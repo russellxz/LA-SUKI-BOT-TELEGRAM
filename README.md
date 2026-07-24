@@ -1,138 +1,255 @@
-<div align="center">
+# 👑 LA SUKI BOT — TELEGRAM
 
-<img src="https://capsule-render.vercel.app/api?type=waving&height=210&color=gradient&customColorList=12,20,24,30&text=🦋%20LA%20SUKI%20BOT%202.0%20🦋&fontSize=48&fontColor=ffffff&animation=fadeIn&fontAlignY=38&desc=Tecnología,%20control%20y%20elegancia%20en%20tu%20WhatsApp&descSize=18&descAlignY=58" width="100%"/>
+Bot de Telegram con sistema de plugins: administración de grupos, stickers, descargas, inteligencia artificial, RPG, economía y más.
 
-<img src="https://readme-typing-svg.demolab.com?font=Orbitron&weight=800&size=26&duration=2800&pause=600&color=00D4FF&center=true&vCenter=true&width=620&lines=%F0%9F%A6%8B+Tu+bot+de+WhatsApp+con+estilo+%F0%9F%A6%8B;%E2%9A%A1+Sistema+de+Subbots+ESTABLE+%E2%9A%A1;%F0%9F%A4%96+%2B500+subbots+conectados+a+la+vez;%F0%9F%93%A5+Descargas%2C+juegos%2C+IA+y+m%C3%A1s" alt="Typing SVG"/>
+**+300 plugins · +500 comandos · listo para Pterodactyl**
 
-<img src="https://readme-typing-svg.demolab.com?font=Orbitron&weight=700&size=20&duration=3200&pause=800&color=FF2BD6&center=true&vCenter=true&width=620&lines=%F0%9F%9A%80+Alojada+en+el+MEJOR+hosting+del+mundo;%E2%98%81%EF%B8%8F+SKY+ULTRA+PLUS+%E2%98%81%EF%B8%8F;%F0%9F%92%8E+Velocidad%2C+potencia+y+estabilidad+24%2F7" alt="Typing SVG"/>
+---
 
-<br/>
+## 🚀 Instalación rápida
 
-<img src="https://img.shields.io/badge/WhatsApp-Bot-25D366?style=for-the-badge&logo=whatsapp&logoColor=white"/>
-<img src="https://img.shields.io/badge/Node.js-20+-339933?style=for-the-badge&logo=nodedotjs&logoColor=white"/>
-<img src="https://img.shields.io/badge/Baileys-Ultra-00D4FF?style=for-the-badge"/>
-<img src="https://img.shields.io/badge/Subbots-Estables%20⚡-FF2BD6?style=for-the-badge"/>
-<img src="https://img.shields.io/badge/Hosting-Sky%20Ultra%20Plus%20🚀-FFD700?style=for-the-badge"/>
+### 1. Crea tu bot en Telegram
 
-<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%"/>
+1. Abre Telegram y busca **@BotFather**
+2. Envía `/newbot` y ponle nombre y usuario
+3. Copia el token que te da (algo como `123456789:AAE...`)
 
-</div>
+### 2. Configúralo para grupos ⚠️ IMPORTANTE
 
-## 🎬 Presentación
+Sin este paso el bot **solo verá los mensajes que empiecen con `/`**, y no funcionarán el antilink, las palabras guardadas ni los stickers con comando:
 
-<p align="center">
-  <img src="https://cdn.russellxz.click/74087f31.jpeg" alt="Portada de La Suki Bot" width="600"/>
-</p>
+```
+En @BotFather:
+  /setprivacy  →  elige tu bot  →  Disable
+```
 
-<p align="center">
-  <a href="https://cdn.russellxz.click/bc06f25b.mp4">
-    <img src="https://img.shields.io/badge/🎬 Ver%20video%20de%20presentación-ff69b4?style=for-the-badge" alt="Ver video de presentación">
-  </a>
-</p>
+Recomendado también:
 
-<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%"/>
+```
+/setjoingroups  →  Enable      (para que pueda entrar a grupos)
+```
 
-## 📦 Instalación y configuración
+### 3. Instala y arranca
 
-> 🛠️ Mira el video completo donde aprenderás cómo instalar La Suki Bot desde cero:
+```bash
+npm install
+npm start
+```
 
-<p align="center">
+La primera vez, si no configuraste el token en una variable, el bot te lo pedirá por consola y lo guardará en `token.json`.
 
-[![Ver en YouTube](https://img.shields.io/badge/Ver%20en%20YouTube-%F0%9F%93%BA-red?style=for-the-badge&logo=youtube)](https://youtu.be/xH_gQrqw4HI?si=9G61A3SmKmOY0mtz)
+### 4. Hazte dueño del bot
 
-</p>
+Al arrancar sin dueños, la consola muestra algo así:
 
-<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%"/>
+```
+⚠️  Todavía no hay ningún dueño configurado.
+   Escríbele al bot por privado:  .soyowner 483920
+```
 
-## ⚙️ Características
+Le mandas ese comando al bot por privado y ya eres el dueño.
+(También puedes poner tu ID directo en la variable `OWNER_ID`.)
 
-<div align="center">
+---
 
-| 🚀 Función | 💬 Descripción |
-|:---|:---|
-| 📥 **Descargas** | Videos y música de YouTube, TikTok, Instagram, Facebook, Twitter, Spotify y más |
-| 🎮 **Juegos** | Verdad, reto, y entretenimiento para tus grupos |
-| 🧠 **IA integrada** | ChatGPT incluido para conversaciones avanzadas |
-| 💬 **Respuestas** | Inteligentes, naturales y con estilo |
-| 🚪 **Grupos automáticos** | Sistema para abrir y cerrar grupos por horario |
-| 👮 **Administración** | Comandos exclusivos para administradores: antilink, antidelete, mute, modoadmins y más |
-| 📊 **Actividad** | Ranking de mensajes, detección de fantasmas y limpieza automática |
-| 🍎 **Compatible con iPhone** | Detecta el dispositivo y adapta botones o reacciones automáticamente |
-| 🌐 **Panel Web** | Control total desde la página web oficial de Suki |
-| 🖥️ **VPS / Pterodactyl** | Corre estable en cualquier servidor |
+## 🦖 Instalación en Pterodactyl
 
-</div>
+1. **Crea el servidor** con el egg de **NodeJS** (versión **20 o superior**).
 
-<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%"/>
+2. **Sube los archivos** del bot (o clona el repositorio):
+   ```bash
+   git clone https://github.com/russellxz/LA-SUKI-BOT-TELEGRAM.git .
+   ```
 
-## 🤖 Sistema de Subbots — ⚡ ESTABLE ⚡
+3. **Variables de arranque** (pestaña *Startup*):
 
-<div align="center">
+   | Variable | Valor | ¿Obligatoria? |
+   |---|---|---|
+   | `BOT_TOKEN` | el token de @BotFather | ✅ sí |
+   | `OWNER_ID` | tu ID de Telegram | recomendada |
 
-<img src="https://readme-typing-svg.demolab.com?font=Orbitron&weight=700&size=20&duration=3000&pause=700&color=48D597&center=true&vCenter=true&width=600&lines=%E2%9C%A8+Convi%C3%A9rtete+en+subbot+de+Suki+%E2%9C%A8;%F0%9F%93%B2+Vinculaci%C3%B3n+con+c%C3%B3digo+de+8+d%C3%ADgitos;%F0%9F%8C%90+Con%C3%A9ctate+desde+la+p%C3%A1gina+web;%F0%9F%94%A5+Soporta+%2B500+subbots+estables" alt="Typing SVG"/>
+   > Si tu egg no deja crear variables, el bot también lee el token de `token.json`.
 
-</div>
+4. **Comando de arranque:**
+   ```
+   npm start
+   ```
 
-> 🦾 El sistema de subbots más completo y **estable**:
+5. **Dale a Start.** En la consola verás el banner y `✅ Bot en línea`.
 
-- 🔑 **Conexión fácil** — comando `code` con código de 8 dígitos (también `serbot`, `jadibot`, `qr`)
-- 🌐 **Vinculación desde la web** — pon tu número en la página de Suki y recibe el código ahí mismo
-- 🛡️ **Independientes** — cada subbot tiene sus propios comandos, prefijos, bienvenidas y configuración
-- ⚙️ **Prefijos personalizables** — `setprefix` para cambiarlo y `reprefix` para restaurar el de fábrica
-- 📥 **Descargas propias** — cada subbot maneja sus peticiones por separado, sin interferencias
-- 👮 **Moderación completa** — antilink, antidelete, mute, modoadmins, welcome y más por cada subbot
-- 🔁 **Reconexión automática** — si el bot principal cae, tus subbots siguen funcionando
-- 💪 **Escala real** — probado con **más de 500 subbots** conectados a la vez
+### Detalles del hosting
 
-<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%"/>
+- **No hace falta compilar nada nativo.** La base de datos es JSON puro y las imágenes usan `@napi-rs/canvas`, que trae binarios listos.
+- **ffmpeg** es opcional: sin él funcionan los stickers de imagen y todo lo demás; solo se pierden los stickers animados y las conversiones de audio/video. Si tu egg lo permite:
+  ```bash
+  apt update && apt install -y ffmpeg
+  ```
+- **Un token = un bot.** Si arrancas dos servidores con el mismo token, Telegram devuelve error 409. El bot te avisa claramente si pasa.
+- **Espacio en disco:** la carpeta `guar_media/` guarda copias de lo que se guarda con `.guar`. Se limpia sola cada 15 minutos de temporales (`tmp/`).
 
-## ☁️ Hosting oficial — 🏆 EL MEJOR DEL MUNDO 🏆
+---
 
-<div align="center">
+## 🔣 Prefijos
 
-<img src="https://readme-typing-svg.demolab.com?font=Orbitron&weight=800&size=24&duration=2600&pause=600&color=FFD700&center=true&vCenter=true&width=620&lines=%E2%98%81%EF%B8%8F+SKY+ULTRA+PLUS+%E2%98%81%EF%B8%8F;%F0%9F%8F%86+El+mejor+hosting+del+mundo+%F0%9F%8F%86;%F0%9F%9A%80+Potencia+%C2%B7+Velocidad+%C2%B7+Estabilidad" alt="Typing SVG"/>
+Por defecto el bot responde a **tres prefijos**:
 
-<img src="https://cdn.russellxz.click/a80956b1.jpg" alt="Sky Ultra Plus" width="400"/>
+```
+.menu      #menu      /menu
+```
 
-<br/><br/>
+- El `/` es el prefijo nativo de Telegram (el del menú de comandos de la app) y **siempre queda activo**.
+- En grupos también funciona `/comando@TuBot`, que es como Telegram manda los comandos.
 
-> 🛰️ *La Suki Bot está alojada con orgullo en el mejor hosting del mundo:*
+Para cambiarlos (solo el dueño):
 
-<a href="https://dash.skyultraplus.com">
-  <img src="https://img.shields.io/badge/☁️%20SKY%20ULTRA%20PLUS%20—%20dash.skyultraplus.com-00D4FF?style=for-the-badge" alt="Sky Ultra Plus"/>
-</a>
+```
+.setprefix . # !        → deja activos . # ! y /
+.setprefix reset        → vuelve a los de siempre
+.setprefix              → muestra los actuales
+```
 
-</div>
+El cambio es inmediato y se guarda en `prefijos.json`.
 
-<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%"/>
+---
 
-## 👑 Colaboradores
+## 📚 Comandos principales
 
-> 🤝 Gracias a quienes han apoyado el proyecto:
+Escribe `.menu` para el menú completo o `.allmenu` para la lista de todos.
 
-- 🔹 [Zastinian](https://github.com/Zastinian)
-- 🔹 [DIEGO-OFC](https://github.com/DIEGO-OFC2)
-- 🔹 [ds6](https://github.com/ds6)
+### 👮 Grupos
+| Comando | Qué hace |
+|---|---|
+| `.kick` | Expulsa (responde o menciona) |
+| `.ban` / `.unban` | Prohíbe usar el bot |
+| `.mute` / `.unmute` | Silencia (admite tiempo: `.mute @user 30m`) |
+| `.daradmins` / `.quitaradmins` | Da o quita administrador |
+| `.antilink on/off` | Borra invitaciones a otros grupos |
+| `.linkall on/off` | Borra cualquier enlace |
+| `.antis on/off` | Anti spam de stickers |
+| `.modoadmins on/off` | Solo los admins usan el bot |
+| `.welcome on/off` · `.setwelcome` | Bienvenidas con imagen |
+| `.despedidas on/off` · `.setdespedidas` | Despedidas |
+| `.abrirgrupo` / `.cerrargrupo` | Abre o cierra el grupo |
+| `.abrir 10m` / `.cerrar 1h` | Programa apertura o cierre |
+| `.setname` · `.setinfo` · `.setfoto` | Cambia datos del grupo |
+| `.todos` · `.tag` | Menciona a todos |
+| `.totalchat` · `.fantasmas 10` · `.fankick 10` | Actividad del grupo |
+| `.configrupo` · `.infogrupo` · `.id` | Información |
 
-<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%"/>
+### 👑 Owner
+`.addowner` · `.delowner` · `.bc` · `.bc2` · `.vergrupos` · `.botname` · `.carga` · `.rest` · `.modoprivado` · `.apagado` · `.re` / `.unre` · `.setmenu` · `.git` · `.addco` / `.delco`
 
-## 💬 Comunidades
+### 🎨 Stickers
+`.s` (foto/video → sticker) · `.sks` (54 efectos con botones) · `.toimg` · `.tovideo` · `.qc` · `.aniemoji` · `.mixemoji` · `.guarsk` / `.versk` / `.sendsk` / `.delsk`
 
-Únete a nuestras comunidades para recibir soporte, novedades y actualizaciones:
+### 📥 Descargas
+`.play` (con botones audio/video) · `.ytmp3` · `.ytmp4` · `.tiktok` · `.instagram` · `.facebook` · `.twitter` · `.spotify` · `.mediafire` · `.apk` · `.pinterest` · `.letra` · `.yts`
 
-<p align="center">
-  <a href="https://chat.whatsapp.com/EB4vMpRUw8R6me7myYF53M">
-    <img src="https://img.shields.io/badge/🤖%20Comunidad%20Suki-25D366?style=for-the-badge&logo=whatsapp&logoColor=white"/>
-  </a>
-  <a href="https://chat.whatsapp.com/E6iWpvGuJ8zJNPbN3zOr0D">
-    <img src="https://img.shields.io/badge/☁️%20Comunidad%20Sky%20Ultra%20Plus-00D4FF?style=for-the-badge&logo=whatsapp&logoColor=white"/>
-  </a>
-</p>
+### 🤖 Inteligencia artificial
+`.chatgpt` · `.gemini` · `.luminai` · `.groq` · `.imagen` · `.dalle` · `.pixai` · `.hd` · `.toanime2` · `.tts` · `.chat on/off` (la IA responde sola en el grupo)
 
-<div align="center">
+### 💾 Guardar multimedia
+| Comando | Qué hace |
+|---|---|
+| `.guar <palabra>` | Guarda el archivo al que respondes |
+| *(escribir la palabra)* | El bot manda ese archivo |
+| `.g <palabra> <n>` | Manda uno concreto |
+| `.del <palabra> <n>` | Borra uno |
+| `.verpacks` · `.menuaudio` | Ver lo guardado |
+| `.addco <comando>` | Enlaza un sticker a un comando |
+| `.delco` | Le quita el comando al sticker |
+| `.trag <n>` | Migra el `guar.json` viejo de WhatsApp |
 
-<img src="https://readme-typing-svg.demolab.com?font=Orbitron&weight=800&size=22&duration=3000&pause=800&color=FF2BD6&center=true&vCenter=true&width=640&lines=%E2%9C%A8+La+Suki+Bot+%E2%9C%A8;Tecnolog%C3%ADa%2C+control+y+elegancia;en+tu+grupo+de+WhatsApp+%F0%9F%A6%8B" alt="Typing SVG"/>
+### 🎮 Juegos y RPG
+`.rpg` · `.menurpg` · `.minar` · `.trabajar` · `.banco` · `.tiendaper` · `.batallauser` · `.crearclan` · `.ship` · `.parejas` · `.verdad` · `.reto` · `.hackear` · `.4vs4` … `.24vs24`
 
-<img src="https://capsule-render.vercel.app/api?type=waving&height=140&color=gradient&customColorList=12,20,24,30&section=footer" width="100%"/>
+### 🛒 Ventas
+`.setpago` · `.pago` · `.stock` · `.netflix` · `.combos` · `.addfactura` · `.verfactura` · `.sorteo`
 
-</div>
+---
+
+## 🗂️ Estructura del proyecto
+
+```
+index.js              Núcleo: conexión, filtros y despacho de comandos
+db.js                 Configuración por chat (JSON, sin dependencias nativas)
+config.js             Listas de verdad/reto
+libs/
+  telegram.js         Adaptador conn: envíos, grupos, media, botones
+  mensajes.js         Normaliza los mensajes que llegan de Telegram
+  usuarios.js         Registro de usuarios y chats conocidos
+  grupo.js            Verificaciones de grupo/admin/permisos
+  descargas.js        Cliente de las APIs de descarga
+  fuctions.js         Conversión de stickers y audio (ffmpeg/sharp)
+  subir.js            Subida de archivos para las APIs que piden URL
+  adminCheck.js       Permisos de owner y admin
+plugins/              Todos los comandos, por categorías
+database/             Datos generados (config, usuarios) — no se sube a git
+```
+
+### Cómo hacer un plugin nuevo
+
+```js
+// plugins/Hola.js
+const handler = async (msg, { conn, text, usedPrefix, isAdmin, isOwner }) => {
+  await conn.sendMessage(msg.chatId, {
+    text: `¡Hola *${msg.senderName}*! Escribiste: ${text}`
+  }, { quoted: msg });
+};
+
+handler.command = ["hola", "saludo"];
+export default handler;
+```
+
+Guárdalo en `plugins/` y usa `.carga` para recargar sin reiniciar.
+
+Opcionales:
+- `handler.all = async (msg, ctx) => {}` → se ejecuta con **todos** los mensajes
+- `handler.iniciar = (conn) => {}` → se ejecuta una vez al arrancar (para tareas o botones)
+
+---
+
+## ⚠️ Diferencias con la versión de WhatsApp
+
+Telegram no es WhatsApp, así que algunas cosas cambian:
+
+| Antes (WhatsApp) | Ahora (Telegram) |
+|---|---|
+| Se conectaba con QR o código de 8 dígitos | Token de @BotFather |
+| Subbots (`.serbot`, `.code`) | ❌ Eliminados: Telegram no los necesita, cada quien crea su bot gratis en 1 minuto |
+| Panel web (`webserver.js`) | ❌ Eliminado |
+| `.antidelete` | ❌ No es posible: Telegram **no avisa a los bots** cuando alguien borra un mensaje |
+| Comandos de LID (`.mylid`, `.sacarlid`) | ➡️ Reemplazados por `.id` (IDs de Telegram) |
+| `.pais` (expulsar por prefijo telefónico) | ❌ Los bots no ven números de teléfono |
+| Anti árabe por prefijo telefónico | ➡️ Ahora detecta el alfabeto árabe en el nombre |
+| Listar todos los miembros del grupo | ⚠️ La Bot API solo deja listar administradores. El bot va aprendiendo a la gente conforme escribe, y de ahí salen `.todos`, `.fantasmas` y `.totalchat` |
+| Foto de perfil del bot por comando | ⚠️ Solo desde @BotFather (`/setuserpic`). El nombre y la descripción sí se cambian con `.botname` y `.botfoto` |
+| Stickers WEBP con metadatos | ➡️ WEBP 512×512 (estáticos) y WEBM (animados, máx 3s) |
+
+---
+
+## 🔧 Problemas comunes
+
+**El bot no responde en el grupo**
+→ Falta desactivar la privacidad: `@BotFather → /setprivacy → Disable`. Después sácalo y vuelve a meterlo al grupo.
+
+**No puede expulsar / silenciar / cerrar el grupo**
+→ Tiene que ser **administrador** con esos permisos. El bot te dice exactamente cuál le falta.
+
+**"Hay OTRA instancia del bot usando el mismo token"**
+→ Estás corriendo el bot dos veces. Apaga una.
+
+**No funcionan los stickers animados ni `.toaudio`**
+→ Falta `ffmpeg` en el servidor.
+
+**No puedo quitarle admin a alguien**
+→ Telegram solo deja quitar admin a quien fue ascendido por el propio bot.
+
+---
+
+## 📜 Créditos
+
+- Creador: **Russell** (russellxz) — [YouTube](https://youtube.com/@skyultraplus)
+- Versión de Telegram del bot que antes corría en WhatsApp con Baileys.
+
+Licencia ISC.

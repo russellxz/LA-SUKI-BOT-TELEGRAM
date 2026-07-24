@@ -1,13 +1,22 @@
 node_modules/
 package-lock.json
+
+# Credenciales y datos generados
 token.json
 .env
 database/
 guar_media/
+guars_media/
+ssy_images/
+lastRestarter.json
+prefijos.json
+
+# Bases viejas de la versión de WhatsApp (activos.db lo reemplaza database/config.json)
+activos.db
+antidelete.db
+
+# Temporales
 tmp/*
 !tmp/.gitkeep
 *.log
 .DS_Store
-lastRestarter.json
-activos.db
-antidelete.db
