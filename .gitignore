@@ -12,7 +12,7 @@
 .output/
 #Extension App-file
 *.app
-#Rapid Application Development File
+#Rapid Application Development File xds
 rad.json
 #Translation Base-file
 *.g.xlf
