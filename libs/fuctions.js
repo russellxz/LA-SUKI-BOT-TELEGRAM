@@ -12,7 +12,7 @@
 import fs from "fs";
 import path from "path";
 import Crypto from "crypto";
-import { spawn } from "child_process";
+import { spawn, spawnSync } from "child_process";
 import { fileURLToPath } from "url";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
@@ -29,18 +29,26 @@ let ffmpegDisponible = null;
 export function hayFfmpeg() {
   if (ffmpegDisponible !== null) return ffmpegDisponible;
   try {
-    const r = spawn("ffmpeg", ["-version"]);
-    ffmpegDisponible = true;
-    r.on("error", () => { ffmpegDisponible = false; });
-    r.kill();
+    const r = spawnSync("ffmpeg", ["-version"], { stdio: "ignore" });
+    ffmpegDisponible = !r.error && r.status === 0;
   } catch {
     ffmpegDisponible = false;
+  }
+  if (!ffmpegDisponible) {
+    console.log("⚠️  ffmpeg no está instalado: los stickers animados, audios y conversiones de video no funcionarán.");
   }
   return ffmpegDisponible;
 }
 
-/** Ejecuta ffmpeg sobre un buffer y devuelve el resultado como buffer */
-export function ffmpeg(buffer, args = [], extEntrada = "bin", extSalida = "mp4") {
+/**
+ * Ejecuta ffmpeg sobre un buffer y devuelve el resultado como buffer.
+ * @param {Buffer} buffer     archivo de entrada
+ * @param {string[]} args     argumentos de salida (filtros, códecs...)
+ * @param {string} extEntrada extensión del archivo de entrada
+ * @param {string} extSalida  extensión del resultado
+ * @param {string[]} previos  argumentos que van ANTES del -i (ej: ["-loop","1"])
+ */
+export function ffmpeg(buffer, args = [], extEntrada = "bin", extSalida = "mp4", previos = []) {
   return new Promise((resolve, reject) => {
     const entrada = tmpFile(extEntrada);
     const salida = `${entrada}.${extSalida}`;
@@ -50,7 +58,7 @@ export function ffmpeg(buffer, args = [], extEntrada = "bin", extSalida = "mp4")
       return reject(e);
     }
 
-    const proc = spawn("ffmpeg", ["-y", "-i", entrada, ...args, salida]);
+    const proc = spawn("ffmpeg", ["-y", ...previos, "-i", entrada, ...args, salida]);
     let error = "";
     proc.stderr.on("data", (d) => { error += d.toString(); });
 

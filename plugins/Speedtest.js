@@ -7,7 +7,7 @@ import path from 'path';
 const exec = promisify(cp.exec).bind(cp);
 
 const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
 
   await conn.sendMessage(chatId, {
     react: { text: "⏳", key: msg.key }
@@ -15,7 +15,7 @@ const handler = async (msg, { conn }) => {
 
   await conn.sendMessage(chatId, {
     text: "🚀 *Realizando prueba de velocidad...*",
-    mentions: [msg.key.participant || msg.key.remoteJid],
+    mentions: [msg.senderId],
   }, { quoted: msg });
 
   let o;

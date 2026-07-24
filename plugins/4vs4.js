@@ -1,16 +1,16 @@
 const handler = async (msg, { conn, args }) => {
-  const chatId = msg.key.remoteJid;
-  const sender = msg.key.participant || msg.key.remoteJid;
+  const chatId = msg.chatId;
+  const sender = msg.senderId;
   const senderNum = sender.replace(/[^0-9]/g, "");
   const isOwner = global.owner.some(([id]) => id === senderNum);
-  const isFromMe = msg.key.fromMe;
+  const isFromMe = false;
 
-  if (!chatId.endsWith("@g.us")) {
+  if (!msg.isGroup) {
     return conn.sendMessage(chatId, { text: "❌ Este comando solo puede usarse en grupos." }, { quoted: msg });
   }
 
   const meta = await conn.groupMetadata(chatId);
-  const isAdmin = await isAdminInGroup(conn, chatId, msg.realJid || sender);
+  const isAdmin = await isAdminInGroup(conn, chatId, msg.senderId || sender);
 
   if (!isAdmin && !isOwner && !isFromMe) {
     return conn.sendMessage(chatId, {
@@ -65,7 +65,9 @@ const handler = async (msg, { conn, args }) => {
   const participantes = meta.participants.filter(p => p.id !== conn.user.id);
   if (participantes.length < 12) {
     return conn.sendMessage(chatId, {
-      text: "⚠️ Se necesitan al menos *12 usuarios* para formar 2 escuadras y suplentes."
+      text: "⚠️ Se necesitan al menos *12 usuarios* para formar 2 escuadras y suplentes.
+
+_Solo puedo contar a quienes he visto escribir en el grupo: Telegram no deja a los bots ver la lista completa de miembros._"
     }, { quoted: msg });
   }
 
@@ -93,7 +95,7 @@ const handler = async (msg, { conn, args }) => {
   const escuadra2 = shuffled.slice(4, 8);
   const suplentes = shuffled.slice(8, 12);
 
-  const renderJugadores = (arr) => arr.map((u, i) => `${i === 0 ? "👑" : "🥷🏻"} ┇ @${u.id.split("@")[0]}`).join("\n");
+  const renderJugadores = (arr) => arr.map((u, i) => `${i === 0 ? "👑" : "🥷🏻"} ┇ @${u.id}`).join("\n");
 
   const textoFinal = `*4 𝐕𝐄𝐑𝐒𝐔𝐒 4*\n\n⏱ 𝐇𝐎𝐑𝐀𝐑𝐈𝐎\n${horaMsg}\n\n➥ 𝐌𝐎𝐃𝐀𝐋𝐈𝐃𝐀𝐃: 🔫 Clásico\n➥ 𝐉𝐔𝐆𝐀𝐃𝐎𝐑𝐄𝐒:\n\n      𝗘𝗦𝗖𝗨𝗔𝗗𝗥𝗔 1\n\n${renderJugadores(escuadra1)}\n\n    ㅤʚ 𝐒𝐔𝐏𝐋𝐄𝐍𝐓𝐄𝐒:\n${renderJugadores(suplentes.slice(0, 2))}\n\n     𝗘𝗦𝗖𝗨𝗔𝗗𝗥𝗔 2\n\n${renderJugadores(escuadra2)}\n\n    ㅤʚ 𝐒𝐔𝐏𝐋𝐄𝐍𝐓𝐄𝐒:\n${renderJugadores(suplentes.slice(2))}`;
 

@@ -36,7 +36,7 @@ function sanitizeKey(key) {
 }
 
 const handler = async (msg, { conn, args }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
   const pref = global.prefixes?.[0] || ".";
 
   await conn.sendMessage(chatId, { react: { text: "🔄", key: msg.key } });
@@ -135,8 +135,10 @@ const handler = async (msg, { conn, args }) => {
 
         // Añadir entrada a dbNueva
         if (!Array.isArray(dbNueva[paquete])) dbNueva[paquete] = [];
+        const TIPOS = { image: "imagen", video: "video", audio: "audio", sticker: "sticker", document: "documento" };
+
         dbNueva[paquete].push({
-          type: item.type,
+          tipo: TIPOS[item.type] || item.type || "documento",
           path: relativePath,
           fileName,
           mime,
@@ -200,5 +202,5 @@ const handler = async (msg, { conn, args }) => {
   return conn.sendMessage(chatId, { text: texto }, { quoted: msg });
 };
 
-handler.command = ["trag"];
+handler.command = ["trag", "migrarguar"];
 export default handler;

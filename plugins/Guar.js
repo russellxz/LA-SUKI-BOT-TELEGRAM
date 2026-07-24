@@ -1,216 +1,124 @@
-// plugins/guar.js
-// Usa wa.downloadContentFromMessage inyectado desde index.js (o conn.wa / global.wa)
+// plugins/Guar.js — Guardar multimedia con una palabra clave
+//
+// Responde a una foto, video, audio, sticker o documento con:
+//    .guar hola
+// Después, cuando alguien escriba "hola", el bot manda ese archivo.
+//
+// Se guarda el file_id de Telegram (reenvío instantáneo) y, si el archivo es
+// pequeño, también una copia en disco por si algún día se cambia de token.
+import fs from "fs";
+import path from "path";
+import crypto from "crypto";
 
-import fs from 'fs';
-import path from 'path';
-import crypto from 'crypto';
-
-// Carpeta raíz donde se guardarán los multimedia
 const MEDIA_ROOT = path.resolve("./guar_media");
-// Archivo JSON LIGERO para los registros nuevos (solo rutas, sin base64)
 const FILES_DB = path.resolve("./guar_files.json");
+const MAX_COPIA = 10 * 1024 * 1024; // 10 MB
 
-function unwrapMessage(m) {
-  let node = m;
-  while (
-    node?.viewOnceMessage?.message ||
-    node?.viewOnceMessageV2?.message ||
-    node?.viewOnceMessageV2Extension?.message ||
-    node?.ephemeralMessage?.message
-  ) {
-    node =
-      node.viewOnceMessage?.message ||
-      node.viewOnceMessageV2?.message ||
-      node.viewOnceMessageV2Extension?.message ||
-      node.ephemeralMessage?.message;
-  }
-  return node;
+/** Convierte la palabra clave en un nombre de carpeta seguro */
+function carpetaSegura(clave) {
+  return (
+    String(clave)
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]/gi, "_")
+      .replace(/_+/g, "_")
+      .replace(/^_|_$/g, "")
+      .slice(0, 64) || "default"
+  );
 }
 
-function ensureWA(wa, conn) {
-  if (wa && typeof wa.downloadContentFromMessage === "function") return wa;
-  if (conn && conn.wa && typeof conn.wa.downloadContentFromMessage === "function") return conn.wa;
-  if (global.wa && typeof global.wa.downloadContentFromMessage === "function") return global.wa;
-  return null;
-}
-
-function mimeToExt(mime, fallback = "bin") {
-  if (!mime || typeof mime !== "string") return fallback;
-  const base = mime.split(";")[0];
-  const [, sub] = base.split("/");
-  if (!sub) return fallback;
-  if (sub.includes("mpeg")) return "mp3";
-  if (sub.includes("webp")) return "webp";
-  if (sub.includes("quicktime")) return "mov";
-  if (sub.includes("x-msvideo")) return "avi";
-  if (sub.includes("x-matroska")) return "mkv";
-  return sub.replace(/^x-/, "") || fallback;
-}
-
-// Sanitiza la palabra clave para usarla como nombre de carpeta de forma segura
-function sanitizeKey(key) {
-  return String(key)
-    .toLowerCase()
-    .replace(/[^a-z0-9_\-]/gi, "_")
-    .replace(/_+/g, "_")
-    .replace(/^_|_$/g, "")
-    .slice(0, 64) || "default";
-}
-
-const handler = async (msg, { conn, args, wa }) => {
-  const chatId = msg.key.remoteJid;
-  const sender = msg.key.participant || msg.key.remoteJid;
-  const userId = String(sender || "").replace(/[^0-9]/g, "");
-  const pref = global.prefixes?.[0] || ".";
-
-  try { await conn.sendMessage(chatId, { react: { text: "⏳", key: msg.key } }); } catch {}
-
-  const ctx = msg.message?.extendedTextMessage?.contextInfo;
-  const quotedRaw = ctx?.quotedMessage;
-  const quoted = quotedRaw ? unwrapMessage(quotedRaw) : null;
-
-  if (!quoted) {
-    try { await conn.sendMessage(chatId, { react: { text: "❌", key: msg.key } }); } catch {}
-    return conn.sendMessage(chatId, {
-      text: `❌ *Error:* Debes *responder* a un multimedia (imagen, video, audio, sticker o documento) con *${pref}guar <palabra_clave>* para guardarlo.`,
-    }, { quoted: msg });
-  }
-
-  const saveKey = (args || []).join(" ").trim().toLowerCase();
-
-  if (!saveKey || !/[a-z0-9]/i.test(saveKey)) {
-    try { await conn.sendMessage(chatId, { react: { text: "❌", key: msg.key } }); } catch {}
-    return conn.sendMessage(chatId, {
-      text: "❌ *Error:* Debes indicar una *palabra clave* (con letras o números).",
-    }, { quoted: msg });
-  }
-
-  // BLOQUEO NUEVO:
-  // No permite guardar "guar"
-  // No permite guardar ".guar"
-  // No permite guardar ninguna palabra que empiece con punto: ".hola", ".war", ".menu", etc.
-  if (saveKey === "guar" || saveKey.startsWith(".")) {
-    try { await conn.sendMessage(chatId, { react: { text: "❌", key: msg.key } }); } catch {}
-    return conn.sendMessage(chatId, {
-      text: `🚫 *Bloqueado:* No puedes guardar *"${saveKey}"* como palabra clave.`,
-    }, { quoted: msg });
-  }
-
-  // Detectar tipo y nodo de media
-  let mediaType = null;
-  let node = null;
-
-  if (quoted.imageMessage) { mediaType = "image"; node = quoted.imageMessage; }
-  else if (quoted.videoMessage) { mediaType = "video"; node = quoted.videoMessage; }
-  else if (quoted.audioMessage) { mediaType = "audio"; node = quoted.audioMessage; }
-  else if (quoted.stickerMessage) { mediaType = "sticker"; node = quoted.stickerMessage; }
-  else if (quoted.documentMessage) { mediaType = "document"; node = quoted.documentMessage; }
-  else {
-    try { await conn.sendMessage(chatId, { react: { text: "❌", key: msg.key } }); } catch {}
-    return conn.sendMessage(chatId, {
-      text: "❌ *Error:* Solo se aceptan *imágenes, videos, audios, stickers o documentos*.",
-    }, { quoted: msg });
-  }
-
-  const WA = ensureWA(wa, conn);
-  if (!WA) {
-    try { await conn.sendMessage(chatId, { react: { text: "❌", key: msg.key } }); } catch {}
-    return conn.sendMessage(chatId, {
-      text: "❌ *Error interno:* downloader no disponible. (Falta inyectar `wa` en index.js)",
-    }, { quoted: msg });
-  }
-
-  // Descargar
+function leerDB() {
   try {
-    const dlType = mediaType === "document" ? "document" : mediaType;
-    const stream = await WA.downloadContentFromMessage(node, dlType);
+    if (fs.existsSync(FILES_DB)) return JSON.parse(fs.readFileSync(FILES_DB, "utf-8") || "{}");
+  } catch {}
+  return {};
+}
 
-    let buf = Buffer.alloc(0);
-    for await (const chunk of stream) buf = Buffer.concat([buf, chunk]);
+const handler = async (msg, { conn, text, usedPrefix, command }) => {
+  const chatId = msg.chatId;
+  await conn.react(chatId, msg.message_id, "⏳");
 
-    if (!buf.length) throw new Error("Descarga vacía");
+  // El multimedia puede venir citado o en el mismo mensaje con caption
+  const media = msg.quoted?.media || (msg.media && msg.tipo !== "texto" ? msg.media : null);
+  const textoCitado = !media ? msg.quoted?.text : null;
 
-    const mime = node.mimetype || (mediaType === "sticker" ? "image/webp" : null) || "application/octet-stream";
-    let ext = "bin";
-
-    if (mediaType === "document" && node.fileName && typeof node.fileName === "string") {
-      const dot = node.fileName.lastIndexOf(".");
-      if (dot !== -1) ext = node.fileName.slice(dot + 1).toLowerCase();
-      else ext = mimeToExt(mime, "bin");
-    } else {
-      ext = mimeToExt(
-        mime,
-        mediaType === "audio"
-          ? "mp3"
-          : (mediaType === "image" ? "jpg" : (mediaType === "video" ? "mp4" : "bin"))
-      );
-    }
-
-    const caption =
-      node.caption ||
-      quoted?.message?.extendedTextMessage?.text ||
-      null;
-
-    if (!fs.existsSync(MEDIA_ROOT)) {
-      fs.mkdirSync(MEDIA_ROOT, { recursive: true });
-    }
-
-    const safeKey = sanitizeKey(saveKey);
-    const keyDir = path.join(MEDIA_ROOT, safeKey);
-
-    if (!fs.existsSync(keyDir)) {
-      fs.mkdirSync(keyDir, { recursive: true });
-    }
-
-    const timestamp = Date.now();
-    const randomId = crypto.randomBytes(4).toString("hex");
-    const fileName = `${timestamp}_${randomId}.${ext}`;
-    const filePath = path.join(keyDir, fileName);
-
-    const relativePath = path.relative(process.cwd(), filePath).split(path.sep).join("/");
-
-    fs.writeFileSync(filePath, buf);
-
-    const entry = {
-      type: mediaType,
-      path: relativePath,
-      fileName,
-      mime,
-      ext,
-      size: buf.length,
-      user: userId,
-      caption,
-      createdAt: timestamp
-    };
-
-    let db = {};
-
-    if (fs.existsSync(FILES_DB)) {
-      try { db = JSON.parse(fs.readFileSync(FILES_DB, "utf-8")); } catch { db = {}; }
-    }
-
-    if (!Array.isArray(db[saveKey])) db[saveKey] = [];
-
-    db[saveKey].push(entry);
-
-    fs.writeFileSync(FILES_DB, JSON.stringify(db, null, 2));
-
-    try { await conn.sendMessage(chatId, { react: { text: "✅", key: msg.key } }); } catch {}
-
+  if (!media && !textoCitado) {
+    await conn.react(chatId, msg.message_id, "❌");
     return conn.sendMessage(chatId, {
-      text: `✅ *Guardado:* se añadió 1 archivo al paquete *"${saveKey}"*.\n• tipo: *${mediaType}*\n• ext: *${ext}*\n• carpeta: *guar_media/${safeKey}/*`,
-    }, { quoted: msg });
-
-  } catch (e) {
-    console.error("[guar] error:", e);
-
-    try { await conn.sendMessage(chatId, { react: { text: "❌", key: msg.key } }); } catch {}
-
-    return conn.sendMessage(chatId, {
-      text: "❌ *Error:* No se pudo descargar/guardar el archivo.",
+      text:
+        "❌ *Responde a un archivo* (foto, video, audio, sticker o documento) con\n" +
+        `*${usedPrefix}${command} <palabra clave>* para guardarlo.\n\n` +
+        `*Ejemplo:* responde a un audio con *${usedPrefix}${command} hola*\n` +
+        "_Después, cuando alguien escriba \"hola\", yo mando ese audio._"
     }, { quoted: msg });
   }
+
+  const clave = String(text || "").trim().toLowerCase();
+
+  if (!clave || !/[a-z0-9áéíóúñ]/i.test(clave)) {
+    await conn.react(chatId, msg.message_id, "❌");
+    return conn.sendMessage(chatId, {
+      text: "❌ *Debes indicar una palabra clave* (con letras o números).\n\n" +
+        `*Ejemplo:* ${usedPrefix}${command} buenos dias`
+    }, { quoted: msg });
+  }
+
+  // No se permite guardar comandos ni palabras con prefijo
+  if (clave === "guar" || global.prefixes.some((p) => clave.startsWith(p))) {
+    await conn.react(chatId, msg.message_id, "❌");
+    return conn.sendMessage(chatId, {
+      text: `🚫 *Bloqueado:* no puedes guardar *"${clave}"* como palabra clave.`
+    }, { quoted: msg });
+  }
+  if (global.pluginIndex?.has(clave)) {
+    await conn.react(chatId, msg.message_id, "❌");
+    return conn.sendMessage(chatId, {
+      text: `🚫 *"${clave}" ya es un comando del bot.* Elige otra palabra.`
+    }, { quoted: msg });
+  }
+
+  const entrada = {
+    tipo: media?.tipo || "texto",
+    fileId: media?.fileId || null,
+    uniqueId: media?.uniqueId || null,
+    mime: media?.mime || null,
+    ext: media?.ext || null,
+    fileName: media?.fileName || null,
+    caption: msg.quoted?.text || null,
+    texto: textoCitado || null,
+    user: msg.senderId,
+    creado: Date.now()
+  };
+
+  // Copia local de respaldo para archivos chicos
+  if (media?.fileId && (media.size || 0) <= MAX_COPIA) {
+    try {
+      const buffer = await conn.downloadMedia(media.fileId);
+      const carpeta = path.join(MEDIA_ROOT, carpetaSegura(clave));
+      fs.mkdirSync(carpeta, { recursive: true });
+      const nombre = `${Date.now()}_${crypto.randomBytes(3).toString("hex")}.${media.ext || "bin"}`;
+      const destino = path.join(carpeta, nombre);
+      fs.writeFileSync(destino, buffer);
+      entrada.path = path.relative(process.cwd(), destino).split(path.sep).join("/");
+      entrada.size = buffer.length;
+    } catch (e) {
+      console.log("⚠️ guar: no pude guardar la copia local:", e.message);
+    }
+  }
+
+  const db = leerDB();
+  if (!Array.isArray(db[clave])) db[clave] = [];
+  db[clave].push(entrada);
+  fs.writeFileSync(FILES_DB, JSON.stringify(db, null, 2));
+
+  await conn.react(chatId, msg.message_id, "✅");
+  await conn.sendMessage(chatId, {
+    text:
+      `✅ *Guardado en el paquete "${clave}".*\n\n` +
+      `📦 Tipo: *${entrada.tipo}*\n` +
+      `🔢 Archivos en el paquete: *${db[clave].length}*\n\n` +
+      `_Escribe *${clave}* en el chat y te lo mando._`
+  }, { quoted: msg });
 };
 
-handler.command = ["guar"];
+handler.command = ["guar", "guar2", "guardar"];
 export default handler;

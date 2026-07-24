@@ -1,16 +1,16 @@
 const handler = async (msg, { conn, args }) => {
-  const chatId = msg.key.remoteJid;
-  const sender = msg.key.participant || msg.key.remoteJid;
+  const chatId = msg.chatId;
+  const sender = msg.senderId;
   const senderNum = sender.replace(/[^0-9]/g, "");
   const isOwner = global.owner.some(([id]) => id === senderNum);
-  const isFromMe = msg.key.fromMe;
+  const isFromMe = false;
 
-  if (!chatId.endsWith("@g.us")) {
+  if (!msg.isGroup) {
     return conn.sendMessage(chatId, { text: "❌ Este comando solo puede usarse en grupos." }, { quoted: msg });
   }
 
   const meta = await conn.groupMetadata(chatId);
-  const isAdmin = await isAdminInGroup(conn, chatId, msg.realJid || sender);
+  const isAdmin = await isAdminInGroup(conn, chatId, msg.senderId || sender);
 
   if (!isAdmin && !isOwner && !isFromMe) {
     return conn.sendMessage(chatId, {
@@ -61,7 +61,9 @@ const handler = async (msg, { conn, args }) => {
   const participantes = meta.participants.filter(p => p.id !== conn.user.id);
   if (participantes.length < 36) {
     return conn.sendMessage(chatId, {
-      text: "⚠️ Se necesitan al menos *36 usuarios* (24 titulares + 12 suplentes) para 6 escuadras."
+      text: "⚠️ Se necesitan al menos *36 usuarios* (24 titulares + 12 suplentes) para 6 escuadras.
+
+_Solo puedo contar a quienes he visto escribir en el grupo: Telegram no deja a los bots ver la lista completa de miembros._"
     }, { quoted: msg });
   }
 
@@ -93,7 +95,7 @@ const handler = async (msg, { conn, args }) => {
     suplentes.push(shuffled.slice(24 + i * 2, 24 + i * 2 + 2));
   }
 
-  const renderJugadores = (arr) => arr.map((u, i) => `${i === 0 ? "👑" : "🥷🏻"} ┇ @${u.id.split("@")[0]}`).join("\n");
+  const renderJugadores = (arr) => arr.map((u, i) => `${i === 0 ? "👑" : "🥷🏻"} ┇ @${u.id}`).join("\n");
 
   let textoFinal = `*🔥 20 𝐕𝐒 20 - 6 ESCUADRAS 🔥*\n\n⏱ 𝐇𝐎𝐑𝐀𝐑𝐈𝐎\n${horaMsg}\n\n➥ 𝐌𝐎𝐃𝐀𝐋𝐈𝐃𝐀𝐃: 🔫 Clásico\n➥ 𝐉𝐔𝐆𝐀𝐃𝐎𝐑𝐄𝐒:\n`;
 

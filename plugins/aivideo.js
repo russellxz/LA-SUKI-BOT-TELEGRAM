@@ -1,9 +1,9 @@
 import fetch from 'node-fetch';
 
 const handler = async (msg, { conn, args, command }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
   const text = args.join(" ");
-  const participant = msg.key.participant || msg.key.remoteJid;
+  const participant = msg.senderId;
 
   if (!text) {
     return conn.sendMessage(chatId, {

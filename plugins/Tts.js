@@ -1,125 +1,64 @@
-// plugins/tts.js — Text To Speech con Google TTS
-// Convierte el MP3 de Google TTS a OGG/Opus para que WhatsApp lo reproduzca como nota de voz.
-// Uso: .tts <texto>   o   .tts (respondiendo a un mensaje con texto)
+// plugins/Tts.js — Convertir texto en nota de voz
+import axios from "axios";
+import googleTTS from "google-tts-api";
+import { toPTT, hayFfmpeg } from "../libs/fuctions.js";
 
-"use strict";
+const handler = async (msg, { conn, text, usedPrefix, command }) => {
+  const chatId = msg.chatId;
+  let contenido = (text || msg.quoted?.text || "").trim();
 
-import fs from 'fs';
-import path from 'path';
-import Crypto from 'crypto';
-import axios from 'axios';
-import ffmpeg from 'fluent-ffmpeg';
-import SpeakEngine from 'google-tts-api';
+  if (!contenido) {
+    return conn.sendMessage(chatId, {
+      text:
+        `🗣️ *Texto a voz*\n\n` +
+        `Usa: *${usedPrefix}${command} <texto>*\n` +
+        "O responde a un mensaje con el comando.\n\n" +
+        `*Ejemplo:* ${usedPrefix}${command} hola a todos`
+    }, { quoted: msg });
+  }
 
-const TMP_DIR = path.resolve("./tmp");
-if (!fs.existsSync(TMP_DIR)) fs.mkdirSync(TMP_DIR, { recursive: true });
+  if (contenido.length > 200) contenido = contenido.slice(0, 200);
 
-const handler = async (msg, { conn, args }) => {
-  const chatId = msg.key.remoteJid;
-  const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-  const pref = global.prefixes?.[0] || ".";
-  const command = "tts";
-
-  const rid = Crypto.randomBytes(6).toString("hex");
-  const mp3Path = path.join(TMP_DIR, `tts_${rid}.mp3`);
-  const oggPath = path.join(TMP_DIR, `tts_${rid}.ogg`);
+  await conn.react(chatId, msg.message_id, "⏳");
+  await conn.sendPresenceUpdate("recording", chatId);
 
   try {
-    await conn.sendMessage(chatId, {
-      react: { text: "🗣️", key: msg.key }
-    });
+    const url = googleTTS.getAudioUrl(contenido, { lang: "es", slow: false, host: "https://translate.google.com" });
 
-    let textToSay = args.join(" ").trim();
-
-    if (!textToSay && quoted) {
-      textToSay =
-        quoted.conversation ||
-        quoted?.extendedTextMessage?.text ||
-        quoted?.imageMessage?.caption ||
-        quoted?.videoMessage?.caption || "";
-    }
-
-    if (!textToSay) {
-      return conn.sendMessage(chatId, {
-        text: `⚠️ *Proporciona un texto o responde a un mensaje para convertirlo a voz.*\n✳️ *Ejemplo:* \`${pref}${command} hola mundo\``
-      }, { quoted: msg });
-    }
-
-    // Google TTS tiene límite de ~200 caracteres por chunk
-    if (textToSay.length > 200) {
-      textToSay = textToSay.slice(0, 200);
-    }
-
-    await conn.sendPresenceUpdate("recording", chatId);
-
-    // 1) Obtener URL del MP3 de Google TTS
-    const audioUrl = SpeakEngine.getAudioUrl(textToSay, {
-      lang: "es",
-      slow: false,
-      host: "https://translate.google.com",
-    });
-
-    // 2) Descargar el MP3 con headers que Google exige (si no, a veces devuelve 404/403)
-    const audioRes = await axios.get(audioUrl, {
+    const respuesta = await axios.get(url, {
       responseType: "arraybuffer",
       timeout: 30000,
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
-        "Referer": "https://translate.google.com/"
+        Referer: "https://translate.google.com/"
       }
     });
 
-    const mp3Buffer = Buffer.from(audioRes.data);
-    fs.writeFileSync(mp3Path, mp3Buffer);
+    const mp3 = Buffer.from(respuesta.data);
 
-    // 3) Convertir MP3 → OGG/Opus (el formato que WhatsApp exige para PTT)
-    await new Promise((resolve, reject) => {
-      ffmpeg(mp3Path)
-        .audioCodec("libopus")
-        .audioChannels(1)
-        .audioFrequency(48000)
-        .audioBitrate("64k")
-        .outputOptions([
-          "-avoid_negative_ts", "make_zero",
-          "-application", "voip"
-        ])
-        .format("ogg")
-        .on("end", resolve)
-        .on("error", reject)
-        .save(oggPath);
-    });
-
-    // 4) Leer el OGG y enviar como nota de voz
-    const oggBuffer = fs.readFileSync(oggPath);
+    // Telegram acepta MP3 como audio; para nota de voz hace falta OGG/Opus
+    if (hayFfmpeg()) {
+      try {
+        const ogg = await toPTT(mp3, "mp3");
+        await conn.sendMessage(chatId, { audio: ogg, ptt: true, fileName: "voz.ogg" }, { quoted: msg });
+        return conn.react(chatId, msg.message_id, "✅");
+      } catch {}
+    }
 
     await conn.sendMessage(chatId, {
-      audio: oggBuffer,
-      mimetype: "audio/ogg; codecs=opus",
-      ptt: true
+      audio: mp3,
+      fileName: "voz.mp3",
+      title: contenido.slice(0, 40),
+      performer: "La Suki Bot"
     }, { quoted: msg });
-
-    try { await conn.sendPresenceUpdate("paused", chatId); } catch {}
-
-    // 5) Limpiar temporales
-    try { fs.unlinkSync(mp3Path); } catch {}
-    try { fs.unlinkSync(oggPath); } catch {}
-
-    await conn.sendMessage(chatId, { react: { text: "✅", key: msg.key } });
-
-  } catch (error) {
-    console.error("❌ Error en el comando tts:", error);
-    try { await conn.sendPresenceUpdate("paused", chatId); } catch {}
-    try { fs.unlinkSync(mp3Path); } catch {}
-    try { fs.unlinkSync(oggPath); } catch {}
-
-    await conn.sendMessage(chatId, { react: { text: "❌", key: msg.key } });
+    await conn.react(chatId, msg.message_id, "✅");
+  } catch (e) {
+    await conn.react(chatId, msg.message_id, "❌");
     await conn.sendMessage(chatId, {
-      text: `❌ *Ocurrió un error al convertir texto a voz.*\n\`${error.message || "Desconocido"}\``
+      text: `❌ No pude generar el audio.\n\n_${String(e.message).slice(0, 200)}_`
     }, { quoted: msg });
   }
 };
 
-handler.command = ["tts"];
-handler.help = ["tts <texto>"];
-handler.tags = ["audio"];
+handler.command = ["tts", "voz", "decir"];
 export default handler;

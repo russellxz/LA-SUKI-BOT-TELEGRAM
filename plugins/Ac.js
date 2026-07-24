@@ -4,12 +4,12 @@ const DIGITS = (s = "") => String(s || "").replace(/[^0-9]/g, "");
 function safeIsOwner(msg) {
   try {
     const sender =
-      msg.realJid ||
+      msg.senderId ||
       msg.key?.participant ||
       msg.key?.remoteJid ||
       "";
 
-    const numero = String(msg.realNumber || DIGITS(sender));
+    const numero = String(msg.senderId || DIGITS(sender));
 
     if (typeof global.isOwner === "function") {
       if (global.isOwner(sender)) return true;
@@ -102,9 +102,9 @@ No olvides dejar tu estrella en el repositorio oficial de Suki para saber que le
 💜 Gracias por usar *La Suki Bot*.`;
 
 const handler = async (msg, { conn, command }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
 
-  if (!safeIsOwner(msg) && !msg.key.fromMe) {
+  if (!safeIsOwner(msg) && !false) {
     return conn.sendMessage(chatId, {
       text: "⛔ *Solo los owners pueden usar este comando.*"
     }, { quoted: msg });

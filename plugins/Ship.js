@@ -1,70 +1,48 @@
-const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
+// plugins/Ship.js — Emparejar a dos personas del grupo
+import { noEsGrupo, mencion } from "../libs/grupo.js";
+import { miembrosDe } from "../libs/usuarios.js";
 
-  try {
-    if (!chatId.endsWith("@g.us")) {
+const handler = async (msg, { conn }) => {
+  const chatId = msg.chatId;
+  if (await noEsGrupo(msg, conn)) return;
+  await conn.react(chatId, msg.message_id, "😍");
+
+  let candidatos = [];
+
+  if (msg.mencionados.length >= 2) {
+    candidatos = msg.mencionados.slice(0, 2).map((id) => ({ id }));
+  } else {
+    const conocidos = miembrosDe(chatId).filter((u) => !u.bot && String(u.id) !== String(conn.user.id));
+    if (conocidos.length < 2) {
       return conn.sendMessage(chatId, {
-        text: "❌ *Este comando solo funciona en grupos.*"
+        text:
+          "⚠️ *Necesito conocer al menos a 2 personas del grupo.*\n\n" +
+          "_Voy aprendiendo a la gente conforme escribe. También puedes mencionar a dos: .ship @uno @dos_"
       }, { quoted: msg });
     }
-
-    await conn.sendMessage(chatId, {
-      react: { text: "💖", key: msg.key }
-    });
-
-    const metadata = await conn.groupMetadata(chatId);
-    let participants = metadata.participants.map(p => p.id);
-    const ctx = msg.message?.extendedTextMessage?.contextInfo;
-    const mentioned = ctx?.mentionedJid || [];
-
-    let user1, user2;
-
-    if (mentioned.length >= 2) {
-      user1 = mentioned[0];
-      user2 = mentioned[1];
-    } else {
-      if (participants.length < 2) {
-        return conn.sendMessage(chatId, {
-          text: "⚠️ *Se necesitan al menos 2 personas en el grupo para hacer un ship.*"
-        }, { quoted: msg });
-      }
-
-      participants = participants.sort(() => Math.random() - 0.5);
-      user1 = participants.pop();
-      user2 = participants.pop();
-    }
-
-    const porcentaje = Math.floor(Math.random() * 101);
-    let frase = "💔 *No parecen ser el uno para el otro...*";
-    if (porcentaje >= 80) frase = "💞 *¡Una pareja perfecta, destinados a estar juntos!*";
-    else if (porcentaje >= 50) frase = "💖 *Hay química, pero aún pueden mejorar.*";
-    else if (porcentaje >= 20) frase = "💕 *Se llevan bien, pero no es un amor tan fuerte.*";
-
-    const mensaje = `💘 *Ship del Amor* 💘\n\n` +
-                    `❤️ *Pareja:* @${user1.split("@")[0]} 💕 @${user2.split("@")[0]}\n` +
-                    `🔮 *Compatibilidad:* *${porcentaje}%*\n` +
-                    `📜 ${frase}\n\n` +
-                    `💍 *¿Deberían casarse?* 💌\n────────────\n👩‍❤️‍👨 _La Suki Bot_`;
-
-    await conn.sendMessage(chatId, {
-      text: mensaje,
-      mentions: [user1, user2]
-    }, { quoted: msg });
-
-    await conn.sendMessage(chatId, {
-      react: { text: "✅", key: msg.key }
-    });
-
-  } catch (error) {
-    console.error("❌ Error en .ship:", error);
-    await conn.sendMessage(chatId, {
-      text: "❌ *Ocurrió un error al calcular el ship.*"
-    }, { quoted: msg });
-
-    await conn.sendMessage(chatId, {
-      react: { text: "❌", key: msg.key }
-    });
+    const mezclados = conocidos.sort(() => Math.random() - 0.5);
+    candidatos = [mezclados[0], mezclados[1]];
   }
+
+  const porcentaje = Math.floor(Math.random() * 101);
+  const corazon = porcentaje > 80 ? "💞" : porcentaje > 50 ? "💖" : porcentaje > 25 ? "💔" : "🥀";
+  const veredicto =
+    porcentaje > 90 ? "¡Almas gemelas! 😍" :
+    porcentaje > 70 ? "¡Hacen bonita pareja! 🥰" :
+    porcentaje > 40 ? "Podría funcionar... 🤔" :
+    porcentaje > 15 ? "Mejor solo amigos 😅" : "Ni lo intenten 😂";
+
+  await conn.sendMessage(chatId, {
+    text:
+      `${corazon} *SHIP DEL DÍA* ${corazon}\n\n` +
+      `${mencion(candidatos[0].id, candidatos[0].nombre)}\n` +
+      `        💘\n` +
+      `${mencion(candidatos[1].id, candidatos[1].nombre)}\n\n` +
+      `📊 Compatibilidad: *${porcentaje}%*\n` +
+      `${"█".repeat(Math.round(porcentaje / 10))}${"░".repeat(10 - Math.round(porcentaje / 10))}\n\n` +
+      `💬 ${veredicto}`,
+    mentions: candidatos.map((c) => c.id)
+  }, { quoted: msg });
 };
 
 handler.command = ["ship"];

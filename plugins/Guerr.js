@@ -2,19 +2,19 @@ import moment from 'moment-timezone';
 import { isAdminInGroup, isOwnerCheck } from '../libs/adminCheck.js';
 
 const handler = async (msg, { conn, args }) => {
-  const chatId = msg.key.remoteJid;
-  const sender = msg.key.participant || msg.key.remoteJid;
+  const chatId = msg.chatId;
+  const sender = msg.senderId;
   const senderNum = sender.replace(/[^0-9]/g, "");
   const isOwner = global.owner.some(([id]) => id === senderNum);
-  const isFromMe = msg.key.fromMe;
+  const isFromMe = false;
 
-  if (!chatId.endsWith("@g.us")) {
+  if (!msg.isGroup) {
     return conn.sendMessage(chatId, { text: "❌ Este comando solo puede usarse en grupos." }, { quoted: msg });
   }
 
   const meta = await conn.groupMetadata(chatId);
   const groupName = meta.subject || "Clan";
-  const isAdmin = await isAdminInGroup(conn, chatId, msg.realJid || sender);
+  const isAdmin = await isAdminInGroup(conn, chatId, msg.senderId || sender);
 
   if (!isAdmin && !isOwner && !isFromMe) {
     return conn.sendMessage(chatId, {
@@ -61,7 +61,9 @@ const handler = async (msg, { conn, args }) => {
   const participantes = meta.participants.filter(p => p.id !== conn.user.id);
   if (participantes.length < 30) {
     return conn.sendMessage(chatId, {
-      text: "⚠️ Se necesitan al menos *30 usuarios* para 6 escuadras y suplentes."
+      text: "⚠️ Se necesitan al menos *30 usuarios* para 6 escuadras y suplentes.
+
+_Solo puedo contar a quienes he visto escribir en el grupo: Telegram no deja a los bots ver la lista completa de miembros._"
     }, { quoted: msg });
   }
 
@@ -75,9 +77,9 @@ const handler = async (msg, { conn, args }) => {
   const suplentes = shuffled.slice(24, 30);
 
   const render = (arr, n) => `│\n│    𝗘𝗦𝗖𝗨𝗔𝗗𝗥𝗔 ➹${n}\n│\n` +
-    arr.map((u, i) => `│${i === 0 ? "👑" : "⚜️"} ➤ @${u.id.split("@")[0]}`).join("\n");
+    arr.map((u, i) => `│${i === 0 ? "👑" : "⚜️"} ➤ @${u.id}`).join("\n");
 
-  const suplenteTxt = suplentes.map(u => `│⚜️ ➤ @${u.id.split("@")[0]}`).join("\n");
+  const suplenteTxt = suplentes.map(u => `│⚜️ ➤ @${u.id}`).join("\n");
 
   let text = `╭──────>⋆☽⋆ ⋆☾⋆<──────╮
    ㅤ   *GUERRA DE CLANES*

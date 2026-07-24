@@ -1,7 +1,7 @@
 import hispamemes from 'hispamemes';
 
 const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
 
   try {
     const meme = hispamemes.meme();

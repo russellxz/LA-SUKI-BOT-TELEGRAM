@@ -1,98 +1,37 @@
-// plugins/vers.js
-// Muestra la lista de paquetes de stickers guardados con .guars
-// Uso: .vers
-
-import fs from 'fs';
-import path from 'path';
+// plugins/Vers.js — Ver los paquetes de stickers guardados
+import fs from "fs";
+import path from "path";
 
 const PACKS_DB = path.resolve("./guars_packs.json");
 
-const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
-  const pref = global.prefixes?.[0] || ".";
-
-  await conn.sendMessage(chatId, { react: { text: "🎨", key: msg.key } });
-
-  // ====== Verificar que exista el archivo ======
-  if (!fs.existsSync(PACKS_DB)) {
-    return conn.sendMessage(chatId, {
-      text: `📂 *Lista vacía:* No hay paquetes de stickers guardados.\nUsa *${pref}guarsk <nombre>* respondiendo a un sticker para guardar.`,
-    }, { quoted: msg });
-  }
+const handler = async (msg, { conn, usedPrefix }) => {
+  const chatId = msg.chatId;
+  await conn.react(chatId, msg.message_id, "📂");
 
   let db = {};
   try {
-    db = JSON.parse(fs.readFileSync(PACKS_DB, "utf-8"));
-  } catch (e) {
+    if (fs.existsSync(PACKS_DB)) db = JSON.parse(fs.readFileSync(PACKS_DB, "utf-8") || "{}");
+  } catch {}
+
+  const nombres = Object.keys(db).filter((k) => Array.isArray(db[k]) && db[k].length);
+  if (!nombres.length) {
     return conn.sendMessage(chatId, {
-      text: `❌ Error al leer la base de datos: \`${e.message}\``,
+      text: `📂 *No hay paquetes de stickers todavía.*\n\n_Crea uno respondiendo a un sticker con ${usedPrefix}guarsk <nombre>_`
     }, { quoted: msg });
   }
 
-  // ====== Limpiar paquetes vacíos ======
-  let cambios = false;
-  for (const key in db) {
-    const pack = db[key];
-    if (!pack || !Array.isArray(pack.stickers) || pack.stickers.length === 0) {
-      delete db[key];
-      cambios = true;
-    }
-  }
-  if (cambios) {
-    try { fs.writeFileSync(PACKS_DB, JSON.stringify(db, null, 2)); } catch {}
-  }
+  const lineas = nombres.sort().map((n) => {
+    const animados = db[n].filter((s) => s.animado).length;
+    return `│ 🌟 *${n}* — ${db[n].length} sticker(s)${animados ? ` (${animados} animados)` : ""}`;
+  });
 
-  const claves = Object.keys(db);
-  if (claves.length === 0) {
-    return conn.sendMessage(chatId, {
-      text: `📂 *Lista vacía:* No hay paquetes de stickers con contenido.`,
-    }, { quoted: msg });
-  }
-
-  // ====== Armar el texto ======
-  const clavesOrdenadas = claves.sort();
-  const mentions = [];
-  let totalStickers = 0;
-
-  let texto = `🎨 *Lista de paquetes de stickers:*\n\n`;
-
-  for (const key of clavesOrdenadas) {
-    const pack = db[key];
-    const stickers = pack.stickers || [];
-    if (stickers.length === 0) continue;
-
-    totalStickers += stickers.length;
-
-    texto += `📦 *${key}* (${stickers.length} sticker${stickers.length !== 1 ? "s" : ""}):\n`;
-
-    stickers.forEach((st, i) => {
-      const userId = st.addedBy || pack.createdBy;
-      const num = userId ? String(userId).replace(/[^0-9]/g, "") : null;
-      const jid = num ? `${num}@s.whatsapp.net` : null;
-      if (jid && !mentions.includes(jid)) mentions.push(jid);
-
-      // Mostrar los emojis asociados si existen
-      const emojis = Array.isArray(st.emojis) && st.emojis.length
-        ? st.emojis.join("")
-        : "🎨";
-
-      texto += `   ${i + 1}. ${emojis} — Agregado por: ${jid ? `@${num}` : "🤷‍♂️ Desconocido"}\n`;
-    });
-
-    texto += `\n`;
-  }
-
-  // Footer con info útil
-  texto += `━━━━━━━━━━━━━━━\n`;
-  texto += `📊 *Total:* ${clavesOrdenadas.length} paquete${clavesOrdenadas.length !== 1 ? "s" : ""} · ${totalStickers} sticker${totalStickers !== 1 ? "s" : ""}\n\n`;
-  texto += `📤 Enviar paquete: *${pref}sendsk <nombre>*\n`;
-  texto += `🗑️ Eliminar sticker: *${pref}delsk <paquete> <número>*`;
-
-  return conn.sendMessage(chatId, {
-    text: texto.trim(),
-    mentions,
+  await conn.sendMessage(chatId, {
+    text:
+      `╭──『 🌟 *PAQUETES DE STICKERS* 』\n│\n${lineas.join("\n")}\n│\n╰────────────────◆\n\n` +
+      `_Enviar uno: ${usedPrefix}sendsk <nombre>_\n` +
+      `_Borrar uno: ${usedPrefix}delsk <nombre> <número>_`
   }, { quoted: msg });
 };
 
-handler.command = ["versk"];
+handler.command = ["versk", "verpacks2", "verstickers"];
 export default handler;

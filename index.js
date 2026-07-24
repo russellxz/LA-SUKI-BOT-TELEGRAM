@@ -377,6 +377,20 @@ async function manejarMensaje(raw) {
   // ── Usuarios silenciados ──
   if (await revisarMute(msg, esAdmin, esOwner)) return;
 
+  // ── Plugins que quieren ver todos los mensajes (IA del grupo, filtros...) ──
+  const contextoBase = {
+    conn, bot, chatId, senderId,
+    isGroup: msg.isGroup, isOwner: esOwner, isAdmin: esAdmin || esOwner,
+    esOwner, esAdmin: esAdmin || esOwner,
+    usedPrefix: global.prefixes[0], prefix: global.prefixes[0],
+    text: textoFinal, args: [], command: null
+  };
+  for (const p of global.plugins) {
+    if (typeof p?.all === "function") {
+      Promise.resolve(p.all(msg, contextoBase)).catch(() => {});
+    }
+  }
+
   if (!prefijoFinal) return;
 
   const comando = textoFinal
@@ -430,13 +444,6 @@ async function manejarMensaje(raw) {
     await conn.sendMessage(chatId, {
       text: `❌ *Ocurrió un error ejecutando ${comando}*\n\n\`${String(e.message || e).slice(0, 300)}\``
     }, { quoted: msg }).catch(() => {});
-  }
-
-  // Plugins que quieren ver todos los mensajes
-  for (const p of global.plugins) {
-    if (typeof p?.all === "function") {
-      p.all(msg, contexto).catch(() => {});
-    }
   }
 }
 

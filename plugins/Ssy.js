@@ -1,142 +1,54 @@
-import fs from 'fs';
-import path from 'path';
+// plugins/Ssy.js — Guardar una imagen bajo un nombre y recuperarla
+import fs from "fs";
+import path from "path";
 
-const DB = "./ssy_db.json";
-const IMG_DIR = "./ssy_images";
+const DB = path.resolve("./ssy_db.json");
 
-if (!fs.existsSync(IMG_DIR))
-fs.mkdirSync(IMG_DIR);
-
-function unwrapMessage(m){
-
-let n=m;
-
-while(
-
-n?.viewOnceMessage?.message ||
-n?.viewOnceMessageV2?.message ||
-n?.ephemeralMessage?.message
-
-){
-
-n=
-n.viewOnceMessage?.message ||
-n.viewOnceMessageV2?.message ||
-n.ephemeralMessage?.message;
-
+function leer() {
+  try {
+    if (fs.existsSync(DB)) return JSON.parse(fs.readFileSync(DB, "utf-8") || "{}");
+  } catch {}
+  return {};
 }
 
-return n;
-}
+const handler = async (msg, { conn, text, usedPrefix, command }) => {
+  const chatId = msg.chatId;
+  const clave = String(text || "").trim().toLowerCase();
+  const db = leer();
 
-function ensureWA(wa,conn){
+  if (!clave) {
+    const claves = Object.keys(db);
+    return conn.sendMessage(chatId, {
+      text:
+        "🖼️ *Guardar imágenes por nombre*\n\n" +
+        `• Responde a una imagen con *${usedPrefix}${command} <nombre>* para guardarla\n` +
+        `• Escribe *${usedPrefix}${command} <nombre>* para que te la mande\n\n` +
+        (claves.length ? `*Guardadas:*\n${claves.map((k) => `• ${k}`).join("\n")}` : "_Todavía no hay ninguna._")
+    }, { quoted: msg });
+  }
 
-if(wa?.downloadContentFromMessage)
-return wa;
+  const media = msg.quoted?.media || (msg.tipo === "imagen" ? msg.media : null);
 
-if(conn?.wa?.downloadContentFromMessage)
-return conn.wa;
+  // Guardar
+  if (media?.tipo === "imagen") {
+    db[clave] = { fileId: media.fileId, user: msg.senderId, creado: Date.now() };
+    fs.writeFileSync(DB, JSON.stringify(db, null, 2));
+    await conn.react(chatId, msg.message_id, "✅");
+    return conn.sendMessage(chatId, {
+      text: `✅ Imagen guardada como *"${clave}"*.\n\n_Pídemela con ${usedPrefix}${command} ${clave}_`
+    }, { quoted: msg });
+  }
 
-return null;
+  // Recuperar
+  const guardada = db[clave];
+  if (!guardada) {
+    return conn.sendMessage(chatId, {
+      text: `❌ No tengo ninguna imagen llamada *"${clave}"*.\n\n_Responde a una imagen con ${usedPrefix}${command} ${clave} para guardarla._`
+    }, { quoted: msg });
+  }
 
-}
-
-function loadDB(){
-
-if(!fs.existsSync(DB))
-return {};
-
-return JSON.parse(
-fs.readFileSync(DB)
-);
-
-}
-
-function saveDB(db){
-
-fs.writeFileSync(
-DB,
-JSON.stringify(db,null,2)
-);
-
-}
-
-const handler = async (msg,{conn,wa,args})=>{
-
-const chatId =
-msg.key.remoteJid;
-
-const key =
-(args||[]).join(" ")
-.toLowerCase()
-.trim();
-
-if(!key){
-
-return conn.sendMessage(chatId,{
-text:
-"usa:\n.ssy nombre"
-},{quoted:msg});
-
-}
-
-const quoted =
-msg.message?.extendedTextMessage
-?.contextInfo?.quotedMessage;
-
-const q =
-unwrapMessage(quoted);
-
-if(!q?.imageMessage){
-
-return conn.sendMessage(chatId,{
-text:
-"responde a imagen"
-},{quoted:msg});
-
-}
-
-const WA =
-ensureWA(wa,conn);
-
-const stream =
-await WA.downloadContentFromMessage(
-q.imageMessage,
-"image"
-);
-
-let buffer =
-Buffer.alloc(0);
-
-for await(const chunk of stream)
-buffer =
-Buffer.concat([buffer,chunk]);
-
-const file =
-path.join(
-IMG_DIR,
-key+".png"
-);
-
-fs.writeFileSync(
-file,
-buffer
-);
-
-const db=
-loadDB();
-
-db[key]=file;
-
-saveDB(db);
-
-conn.sendMessage(chatId,{
-text:
-"guardado:\n"+key
-},{quoted:msg});
-
+  await conn.sendMessage(chatId, { image: guardada.fileId, caption: `🖼️ *${clave}*` }, { quoted: msg });
 };
 
-handler.command=["ssy"];
-
+handler.command = ["ssy"];
 export default handler;
