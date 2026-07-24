@@ -1,29 +1,25 @@
-import fs from 'fs';
-import path from 'path';
+// plugins/pluginsgrupos/Reglas.js — Ver las reglas del grupo
+import { noEsGrupo, estadoChat } from "../../libs/grupo.js";
 
-const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
-  const filePath = "./ventas365.json";
+const handler = async (msg, ctx) => {
+  const { conn, usedPrefix } = ctx;
+  const chatId = msg.chatId;
 
-  let ventas = fs.existsSync(filePath) ? JSON.parse(fs.readFileSync(filePath)) : {};
-  const data = ventas[chatId]?.setreglas;
+  if (await noEsGrupo(msg, conn)) return;
 
-  if (!data) {
+  const reglas = estadoChat(chatId, "reglas");
+  if (!reglas) {
     return conn.sendMessage(chatId, {
-      text: "⚠️ No se ha establecido ninguna *regla* para este grupo.",
+      text:
+        "📜 *Este grupo todavía no tiene reglas.*\n\n" +
+        `Un administrador puede ponerlas con:\n*${usedPrefix}setreglas <texto>*`
     }, { quoted: msg });
   }
 
-  if (data.imagen) {
-    const imagenBuffer = Buffer.from(data.imagen, "base64");
-    return conn.sendMessage(chatId, {
-      image: imagenBuffer,
-      caption: data.texto
-    }, { quoted: msg });
-  } else {
-    return conn.sendMessage(chatId, { text: data.texto }, { quoted: msg });
-  }
+  await conn.sendMessage(chatId, {
+    text: `📜 *REGLAS DE ${msg.chatName.toUpperCase()}*\n\n${reglas}`
+  }, { quoted: msg });
 };
 
-handler.command = ["reglas"];
+handler.command = ["reglas", "rules"];
 export default handler;

@@ -212,7 +212,7 @@ const bot = new TelegramBot(token, {
       timeout: 30,
       allowed_updates: JSON.stringify([
         "message", "edited_message", "channel_post", "callback_query",
-        "chat_member", "my_chat_member", "message_reaction", "poll_answer"
+        "chat_member", "my_chat_member", "chat_join_request", "poll_answer"
       ])
     }
   },
@@ -446,10 +446,10 @@ async function bloqueadoPorFiltros({ msg, comando, esOwner, esAdmin }) {
   const senderId = msg.senderId;
 
   // 1) Usuarios baneados del bot
-  if (!esOwner && listaDeChat(chatId, "baneados").includes(String(senderId))) {
+  if (!esOwner && listaDeChat(chatId, "banned").includes(String(senderId))) {
     return true;
   }
-  if (!esOwner && listaDeChat("global", "baneados").includes(String(senderId))) return true;
+  if (!esOwner && listaDeChat("global", "banned").includes(String(senderId))) return true;
 
   // 2) Bot apagado en este grupo (solo el dueño puede prenderlo)
   if (activo(getConfig(chatId, "apagado")) && !esOwner && comando !== "on" && comando !== "prender") {
@@ -731,7 +731,7 @@ const muteAvisos = new Map();
 async function revisarMute(msg, esAdmin, esOwner) {
   try {
     if (!msg.isGroup || esOwner || esAdmin) return false;
-    const muteados = listaDeChat(msg.chatId, "muteados");
+    const muteados = listaDeChat(msg.chatId, "muted");
     if (!muteados.includes(String(msg.senderId))) return false;
 
     if (await conn.botPuede(msg.chatId, "can_delete_messages")) {
@@ -803,17 +803,37 @@ bot.on("my_chat_member", async (update) => {
   } catch {}
 });
 
-// Cambios de admins del grupo → refrescar caché
+// Cambios de admins del grupo → refrescar caché y avisar
 bot.on("chat_member", async (update) => {
   try {
     conn.limpiarCacheAdmins(update.chat.id);
     const nuevo = update.new_chat_member;
+    const viejo = update.old_chat_member;
     if (!nuevo?.user) return;
+
+    const chatId = update.chat.id;
+    const eraAdmin = ["administrator", "creator"].includes(viejo?.status);
+    const esAdminAhora = ["administrator", "creator"].includes(nuevo.status);
+
     if (["member", "administrator", "creator"].includes(nuevo.status)) {
-      registrarEntrada(nuevo.user, update.chat.id);
+      registrarEntrada(nuevo.user, chatId);
     } else if (["left", "kicked"].includes(nuevo.status)) {
-      registrarSalida(nuevo.user.id, update.chat.id);
+      registrarSalida(nuevo.user.id, chatId);
     }
+
+    if (!eraAdmin && esAdminAhora) {
+      conn.ev.emit("ascenso", { chatId, user: nuevo.user, autor: update.from, chat: update.chat });
+    } else if (eraAdmin && !esAdminAhora && nuevo.status === "member") {
+      conn.ev.emit("descenso", { chatId, user: nuevo.user, autor: update.from, chat: update.chat });
+    }
+  } catch {}
+});
+
+// Solicitudes de ingreso al grupo (para el filtro automático)
+bot.on("chat_join_request", async (peticion) => {
+  try {
+    registrarUsuario(peticion.from);
+    conn.ev.emit("solicitud", { chatId: peticion.chat.id, user: peticion.from, chat: peticion.chat });
   } catch {}
 });
 

@@ -1,62 +1,51 @@
-import fs from 'fs';
-import path from 'path';
-import { getAllConfigs } from '../../db.js';
+// plugins/pluginsgrupos/Configrupo.js — Ver toda la configuración del grupo
+import { getConfig } from "../../db.js";
+import { noEsGrupo, listaChat, estadoChat } from "../../libs/grupo.js";
 
-const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
+const marca = (valor) => (global.estaActivo(valor) ? "✅ activado" : "❌ desactivado");
 
-  if (!chatId.endsWith("@g.us")) {
-    await conn.sendMessage(chatId, {
-      text: "❌ *Este comando solo funciona en grupos.*"
-    }, { quoted: msg });
-    return;
-  }
+const handler = async (msg, ctx) => {
+  const { conn, usedPrefix } = ctx;
+  const chatId = msg.chatId;
 
-  await conn.sendMessage(chatId, {
-    react: { text: "📋", key: msg.key }
-  });
+  if (await noEsGrupo(msg, conn)) return;
 
-  const metadata = await conn.groupMetadata(chatId);
-  const name = metadata.subject || "Sin nombre";
-  const creator = metadata.owner?.split("@")[0] || "Desconocido";
-  const fecha = metadata.creation
-    ? new Date(metadata.creation * 1000).toLocaleString("es-ES", {
-        dateStyle: "medium",
-        timeStyle: "short"
-      })
-    : "No disponible";
-
-  const config = getAllConfigs(chatId);
-  const configKeys = [
-    ["antis", "🚫 Antis"],
-    ["antidelete", "🗑️ Antidelete"],
-    ["modoprivado", "🔒 ModoPrivado"],
-    ["apagado", "🛑 Apagado"],
-    ["modoadmins", "👮‍♂️ Solo Admins"],
-    ["antiarabe", "🚷 AntiArabe"],
-    ["antilink", "🔗 AntiLink WA"],
-    ["linkall", "🌐 AntiLink All"],
-    ["welcome", "👋 Bienvenida"],
-    ["despedidas", "👋 Despedida"]
+  const opciones = [
+    ["🛡️ Anti stickers", "antis"],
+    ["🔗 Antilink (invitaciones)", "antilink"],
+    ["🚷 Bloqueo de enlaces", "linkall"],
+    ["👮 Modo solo admins", "modoadmins"],
+    ["🚫 Anti árabe", "antiarabe"],
+    ["👋 Bienvenidas", "welcome"],
+    ["🚪 Despedidas", "despedidas"],
+    ["💬 Respuestas automáticas", "reacion"],
+    ["🛑 Bot apagado aquí", "apagado"],
+    ["🤖 ChatGPT del grupo", "chatgpt"]
   ];
 
-  const stateLines = configKeys.map(([k, label]) => {
-    const active = config[k] == 1 ? "✅" : "❌";
-    return `${label.padEnd(16)}: ${active}`;
-  }).join("\n");
+  const filas = opciones.map(([nombre, clave]) => `│ ${nombre}: *${marca(getConfig(chatId, clave))}*`).join("\n");
 
-  const resultText = `📋 *Configuraciones del Grupo:*
-📛 *Nombre:* ${name}
-🧑‍💼 *Creador:* @${creator}
-📆 *Fecha de creación:* ${fecha}
+  const muteados = listaChat(chatId, "muted").length;
+  const baneados = listaChat(chatId, "banned").length;
+  const restringidos = listaChat(chatId, "restringidos");
+  const soyAdmin = await conn.botEsAdmin(chatId);
 
-${stateLines}`;
+  const texto =
+    `╭──『 ⚙️ *CONFIGURACIÓN* 』\n` +
+    `│ 📍 ${msg.chatName}\n` +
+    `│\n` +
+    filas + "\n" +
+    `│\n` +
+    `│ 🔇 Silenciados: *${muteados}*\n` +
+    `│ 🚫 Baneados del bot: *${baneados}*\n` +
+    `│ 🔒 Comandos restringidos: *${restringidos.length}*\n` +
+    `│ ${soyAdmin ? "⭐ Soy administradora" : "⚠️ NO soy administradora"}\n` +
+    `│ 📜 Reglas: ${estadoChat(chatId, "reglas") ? "definidas" : "sin definir"}\n` +
+    `╰────────────────◆\n\n` +
+    `_Usa ${usedPrefix}menugrupo para ver cómo cambiar cada cosa._`;
 
-  await conn.sendMessage(chatId, {
-    text: resultText,
-    mentions: [`${creator}@s.whatsapp.net`]
-  }, { quoted: msg });
+  await conn.sendMessage(chatId, { text: texto }, { quoted: msg });
 };
 
-handler.command = ["configrupo"];
+handler.command = ["configrupo", "config", "estado"];
 export default handler;

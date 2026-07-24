@@ -1,122 +1,77 @@
-import fs from 'fs';
-import path from 'path';
+// plugins/pluginsgrupos/Menugrupo.js — Menú de comandos de administración
+const handler = async (msg, { conn, usedPrefix }) => {
+  const chatId = msg.chatId;
+  const p = usedPrefix;
+  await conn.react(chatId, msg.message_id, "👮");
 
-const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
-  const pref = global.prefixes?.[0] || ".";
+  const texto =
+`╭━━━『 👮 *MENÚ DE GRUPOS* 』━━━◆
+│ Prefijo actual: 「 ${p} 」
+╰━━━━━━━━━━━━━━━━━━◆
 
-  try { await conn.sendMessage2(chatId, { react: { text: "✨", key: msg.key } }, msg); } catch {}
-
-  let customText = null;
-  let customImgB64 = null;
-
-  try {
-    const filePath = path.resolve("./setmenu.json");
-    if (fs.existsSync(filePath)) {
-      const data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-      if (typeof data?.texto_grupo === "string" && data.texto_grupo.trim().length) {
-        customText = data.texto_grupo;
-      }
-      if (typeof data?.imagen_grupo === "string" && data.imagen_grupo.length) {
-        customImgB64 = data.imagen_grupo;
-      }
-    }
-  } catch (e) {
-    console.error("[menugrupo] error leyendo setmenu.json:", e);
-  }
-
-  if (customText || customImgB64) {
-    try {
-      if (customImgB64) {
-        const buf = Buffer.from(customImgB64, "base64");
-        await conn.sendMessage2(
-          chatId,
-          { image: buf, caption: customText || "" },
-          msg
-        );
-      } else {
-        await conn.sendMessage2(chatId, { text: customText }, msg);
-      }
-    } catch (e) {
-      console.error("[menugrupo] error enviando personalizado:", e);
-    }
-    return;
-  }
-
-  const caption = `╔════════════════╗
-     💠 𝙱𝙸𝙴𝙽𝚅𝙴𝙽𝙸𝙳𝙾 💠
-╚════════════════╝
-*𝐴𝑙 𝑚𝑒𝑛𝑢 𝑑𝑒 𝑔𝑟𝑢𝑝𝑜 𝑑𝑒 𝐿𝑎 𝑆𝑢𝑘𝑖 𝐵𝑜𝑡*
-
-🛠️ *CONFIGURACIONES*
+🛡️ *MODERACIÓN*
 ╭─────◆
-│๛ ${pref}reaccion off / on
-│๛ ${pref}infogrupo
-│๛ ${pref}setinfo
-│๛ ${pref}setname
-│๛ ${pref}setwelcome
-│๛ ${pref}delwelcome ELIMINA DESPEDIDAS TAMBIEN.
-│๛ ${pref}setdespedidas
-│๛ ${pref}setfoto
-│๛ ${pref}setreglas
-│๛ ${pref}reglas
-│๛ ${pref}welcome on/off
-│๛ ${pref}despedidas on/off
-│๛ ${pref}modoadmins on/off
-│๛ ${pref}antilink on/off
-│๛ ${pref}linkall on/off
-│๛ ${pref}antis on/off
-│๛ ${pref}antidelete on/off
-│๛ ${pref}antiarabe on/off
-│๛ ${pref}configrupo
-│๛ ${pref}addco / comando a Stikerz
-│๛ ${pref}delco / elimina comandos en s
+│ ${p}kick — expulsar
+│ ${p}ban / ${p}unban — bloquear el bot
+│ ${p}mute / ${p}unmute — silenciar
+│ ${p}delete — borrar mensaje citado
+│ ${p}daradmins / ${p}quitaradmins
+│ ${p}delwar — borrar advertencias
 ╰─────◆
 
-🛡️ *ADMINISTRACIÓN*
+🔒 *PROTECCIONES*
 ╭─────◆
-│๛ ${pref}promote
-│๛ ${pref}demote
-│๛ ${pref}daradmins
-│๛ ${pref}quitaradmins
-│๛ ${pref}kick
-│๛ ${pref}tag
-│๛ ${pref}tagall
-│๛ ${pref}todos
-│๛ ${pref}invocar
-│๛ ${pref}totalchat
-│๛ ${pref}restchat
-│๛ ${pref}fantasmas
-│๛ ${pref}fankick
-│๛ ${pref}delete
-│๛ ${pref}linkgrupo
-│๛ ${pref}mute
-│๛ ${pref}unmute
-│๛ ${pref}ban
-│๛ ${pref}unban
-│๛ ${pref}restpro
-│๛ ${pref}abrir / automáticamente
-│๛ ${pref}cerrar / automáticamente
-│๛ ${pref}abrirgrupo
-│๛ ${pref}cerrargrupo
+│ ${p}antilink on/off
+│ ${p}linkall on/off
+│ ${p}antis on/off
+│ ${p}antiarabe on/off
+│ ${p}antiarabe2 — limpiar
+│ ${p}modoadmins on/off
 ╰─────◆
 
-🤖 *La Suki Bot - Panel de control grupal*
-`.trim();
+👋 *BIENVENIDAS*
+╭─────◆
+│ ${p}welcome on/off
+│ ${p}despedidas on/off
+│ ${p}setwelcome <texto>
+│ ${p}setdespedidas <texto>
+│ ${p}delwelcome
+╰─────◆
 
-  await conn.sendMessage2(
-    chatId,
-    {
-      video: { url: "https://cdn.russellxz.click/8eef84e4.mp4" },
-      gifPlayback: true,
-      caption
-    },
-    msg
-  );
+⚙️ *AJUSTES DEL GRUPO*
+╭─────◆
+│ ${p}abrirgrupo / ${p}cerrargrupo
+│ ${p}abrir 10m / ${p}cerrar 1h
+│ ${p}setname <nombre>
+│ ${p}setinfo <descripción>
+│ ${p}setfoto (responde a una foto)
+│ ${p}setreglas / ${p}reglas
+│ ${p}linkgrupo
+╰─────◆
+
+📊 *INFORMACIÓN*
+╭─────◆
+│ ${p}infogrupo
+│ ${p}configrupo
+│ ${p}totalchat — ranking
+│ ${p}fantasmas 10
+│ ${p}fankick 10
+│ ${p}restchat
+│ ${p}id — ver IDs
+╰─────◆
+
+📢 *AVISOS*
+╭─────◆
+│ ${p}todos <mensaje>
+│ ${p}tag <mensaje>
+│ ${p}reacion on/off
+╰─────◆
+
+💡 *Recuerda:* para expulsar, silenciar o cerrar el grupo
+necesito ser *administradora* con esos permisos.`;
+
+  await conn.sendMessage(chatId, { text: texto }, { quoted: msg });
 };
 
-handler.command = ["menugrupo", "grupomenu"];
-handler.help = ["menugrupo"];
-handler.tags = ["menu"];
-
+handler.command = ["menugrupo", "grupomenu", "menuadmin"];
 export default handler;

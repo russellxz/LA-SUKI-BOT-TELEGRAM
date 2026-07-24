@@ -1,115 +1,70 @@
-// plugins/checkTiempoGrupos.js
-import fs from 'fs';
-import path from 'path';
+// plugins/pluginsgrupos/Sistemadetiempogrupos.js
+// Revisa cada 20 segundos si algún grupo tiene programada una apertura o un
+// cierre (comandos .abrir y .cerrar) y lo aplica cuando llega la hora.
+import fs from "fs";
+import path from "path";
 
-const OPEN_FILE  = path.resolve("tiempo_grupo.json");   // abrir
-const CLOSE_FILE = path.resolve("tiempogrupo2.json");  // cerrar
+const ARCHIVO_ABRIR = path.resolve("tiempo_grupo.json");
+const ARCHIVO_CERRAR = path.resolve("tiempogrupo2.json");
+const INTERVALO = 20000;
 
-function readJSON(file) {
+function leer(archivo) {
   try {
-    if (!fs.existsSync(file)) return {};
-    const raw = fs.readFileSync(file, "utf-8");
-    return raw ? JSON.parse(raw) : {};
+    if (!fs.existsSync(archivo)) return {};
+    return JSON.parse(fs.readFileSync(archivo, "utf-8") || "{}");
   } catch {
     return {};
   }
 }
-function writeJSON(file, obj) {
-  try { fs.writeFileSync(file, JSON.stringify(obj, null, 2)); } catch {}
-}
-function emptyGroup(obj, key) {
-  return obj[key] && Object.keys(obj[key]).length === 0;
-}
 
-async function applyAction(conn, chatId, action) {
+function guardar(archivo, data) {
   try {
-    if (action === "close") {
-      await conn.groupSettingUpdate(chatId, "announcement");
-      await conn.sendMessage(chatId, {
-        video: { url: "https://cdn.russellxz.click/1f9e8232.mp4" },
-        caption: "🔒 El grupo ha sido cerrado automáticamente."
-      });
-    } else if (action === "open") {
-      await conn.groupSettingUpdate(chatId, "not_announcement");
-      await conn.sendMessage(chatId, {
-        video: { url: "https://cdn.russellxz.click/b5635057.mp4" },
-        caption: "🔓 El grupo ha sido abierto automáticamente."
-      });
-    }
-  } catch (e) {
-    // Si falla (por permisos, etc.), igual limpiamos el tiempo para no ciclar
-    await conn.sendMessage(chatId, {
-      text: `⚠️ No pude ${action === "close" ? "cerrar" : "abrir"} el grupo (quizá no soy admin). Se limpia la tarea programada.`
-    }).catch(()=>{});
-  }
+    fs.writeFileSync(archivo, JSON.stringify(data, null, 2));
+  } catch {}
 }
 
-const handler = async (conn) => {
-  // Evita múltiples intervalos si se llama varias veces
-  if (conn._tiemposInterval) return;
+async function revisar(conn) {
+  const ahora = Date.now();
 
-  conn._tiemposInterval = setInterval(async () => {
-    const now = Date.now();
-
-    // Cargar tiempos
-    const abrirData  = readJSON(OPEN_FILE);
-    const cerrarData = readJSON(CLOSE_FILE);
-
-    // Unir todos los grupos que tengan algo pendiente
-    const groups = new Set([
-      ...Object.keys(abrirData || {}),
-      ...Object.keys(cerrarData || {}),
-    ]);
-
-    let changedOpen = false;
-    let changedClose = false;
-
-    for (const chatId of groups) {
-      try {
-        const openTime  = abrirData?.[chatId]?.abrir  ?? null;
-        const closeTime = cerrarData?.[chatId]?.cerrar ?? null;
-
-        const dueOpen  = typeof openTime  === "number" && now >= openTime;
-        const dueClose = typeof closeTime === "number" && now >= closeTime;
-
-        if (!dueOpen && !dueClose) continue;
-
-        // Si ambos vencieron, ejecuta el MÁS RECIENTE (mayor timestamp)
-        let action;
-        if (dueOpen && dueClose) {
-          action = (closeTime >= openTime) ? "close" : "open";
-        } else if (dueClose) {
-          action = "close";
-        } else {
-          action = "open";
-        }
-
-        await applyAction(conn, chatId, action);
-
-        // Limpiar tiempos ejecutados
-        if (action === "open" && abrirData?.[chatId]?.abrir) {
-          delete abrirData[chatId].abrir;
-          if (emptyGroup(abrirData, chatId)) delete abrirData[chatId];
-          changedOpen = true;
-        }
-        if (action === "close" && cerrarData?.[chatId]?.cerrar) {
-          delete cerrarData[chatId].cerrar;
-          if (emptyGroup(cerrarData, chatId)) delete cerrarData[chatId];
-          changedClose = true;
-        }
-
-      } catch (err) {
-        console.error("❌ Error procesando grupo", chatId, err?.message || err);
-        // En caso de error inesperado, continuar con otros grupos
-      }
+  const pendientesAbrir = leer(ARCHIVO_ABRIR);
+  let cambioAbrir = false;
+  for (const [chatId, info] of Object.entries(pendientesAbrir)) {
+    if (!info?.abrir || info.abrir > ahora) continue;
+    delete pendientesAbrir[chatId];
+    cambioAbrir = true;
+    try {
+      await conn.cerrarGrupo(chatId, false);
+      await conn.sendMessage(chatId, { text: "🔓 *El grupo se abrió automáticamente.* ¡Ya pueden escribir!" });
+    } catch (e) {
+      console.log(`⚠️ No pude abrir ${chatId}: ${e.message}`);
     }
+  }
+  if (cambioAbrir) guardar(ARCHIVO_ABRIR, pendientesAbrir);
 
-    // Persistir solo si hubo cambios
-    if (changedOpen)  writeJSON(OPEN_FILE,  abrirData);
-    if (changedClose) writeJSON(CLOSE_FILE, cerrarData);
+  const pendientesCerrar = leer(ARCHIVO_CERRAR);
+  let cambioCerrar = false;
+  for (const [chatId, info] of Object.entries(pendientesCerrar)) {
+    if (!info?.cerrar || info.cerrar > ahora) continue;
+    delete pendientesCerrar[chatId];
+    cambioCerrar = true;
+    try {
+      await conn.cerrarGrupo(chatId, true);
+      await conn.sendMessage(chatId, { text: "🔒 *El grupo se cerró automáticamente.* Solo los admins pueden escribir." });
+    } catch (e) {
+      console.log(`⚠️ No pude cerrar ${chatId}: ${e.message}`);
+    }
+  }
+  if (cambioCerrar) guardar(ARCHIVO_CERRAR, pendientesCerrar);
+}
 
-  }, 10_000); // cada 10s
+const handler = {};
+
+handler.iniciar = (conn) => {
+  if (global.__tiempoGruposTimer) clearInterval(global.__tiempoGruposTimer);
+  global.__tiempoGruposTimer = setInterval(() => {
+    revisar(conn).catch((e) => console.log("⚠️ Tiempos de grupo:", e.message));
+  }, INTERVALO);
+  console.log("⏱️  Sistema de apertura/cierre programado activo");
 };
 
-handler.run = handler;
 export default handler;
