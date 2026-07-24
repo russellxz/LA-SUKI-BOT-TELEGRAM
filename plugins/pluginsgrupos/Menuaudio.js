@@ -1,124 +1,61 @@
-// plugins/menuaudio.js
-// Lista los paquetes multimedia guardados en el NUEVO formato (guar_files.json + ./guar_media/)
-// Soporta también el formato viejo (guar.json) por compatibilidad: si existen ambos, los combina.
-
-import fs from 'fs';
-import path from 'path';
+// plugins/pluginsgrupos/Menuaudio.js — Lista los paquetes guardados con .guar
+import fs from "fs";
+import path from "path";
 
 const FILES_DB = path.resolve("./guar_files.json");
-const OLD_DB = path.resolve("./guar.json");
 
-const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
-
-  await conn.sendMessage2(chatId, {
-    react: { text: "🎵", key: msg.key }
-  }, msg);
-
-  // ====== Cargar paquetes del NUEVO formato (guar_files.json) ======
-  let guarFiles = {};
-  if (fs.existsSync(FILES_DB)) {
-    try {
-      guarFiles = JSON.parse(fs.readFileSync(FILES_DB, "utf-8"));
-    } catch (e) {
-      console.error("[menuaudio] error leyendo guar_files.json:", e);
-      guarFiles = {};
-    }
-  }
-
-  // ====== Cargar paquetes del formato VIEJO (guar.json) por si quedó algo sin migrar ======
-  let guarOld = {};
-  if (fs.existsSync(OLD_DB)) {
-    try {
-      guarOld = JSON.parse(fs.readFileSync(OLD_DB, "utf-8"));
-    } catch (e) {
-      console.error("[menuaudio] error leyendo guar.json:", e);
-      guarOld = {};
-    }
-  }
-
-  // ====== Combinar paquetes ======
-  // Cuenta cuántos archivos hay por paquete (sumando ambos formatos)
-  const paquetesMap = new Map();
-
-  // Contar nuevo formato (puede ser array o objeto único)
-  for (const [clave, valor] of Object.entries(guarFiles)) {
-    let cantidad = 0;
-    if (Array.isArray(valor)) {
-      cantidad = valor.length;
-    } else if (valor && typeof valor === "object") {
-      cantidad = 1;
-    }
-    if (cantidad > 0) {
-      paquetesMap.set(clave, (paquetesMap.get(clave) || 0) + cantidad);
-    }
-  }
-
-  // Contar viejo formato (puede ser objeto único o array)
-  for (const [clave, valor] of Object.entries(guarOld)) {
-    let cantidad = 0;
-    if (Array.isArray(valor)) {
-      cantidad = valor.length;
-    } else if (valor && typeof valor === "object") {
-      cantidad = 1;
-    }
-    if (cantidad > 0) {
-      paquetesMap.set(clave, (paquetesMap.get(clave) || 0) + cantidad);
-    }
-  }
-
-  // Ordenar alfabéticamente para que se vea bonito
-  const paquetes = Array.from(paquetesMap.entries()).sort((a, b) =>
-    a[0].localeCompare(b[0], "es", { sensitivity: "base" })
-  );
-  const total = paquetes.length;
-  const totalArchivos = paquetes.reduce((sum, [, n]) => sum + n, 0);
-
-  const caption = `𖠺𝐿𝑎 𝑆𝑢𝑘𝑖 𝐵𝑜𝑡𖠺
-
-𖠁🗂️ 𝙋𝘼𝙌𝙐𝙀𝙏𝙀𝙎 𝘿𝙀 𝙈𝙐𝙇𝙏𝙄𝙈𝙀𝘿𝙄𝘼𖠁
-🎧 Audios, 🎞️ videos, 🖼️ imágenes, 🧩 stickers y más...
-
-📝 *¿Cómo funciona?*
-Solo escribe el *nombre del paquete* en el chat y *La Suki Bot* enviará al azar uno de los archivos guardados dentro de ese paquete.
-
-📥 Para *guardar multimedia* responde a cualquier imagen, audio, sticker o video con:
-➤ *.guar nombreDelPaquete*
-
-🗑️ Para *borrar un archivo específico* de un paquete:
-➤ *.del nombreDelPaquete número*
-
-🔍 Para *ver un archivo específico* de un paquete:
-➤ *.g nombreDelPaquete número*
-
-📦 Todos los paquetes son públicos y compartidos entre los usuarios del grupo.
-
-━━━━━━━━━━━━━━━
-
-📦 *Paquetes disponibles:* ${total}
-📄 *Archivos totales:* ${totalArchivos}
-
-${
-  total > 0
-    ? "╭─────◆\n" +
-      paquetes
-        .map(([key, n]) => `│๛ ${key} [${n} archivo${n !== 1 ? "s" : ""}]`)
-        .join("\n") +
-      "\n╰─────◆"
-    : "❌ No hay multimedia guardada aún. Usa *.guar nombre* para comenzar."
-}
-`.trim();
-
-  await conn.sendMessage2(chatId, {
-    video: { url: "https://cdn.russellxz.click/18bf4be2.mp4" },
-    gifPlayback: true,
-    caption
-  }, msg);
+const ICONOS = {
+  imagen: "🖼️", video: "🎬", audio: "🎵", nota: "🎤",
+  sticker: "🌟", documento: "📄", gif: "🎞️", texto: "💬"
 };
 
-handler.command = ["menuaudio"];
-handler.help = ["menuaudio"];
-handler.tags = ["menu"];
-handler.register = true;
+const handler = async (msg, { conn, usedPrefix }) => {
+  const chatId = msg.chatId;
+  await conn.react(chatId, msg.message_id, "🎵");
 
+  let db = {};
+  try {
+    if (fs.existsSync(FILES_DB)) db = JSON.parse(fs.readFileSync(FILES_DB, "utf-8"));
+  } catch {}
+
+  const claves = Object.keys(db).filter((k) => Array.isArray(db[k]) && db[k].length);
+
+  if (!claves.length) {
+    return conn.sendMessage(chatId, {
+      text:
+        "📭 *Todavía no hay nada guardado.*\n\n" +
+        `Responde a una foto, video, audio o sticker con *${usedPrefix}guar <palabra>* para guardarlo.\n` +
+        "Después, cuando alguien escriba esa palabra, yo la envío sola."
+    }, { quoted: msg });
+  }
+
+  claves.sort((a, b) => a.localeCompare(b));
+
+  const lineas = claves.map((clave) => {
+    const items = db[clave];
+    const tipos = [...new Set(items.map((i) => i.tipo))].map((t) => ICONOS[t] || "📦").join("");
+    return `│ ${tipos} *${clave}* — ${items.length}`;
+  });
+
+  const total = claves.reduce((acc, k) => acc + db[k].length, 0);
+
+  // Se envía por tandas para no pasarse del límite de Telegram
+  const tandas = [];
+  for (let i = 0; i < lineas.length; i += 60) tandas.push(lineas.slice(i, i + 60));
+
+  for (let i = 0; i < tandas.length; i++) {
+    const encabezado = i === 0
+      ? `╭──『 🎵 *PALABRAS GUARDADAS* 』\n│\n│ 📦 Paquetes: *${claves.length}*\n│ 📁 Archivos: *${total}*\n│\n`
+      : "╭─────◆\n";
+    await conn.sendMessage(chatId, {
+      text:
+        encabezado + tandas[i].join("\n") + "\n╰────────────────◆" +
+        (i === tandas.length - 1
+          ? `\n\n_Escribe la palabra y te mando el archivo._\n_Para borrar uno: ${usedPrefix}del <palabra> <número>_`
+          : "")
+    }, { quoted: i === 0 ? msg : undefined });
+  }
+};
+
+handler.command = ["menuaudio", "guardados", "listaguar"];
 export default handler;

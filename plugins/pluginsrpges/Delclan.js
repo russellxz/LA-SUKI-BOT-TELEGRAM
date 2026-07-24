@@ -6,14 +6,13 @@
 import fs from 'fs';
 import path from 'path';
 
-const pendingDelClan = {};
 
 function loadDB(p) { return fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, "utf8")) : {}; }
 function saveDB(p, o) { fs.writeFileSync(p, JSON.stringify(o, null, 2)); }
 
 const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
-  const sender = msg.key.participant || msg.key.remoteJid;
+  const chatId = msg.chatId;
+  const sender = msg.senderId;
   const numero = (sender || "").replace(/\D/g, "");
 
   // reacción inicial
@@ -55,129 +54,55 @@ const handler = async (msg, { conn }) => {
   }
 
   // Mensaje de confirmación (responder con "si")
-  const confirmMsg = await conn.sendMessage(chatId, {
+  await conn.sendMessage(chatId, {
     text:
-`⚠️ ¿Seguro que deseas *ELIMINAR* el clan *${clan.nombre}*?
-Esta acción es permanente y eliminará todos sus miembros del clan.
-
-📝 *Responde a ESTE mensaje escribiendo:*
-*si*`,
+      `⚠️ ¿Seguro que quieres *ELIMINAR* el clan *${clan.nombre}*?\n\n` +
+      "Es permanente y sacará del clan a todos sus miembros.\n\n" +
+      "📝 Responde escribiendo:\n*si*\n\n_Tienes 2 minutos._"
   }, { quoted: msg });
 
-  const requestId = confirmMsg.key.id;
+  const respuesta = await conn.esperarRespuesta(chatId, sender, 2 * 60 * 1000);
 
-  // Guardar pending
-  pendingDelClan[requestId] = {
-    chatId,
-    clanId: clan.id,
-    autor: sender,
-    numero,
-    timer: setTimeout(async () => {
-      delete pendingDelClan[requestId];
-      await conn.sendMessage(chatId, {
-        text: "⏳ La solicitud de eliminación del clan ha expirado por inactividad."
-      }, { quoted: confirmMsg });
-    }, 2 * 60 * 1000) // 2 minutos
-  };
-
-  // Registrar listener una sola vez
-  if (!conn._delclanListener) {
-    conn._delclanListener = true;
-
-    conn.ev.on("messages.upsert", async ev => {
-      for (const m of ev.messages) {
-        try {
-          if (!m.message || m.key.fromMe) continue;
-
-          // Texto normal o extendedText
-          const texto = (
-            m.message?.conversation ||
-            m.message?.extendedTextMessage?.text ||
-            ""
-          ).trim().toLowerCase();
-
-          // Debe ser respuesta a un mensaje nuestro
-          const context = m.message?.extendedTextMessage?.contextInfo;
-          const citado = context?.stanzaId;
-          if (!citado) continue;
-
-          const job = pendingDelClan[citado];
-          if (!job) continue; // no es una confirmación pendiente
-
-          // Validar que conteste el mismo autor
-          const quienContesta = m.key.participant || m.key.remoteJid;
-          if (quienContesta !== job.autor) {
-            await conn.sendMessage(job.chatId, {
-              text: "🚫 Solo quien inició la solicitud puede confirmarla."
-            }, { quoted: m });
-            continue;
-          }
-
-          if (texto !== "si") {
-            // Ignorar otros textos (no cancelamos la pending por si se equivoca)
-            continue;
-          }
-
-          // Releer DB
-          const file2 = path.join(process.cwd(), "sukirpg.json");
-          let db2 = loadDB(file2);
-          db2.usuarios = Array.isArray(db2.usuarios) ? db2.usuarios : [];
-          db2.clanes   = Array.isArray(db2.clanes)   ? db2.clanes   : [];
-
-          // Buscar el clan por id
-          const idx = db2.clanes.findIndex(c => c.id === job.clanId);
-          if (idx === -1) {
-            clearTimeout(job.timer);
-            delete pendingDelClan[citado];
-            await conn.sendMessage(job.chatId, {
-              text: "❌ No se encontró el clan (ya pudo haber sido eliminado)."
-            }, { quoted: m });
-            continue;
-          }
-
-          const clanObj = db2.clanes[idx];
-
-          // Seguridad: verificar que sigue siendo líder y que no es supremo
-          if (clanObj.esSupremo) {
-            clearTimeout(job.timer);
-            delete pendingDelClan[citado];
-            await conn.sendMessage(job.chatId, {
-              text: "🚫 No puedes borrar el *clan supremo*."
-            }, { quoted: m });
-            continue;
-          }
-
-          if (!(clanObj.lider && String(clanObj.lider.numero) === String(job.numero))) {
-            clearTimeout(job.timer);
-            delete pendingDelClan[citado];
-            await conn.sendMessage(job.chatId, {
-              text: "🚫 Ya no eres el líder de este clan; no puedes borrarlo."
-            }, { quoted: m });
-            continue;
-          }
-
-          // Borrar el clan
-          db2.clanes.splice(idx, 1);
-          saveDB(file2, db2);
-
-          // Limpiar pending
-          clearTimeout(job.timer);
-          delete pendingDelClan[citado];
-
-          await conn.sendMessage(job.chatId, {
-            text: `✅ El clan *${clanObj.nombre}* ha sido eliminado correctamente.`
-          }, { quoted: m });
-
-          await conn.sendMessage(job.chatId, { react: { text: "🗑️", key: m.key } });
-        } catch (e) {
-          // silencioso para no romper el flujo
-        }
-      }
-    });
+  if (!respuesta) {
+    return conn.sendMessage(chatId, {
+      text: "⏳ La solicitud para eliminar el clan expiró por inactividad."
+    }, { quoted: msg });
   }
 
-  // reacción final al comando
-  await conn.sendMessage(chatId, { react: { text: "✅", key: msg.key } });
+  if (String(respuesta.text || "").trim().toLowerCase() !== "si") {
+    return conn.sendMessage(chatId, {
+      text: "❎ Cancelado. El clan sigue en pie."
+    }, { quoted: respuesta });
+  }
+
+  // Releemos la base por si cambió mientras esperábamos
+  const db2 = loadDB(file);
+  db2.clanes = db2.clanes || [];
+  const idx = db2.clanes.findIndex(c => String(c.id) === String(clan.id));
+
+  if (idx === -1) {
+    return conn.sendMessage(chatId, { text: "❌ Ese clan ya no existe." }, { quoted: respuesta });
+  }
+
+  const clanObj = db2.clanes[idx];
+
+  if (clanObj.esSupremo) {
+    return conn.sendMessage(chatId, { text: "🚫 No puedes borrar el *clan supremo*." }, { quoted: respuesta });
+  }
+
+  if (!(clanObj.lider && String(clanObj.lider.numero) === String(numero))) {
+    return conn.sendMessage(chatId, {
+      text: "🚫 Ya no eres el líder de este clan, no puedes borrarlo."
+    }, { quoted: respuesta });
+  }
+
+  db2.clanes.splice(idx, 1);
+  saveDB(file, db2);
+
+  await conn.react(chatId, respuesta.message_id, "🗑️");
+  await conn.sendMessage(chatId, {
+    text: `✅ El clan *${clanObj.nombre}* fue eliminado correctamente.`
+  }, { quoted: respuesta });
 };
 
 handler.command = ["delclan"];

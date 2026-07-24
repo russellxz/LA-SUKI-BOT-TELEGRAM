@@ -26,7 +26,7 @@ const quotedPush = q => (
 
 async function niceName(jid, conn, chatId, qPush, fallback = '') {
   if (qPush && qPush.trim() && !/^\d+$/.test(qPush)) return qPush;
-  if (chatId.endsWith('@g.us')) {
+  if (msg.isGroup) {
     try {
       const meta = await conn.groupMetadata(chatId);
       const p = meta.participants.find(p => p.id === jid);
@@ -42,7 +42,7 @@ async function niceName(jid, conn, chatId, qPush, fallback = '') {
   if (c?.notify && !/^\d+$/.test(c.notify)) return c.notify;
   if (c?.name && !/^\d+$/.test(c.name)) return c.name;
   if (fallback && fallback.trim() && !/^\d+$/.test(fallback)) return fallback;
-  return numberWithFlag(jid.split('@')[0]);
+  return numberWithFlag(jid);
 }
 
 const colors = {
@@ -59,11 +59,11 @@ const colors = {
 
 const handler = async (msg, { conn, args }) => {
   try {
-    const chatId = msg.key.remoteJid;
-    const ctx = msg.message?.extendedTextMessage?.contextInfo;
+    const chatId = msg.chatId;
+    const ctx = msg.quoted;
     const quoted = ctx?.quotedMessage;
 
-    let targetJid = msg.key.participant || msg.key.remoteJid;
+    let targetJid = msg.senderId;
     let textQuoted = '';
     let fallbackPN = msg.pushName || '';
     let qPushName = '';
@@ -138,7 +138,7 @@ const handler = async (msg, { conn, args }) => {
 
   } catch (e) {
     console.error('❌ Error en qc:', e);
-    await conn.sendMessage(msg.key.remoteJid, { text: '❌ Error al generar el sticker.' }, { quoted: msg });
+    await conn.sendMessage(msg.chatId, { text: '❌ Error al generar el sticker.' }, { quoted: msg });
   }
 };
 

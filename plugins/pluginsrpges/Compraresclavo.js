@@ -58,8 +58,8 @@ function nextAlignedTick() {
 }
 
 const handler = async (msg, { conn, args }) => {
-  const chatId = msg.key.remoteJid;
-  const sender = msg.key.participant || msg.key.remoteJid;
+  const chatId = msg.chatId;
+  const sender = msg.senderId;
   const compradorNum = (sender || "").replace(/\D/g, "");
 
   await conn.sendMessage(chatId, { react: { text: "🧾", key: msg.key } });
@@ -74,7 +74,7 @@ const handler = async (msg, { conn, args }) => {
 
   // detectar objetivo
   let objetivoNum = null;
-  const ctx = msg.message?.extendedTextMessage?.contextInfo;
+  const ctx = msg.quoted;
   if (ctx?.participant) objetivoNum = ctx.participant.replace(/\D/g,"");
   else if (ctx?.mentionedJid?.length) objetivoNum = ctx.mentionedJid[0].replace(/\D/g,"");
 
@@ -125,7 +125,7 @@ const handler = async (msg, { conn, args }) => {
     const rest = formatoTiempo(activoObj.hasta - ahora);
     return conn.sendMessage(chatId, {
       text: `🚫 Este usuario ya tiene dueño.\n👤 Dueño: @${activoObj.dueno}\n⏳ Restante: ${rest}`,
-      mentions: [`${activoObj.dueno}@s.whatsapp.net`],
+      mentions: [String(activoObj.dueno)],
       quoted: msg
     });
   }
@@ -209,7 +209,7 @@ const handler = async (msg, { conn, args }) => {
 🧭 Próximos comandos:
 • *.veres* / *.veresclavos* → ver tus esclavos y tiempo hasta la *siguiente recompensa*.
 • *.tiendaes* / *.tiendaesclavo* → listar usuarios disponibles.`,
-    mentions: [`${compradorNum}@s.whatsapp.net`, `${objetivoNum}@s.whatsapp.net`],
+    mentions: [String(compradorNum), String(objetivoNum)],
     quoted: msg
   });
 

@@ -13,7 +13,7 @@ function cargarDB(p) {
 }
 
 const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
 
   // Reacción inicial
   await conn.sendMessage(chatId, { react: { text: "📊", key: msg.key } });
@@ -71,8 +71,8 @@ const handler = async (msg, { conn }) => {
   top.forEach((item, idx) => {
     const pos = idx + 1;
     // dueños y esclavos mencionados
-    menciones.add(`${item.owner}@s.whatsapp.net`);
-    item.slaves.forEach(s => menciones.add(`${s}@s.whatsapp.net`));
+    menciones.add(String(item.owner));
+    item.slaves.forEach(s => menciones.add(String(s)));
 
     const esclavosTxt = item.slaves.length
       ? item.slaves.map(s => `@${s}`).join(", ")

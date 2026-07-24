@@ -1,7 +1,7 @@
 import fetch from 'node-fetch';
 
 const handler = async (msg, { conn, args, command }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
   const query = args.join(" ");
   const pref = global.prefixes?.[0] || ".";
 

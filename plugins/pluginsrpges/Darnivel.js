@@ -12,10 +12,10 @@ function loadDB(p){ return fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, "utf
 function saveDB(p,o){ fs.writeFileSync(p, JSON.stringify(o, null, 2)); }
 
 const handler = async (msg, { conn, args }) => {
-  const chatId  = msg.key.remoteJid;
-  const sender  = msg.key.participant || msg.key.remoteJid;
+  const chatId  = msg.chatId;
+  const sender  = msg.senderId;
   const numero  = (sender || "").replace(/\D/g, "");
-  const fromMe  = !!msg.key.fromMe;
+  const fromMe  = !!false;
   const botID   = (conn.user?.id || "").replace(/\D/g, "");
 
   // ✅ misma lógica que tu addowner
@@ -55,7 +55,7 @@ const handler = async (msg, { conn, args }) => {
 
   // Detectar objetivo: mención, respuesta o número directo
   let targetNum = null;
-  const ctx = msg.message?.extendedTextMessage?.contextInfo;
+  const ctx = msg.quoted;
   if (ctx?.mentionedJid?.length) {
     targetNum = ctx.mentionedJid[0].replace(/\D/g, "");
   } else if (ctx?.participant) {
@@ -122,7 +122,7 @@ const handler = async (msg, { conn, args }) => {
 `✅ *Nivel actualizado*
 👤 Usuario: @${targetNum}
 ${detalle}`,
-    mentions: [`${targetNum}@s.whatsapp.net`],
+    mentions: [String(targetNum)],
     quoted: msg
   });
 };

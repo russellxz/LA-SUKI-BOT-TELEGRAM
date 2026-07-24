@@ -2,10 +2,10 @@ import fs from 'fs';
 import path from 'path';
 
 const handler = async (msg, { conn, args }) => {
-  const chatId = msg.key.remoteJid;
-  const sender = msg.key.participant || msg.key.remoteJid;
+  const chatId = msg.chatId;
+  const sender = msg.senderId;
   const numero = sender.replace(/\D/g, "");
-  const isFromMe = msg.key.fromMe;
+  const isFromMe = false;
   const botID = (conn.user?.id || "").replace(/\D/g, "");
 
   await conn.sendMessage(chatId, { react: { text: "🗑️", key: msg.key } });
@@ -20,12 +20,12 @@ const handler = async (msg, { conn, args }) => {
   // Detectar el usuario a eliminar
   let target = null;
 
-  if (msg.message?.extendedTextMessage?.contextInfo?.participant) {
-    target = msg.message.extendedTextMessage.contextInfo.participant.replace(/\D/g, "");
+  if (msg.quoted?.senderId) {
+    target = msg.quoted?.senderId.replace(/\D/g, "");
   } else if (args[0]?.match(/\d{5,}/)) {
     target = args[0].replace(/\D/g, "");
-  } else if (msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.length) {
-    target = msg.message.extendedTextMessage.contextInfo.mentionedJid[0].replace(/\D/g, "");
+  } else if (msg.mencionados?.length) {
+    target = msg.mencionados[0].replace(/\D/g, "");
   }
 
   if (!target) {
@@ -51,7 +51,7 @@ const handler = async (msg, { conn, args }) => {
   if (idx === -1) {
     return conn.sendMessage(chatId, {
       text: `❌ El usuario @${target} no está registrado en el RPG.`,
-      mentions: [`${target}@s.whatsapp.net`],
+      mentions: [String(target)],
       quoted: msg
     });
   }
@@ -75,7 +75,7 @@ const handler = async (msg, { conn, args }) => {
 
   await conn.sendMessage(chatId, {
     text: `✅ El registro RPG del usuario @${target} ha sido eliminado correctamente.\n🛒 Sus personajes han sido devueltos a la tienda.`,
-    mentions: [`${target}@s.whatsapp.net`],
+    mentions: [String(target)],
     quoted: msg
   });
 

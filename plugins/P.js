@@ -87,7 +87,7 @@ function getDisksInfo() {
 }
 
 const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
 
   // Reacción inicial
   await conn.sendMessage(chatId, { react: { text: "🛰️", key: msg.key } });

@@ -1,46 +1,50 @@
-const handler = async (msg, { conn }) => {
-  const chatId  = msg.key.remoteJid;
-  const prefijo = global.prefixes?.[0] || ".";
+// plugins/Allmenu.js — Lista completa de comandos, sacada de los plugins cargados
+import path from "path";
 
-  await conn.sendMessage2(chatId, { react: { text: "🧩", key: msg.key } }, msg);
-
-  const todosLosComandos = [
-    ...new Set(
-      (global.plugins || [])
-        .flatMap(p => {
-          const c = p?.command;
-          if (!c) return [];
-          const arr = Array.isArray(c) ? c : [c];
-          return arr.filter(x => typeof x === "string");
-        })
-    )
-  ].sort((a, b) => a.localeCompare(b));
-
-  const total = todosLosComandos.length;
-
-  const caption = `
-╔════════════════════╗
-║🤖 *ALL MENU LA SUKI BOT*
-╚════════════════════╝
-
-🧠 *Bot creado desde cero.*
-🔧 *Total comandos activos:* ${total}
-🔑 *Prefijo actual:* ${prefijo}
-
-📦 *Lista de comandos:*
-${todosLosComandos.map(c => `➤ ${prefijo}${c}`).join("\n")}
-  
-💫 *Gracias por usar suki Omega.*
-`.trim();
-
-  return conn.sendMessage2(chatId, {
-    image: { url: "https://cdn.russellxz.click/40df9bcb.jpeg" },
-    caption
-  }, msg);
+const NOMBRES = {
+  "plugins": "🌟 GENERAL",
+  "plugins/pluginsgrupos": "👮 GRUPOS",
+  "plugins/pluginsowner": "👑 OWNER",
+  "plugins/pluginsdescargas": "📥 DESCARGAS",
+  "plugins/pluginsrpg": "🎮 RPG",
+  "plugins/pluginsrpges": "⚔️ CLANES RPG",
+  "plugins/pluginsventas": "🛒 VENTAS"
 };
 
-handler.command = ["allmenu"];
-handler.help = ["allmenu"];
-handler.tags = ["menu"];
+const handler = async (msg, { conn, usedPrefix }) => {
+  const chatId = msg.chatId;
+  await conn.react(chatId, msg.message_id, "📦");
 
+  // Se agrupan los comandos por la carpeta de cada plugin
+  const porCarpeta = new Map();
+  for (const plugin of global.plugins) {
+    const cmds = Array.isArray(plugin?.command) ? plugin.command : [];
+    if (!cmds.length) continue;
+    const carpeta = path.dirname(plugin.__archivo || "plugins").replace(/\\/g, "/");
+    if (!porCarpeta.has(carpeta)) porCarpeta.set(carpeta, new Set());
+    porCarpeta.get(carpeta).add(cmds[0]);
+  }
+
+  const orden = Object.keys(NOMBRES).filter((k) => porCarpeta.has(k));
+  for (const carpeta of porCarpeta.keys()) if (!orden.includes(carpeta)) orden.push(carpeta);
+
+  let texto = `📦 *TODOS LOS COMANDOS*\n🔣 Prefijos: ${global.prefixes.join(" ")}\n`;
+
+  for (const carpeta of orden) {
+    const lista = [...porCarpeta.get(carpeta)].sort();
+    texto += `\n${NOMBRES[carpeta] || `📁 ${path.basename(carpeta)}`} _(${lista.length})_\n`;
+    texto += lista.map((c) => `${usedPrefix}${c}`).join("  ") + "\n";
+  }
+
+  texto += `\n_Total: *${global.pluginIndex?.size || 0}* comandos (contando los alias)_`;
+
+  // Telegram corta los mensajes largos
+  const trozos = texto.match(/[\s\S]{1,3800}/g) || [texto];
+  for (const trozo of trozos) {
+    await conn.sendMessage(chatId, { text: trozo }, { quoted: msg });
+    await new Promise((r) => setTimeout(r, 300));
+  }
+};
+
+handler.command = ["allmenu", "todoslos", "listacomandos"];
 export default handler;

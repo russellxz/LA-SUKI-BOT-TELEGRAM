@@ -52,15 +52,15 @@ function hoyStrLocal() {
 }
 
 const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
-  const thiefJid = msg.key.participant || msg.key.remoteJid;
+  const chatId = msg.chatId;
+  const thiefJid = msg.senderId;
   const thiefNum = toNum(thiefJid);
 
   await conn.sendMessage(chatId, { react: { text: "🕶️", key: msg.key } });
 
   // Detectar objetivo por cita o mención
   let targetJid = null;
-  const ctx = msg.message?.extendedTextMessage?.contextInfo;
+  const ctx = msg.quoted;
   if (ctx?.quotedMessage) targetJid = ctx.participant;
   if (!targetJid && ctx?.mentionedJid?.length) targetJid = ctx.mentionedJid[0];
 
@@ -120,8 +120,8 @@ const handler = async (msg, { conn }) => {
   const restanteCred = Math.max(0, TOPE_CREDITOS_DIA - (thief.robarDiario.creditos || 0));
   const restanteXP   = Math.max(0, TOPE_XP_DIA      - (thief.robarDiario.xp || 0));
 
-  const thiefTag = `${thiefNum}@s.whatsapp.net`;
-  const victimTag = `${targetNum}@s.whatsapp.net`;
+  const thiefTag = String(thiefNum);
+  const victimTag = String(targetNum);
 
   // ¿Sale mal?
   const fallo = Math.random() < FAIL_PROB;

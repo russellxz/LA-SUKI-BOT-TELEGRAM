@@ -1,50 +1,25 @@
-const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
-  const pref = global.prefixes?.[0] || ".";
+// plugins/Menufree.js — Menú corto con lo más usado
+const handler = async (msg, { conn, usedPrefix }) => {
+  const chatId = msg.chatId;
+  const p = usedPrefix;
+  await conn.react(chatId, msg.message_id, "✨");
 
-  await conn.sendMessage2(chatId, { react: { text: "📋", key: msg.key } }, msg);
+  await conn.sendMessage(chatId, {
+    text:
+`✨ *LO MÁS USADO DE LA SUKI BOT* ✨
 
-  const texto = `𖠺𝐿𝑎 𝑆𝑢𝑘𝑖 𝐵𝑜𝑡𖠺
+🎵 ${p}play <nombre> — bajar música
+🎬 ${p}ytmp4 <enlace> — bajar video
+🎨 ${p}s — hacer un sticker
+🤖 ${p}chatgpt <texto> — preguntar a la IA
+🗣️ ${p}tts <texto> — texto a voz
+💾 ${p}guar <palabra> — guardar multimedia
+👮 ${p}menugrupo — administrar el grupo
+📦 ${p}menu — el menú completo
 
-𖠁𝗠𝗘𝗡𝗨 𝗙𝗥𝗘𝗘 𝗙𝗜𝗥𝗘𖠁
-𖠁𝗣𝗿𝗲𝗳𝗶𝗷𝗼 𝗔𝗰𝘁𝘂𝗮𝗹: 『 ${pref} 』
-𖠁𝗨𝘀𝗮 𝗲𝗻 𝗰𝗮𝗱𝗮 𝗰𝗼𝗺𝗮𝗻𝗱𝗼
-
-🍉 *MAPAS*
-╭─────◆
-│๛ ${pref}mapas
-╰─────◆
-
-📃 *REGLAS*
-╭─────◆
-│๛ ${pref}reglas
-│๛ ${pref}setreglas
-╰─────◆
-
-🛡️ *LISTA DE VERSUS*
-╭─────◆
-│๛ ${pref}4vs4
-│๛ ${pref}6vs6
-│๛ ${pref}12vs12
-│๛ ${pref}16vs16
-│๛ ${pref}20vs20
-│๛ ${pref}24vs24
-│๛ ${pref}guerr
-╰─────◆
-
-🎮 *Sistema personalizado para clanes FF*
-
-🤖 *La Suki Bot*`.trim();
-
-  await conn.sendMessage2(chatId, {
-    image: { url: 'https://cdn.russellxz.click/bdd4fca0.jpeg' },
-    caption: texto
-  }, msg);
+💜 _Escribe ${p}allmenu para verlo TODO_`
+  }, { quoted: msg });
 };
 
-handler.command = ['menufree'];
-handler.help = ['menufree'];
-handler.tags = ['menu'];
-handler.register = true;
-
+handler.command = ["menufree", "menucorto"];
 export default handler;

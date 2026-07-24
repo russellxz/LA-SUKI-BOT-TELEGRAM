@@ -15,8 +15,8 @@ function saveDB(p, o) {
 }
 
 const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
-  const sender = msg.key.participant || msg.key.remoteJid;
+  const chatId = msg.chatId;
+  const sender = msg.senderId;
   const numero = (sender || "").replace(/\D/g, "");
   const COSTO_SALIR = 20000;
 

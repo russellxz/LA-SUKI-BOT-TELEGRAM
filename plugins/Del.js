@@ -1,169 +1,80 @@
-import fs from 'fs';
-import { isAdminInGroup, isOwnerCheck } from '../libs/adminCheck.js';
-import path from 'path';
+// plugins/Del.js — Borrar un archivo guardado con .guar
+import fs from "fs";
+import path from "path";
 
-const RUTA_VIEJA = path.resolve("./guar.json");       // legacy (base64)
-const RUTA_NUEVA = path.resolve("./guar_files.json"); // nuevo (rutas)
+const FILES_DB = path.resolve("./guar_files.json");
 
-function getPaqueteCandidates(paquete) {
-  const clean = String(paquete || "").trim().toLowerCase();
-  const withoutDot = clean.replace(/^\.+/, "");
+const handler = async (msg, { conn, args, usedPrefix, command, isOwner, isAdmin }) => {
+  const chatId = msg.chatId;
 
-  if (!clean) return [];
-
-  if (clean.startsWith(".")) {
-    return [...new Set([clean, withoutDot])];
-  }
-
-  return [...new Set([clean, `.${clean}`])];
-}
-
-function resolveKey(db, paquete) {
-  const candidates = getPaqueteCandidates(paquete);
-
-  for (const key of candidates) {
-    if (Array.isArray(db[key])) return key;
-  }
-
-  return paquete;
-}
-
-const handler = async (msg, { conn, args }) => {
-  const chatId = msg.key.remoteJid;
-  const sender = (msg.key.participant || msg.key.remoteJid).replace(/\D/g, "");
-  const isGroup = chatId.endsWith("@g.us");
-  const pref = global.prefixes?.[0] || ".";
-
-  await conn.sendMessage(chatId, { react: { text: "🗑️", key: msg.key } });
-
-  // ====== Parsear argumentos: último = número, el resto = palabra clave ======
-  // Ejemplos:
-  //   .del hola 2           → paquete="hola", index=2
-  //   .del .hola 2          → paquete=".hola", index=2
-  //   .del guar 1           → también busca ".guar"
-  //   .del mi saludo 1      → paquete="mi saludo", index=1
-  const argsArr = Array.isArray(args) ? args : [];
-  const lastArg = argsArr[argsArr.length - 1];
-  const index = parseInt(lastArg);
-  const paquete = argsArr.slice(0, -1).join(" ").trim().toLowerCase();
-
-  if (!paquete || isNaN(index) || argsArr.length < 2) {
-    await conn.sendMessage(chatId, { react: { text: "❌", key: msg.key } });
+  if (!isOwner && !isAdmin) {
     return conn.sendMessage(chatId, {
-      text: `❗ Usa correctamente:\n*${pref}del <paquete> <número>*\n\nEjemplos:\n• ${pref}del hola 2\n• ${pref}del .hola 1\n• ${pref}del guar 1\n• ${pref}del .guar 1`,
+      text: "🚫 *Solo los administradores o el dueño del bot pueden borrar archivos guardados.*"
     }, { quoted: msg });
   }
 
-  // ====== Cargar ambas bases de datos ======
-  let dbVieja = {};
-  let dbNueva = {};
+  await conn.react(chatId, msg.message_id, "🗑️");
 
-  if (fs.existsSync(RUTA_VIEJA)) {
-    try { dbVieja = JSON.parse(fs.readFileSync(RUTA_VIEJA, "utf-8")); } catch { dbVieja = {}; }
-  }
+  const numero = parseInt(args[args.length - 1]);
+  const paquete = args.slice(0, -1).join(" ").trim().toLowerCase();
 
-  if (fs.existsSync(RUTA_NUEVA)) {
-    try { dbNueva = JSON.parse(fs.readFileSync(RUTA_NUEVA, "utf-8")); } catch { dbNueva = {}; }
-  }
-
-  // NUEVO:
-  // Permite borrar paquetes guardados con punto.
-  // Si pones ".del guar 1" y existe ".guar", lo encuentra.
-  // Si pones ".del .guar 1", también lo encuentra.
-  const paqueteViejoReal = resolveKey(dbVieja, paquete);
-  const paqueteNuevoReal = resolveKey(dbNueva, paquete);
-
-  const itemsViejos = Array.isArray(dbVieja[paqueteViejoReal]) ? dbVieja[paqueteViejoReal] : [];
-  const itemsNuevos = Array.isArray(dbNueva[paqueteNuevoReal]) ? dbNueva[paqueteNuevoReal] : [];
-  const total = itemsViejos.length + itemsNuevos.length;
-
-  if (total === 0) {
-    await conn.sendMessage(chatId, { react: { text: "❌", key: msg.key } });
-    return conn.sendMessage(chatId, {
-      text: `⚠️ No existe el paquete *"${paquete}"*.\nTambién busqué si estaba guardado como *".${paquete.replace(/^\.+/, "")}"*.`,
-    }, { quoted: msg });
-  }
-
-  if (index < 1 || index > total) {
-    await conn.sendMessage(chatId, { react: { text: "❌", key: msg.key } });
-    return conn.sendMessage(chatId, {
-      text: `⚠️ Número inválido.\nEl paquete *"${paquete}"* tiene *${total}* archivo(s).\nUsa un número del *1* al *${total}*.`,
-    }, { quoted: msg });
-  }
-
-  // ====== Determinar de dónde viene el item seleccionado ======
-  // Los viejos van primero (índices 1 a itemsViejos.length),
-  // los nuevos después (itemsViejos.length+1 en adelante).
-  let target, origen, idxLocal;
-  if (index <= itemsViejos.length) {
-    target = itemsViejos[index - 1];
-    origen = "vieja";
-    idxLocal = index - 1;
-  } else {
-    idxLocal = index - itemsViejos.length - 1;
-    target = itemsNuevos[idxLocal];
-    origen = "nueva";
-  }
-
-  // Retrocompatibilidad: el campo puede llamarse "de" (viejo) o "user" (nuevo)
-  const targetUser = target.de || target.user;
-
-  // ====== Protección de permisos (igual que antes) ======
-  const isAdmin = isGroup ? await isAdminInGroup(conn, chatId, msg.realJid || msg.key.participant || msg.key.remoteJid) : false;
-  const esOwner = isOwnerCheck(msg.realJid || msg.key.participant || msg.key.remoteJid) || global.isOwner(sender);
-  const esDueñoDelArchivo = targetUser === sender;
-  const archivoEsDeOwner = global.owner.some(([o]) => o === targetUser);
-
-  if (!esOwner && !esDueñoDelArchivo && (!isAdmin || archivoEsDeOwner)) {
-    await conn.sendMessage(chatId, { react: { text: "❌", key: msg.key } });
-    return conn.sendMessage(chatId, {
-      text: `🚫 No tienes permiso para eliminar ese archivo.`,
-    }, { quoted: msg });
-  }
-
-  // ====== Eliminar del archivo correcto ======
+  let db = {};
   try {
-    if (origen === "vieja") {
-      dbVieja[paqueteViejoReal].splice(idxLocal, 1);
+    if (fs.existsSync(FILES_DB)) db = JSON.parse(fs.readFileSync(FILES_DB, "utf-8") || "{}");
+  } catch {}
 
-      if (dbVieja[paqueteViejoReal].length === 0) {
-        delete dbVieja[paqueteViejoReal];
-      }
-
-      fs.writeFileSync(RUTA_VIEJA, JSON.stringify(dbVieja, null, 2));
-    } else {
-      const eliminado = dbNueva[paqueteNuevoReal].splice(idxLocal, 1)[0];
-
-      if (dbNueva[paqueteNuevoReal].length === 0) {
-        delete dbNueva[paqueteNuevoReal];
-      }
-
-      fs.writeFileSync(RUTA_NUEVA, JSON.stringify(dbNueva, null, 2));
-
-      // También borrar el archivo físico de la carpeta guar_media/
-      if (eliminado?.path) {
-        try {
-          const filePath = path.resolve(eliminado.path);
-          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-        } catch {}
-      }
+  if (!paquete || Number.isNaN(numero)) {
+    // Sin número: si el paquete existe, se muestra su contenido
+    const soloPaquete = args.join(" ").trim().toLowerCase();
+    if (soloPaquete && Array.isArray(db[soloPaquete])) {
+      const lista = db[soloPaquete]
+        .map((it, i) => `${i + 1}. ${it.tipo}${it.fileName ? ` (${it.fileName})` : ""}`)
+        .join("\n");
+      return conn.sendMessage(chatId, {
+        text: `📦 *Paquete "${soloPaquete}"* — ${db[soloPaquete].length} archivo(s)\n\n${lista}\n\n_Para borrar uno: ${usedPrefix}${command} ${soloPaquete} 1_`
+      }, { quoted: msg });
     }
-  } catch (e) {
-    console.error("[del] error al escribir:", e);
-    await conn.sendMessage(chatId, { react: { text: "❌", key: msg.key } });
     return conn.sendMessage(chatId, {
-      text: `❌ Error al guardar los cambios.`,
+      text:
+        `❗ Usa: *${usedPrefix}${command} <palabra> <número>*\n\n` +
+        `*Ejemplos:*\n• ${usedPrefix}${command} hola 2\n• ${usedPrefix}${command} buenos dias 1\n\n` +
+        `_Para ver los paquetes: ${usedPrefix}menuaudio_`
     }, { quoted: msg });
   }
 
-  await conn.sendMessage(chatId, { react: { text: "✅", key: msg.key } });
+  const items = Array.isArray(db[paquete]) ? db[paquete] : null;
+  if (!items || !items.length) {
+    return conn.sendMessage(chatId, {
+      text: `⚠️ No existe ningún paquete llamado *"${paquete}"*.`
+    }, { quoted: msg });
+  }
 
-  const paqueteReal = origen === "vieja" ? paqueteViejoReal : paqueteNuevoReal;
+  if (numero < 1 || numero > items.length) {
+    return conn.sendMessage(chatId, {
+      text: `⚠️ Número inválido. El paquete *"${paquete}"* tiene *${items.length}* archivo(s).`
+    }, { quoted: msg });
+  }
 
-  return conn.sendMessage(chatId, {
-    text: `✅ Archivo número *${index}* eliminado del paquete: *${paqueteReal}*`
+  const [borrado] = items.splice(numero - 1, 1);
+
+  // Borrar también la copia física
+  if (borrado?.path) {
+    try {
+      const ruta = path.resolve(borrado.path);
+      if (fs.existsSync(ruta)) fs.unlinkSync(ruta);
+    } catch {}
+  }
+
+  if (!items.length) delete db[paquete];
+  fs.writeFileSync(FILES_DB, JSON.stringify(db, null, 2));
+
+  await conn.react(chatId, msg.message_id, "✅");
+  await conn.sendMessage(chatId, {
+    text:
+      `🗑️ *Borrado el archivo #${numero}* del paquete *"${paquete}"*.\n\n` +
+      (db[paquete] ? `Quedan *${db[paquete].length}* archivo(s).` : "_El paquete quedó vacío y se eliminó._")
   }, { quoted: msg });
 };
 
-handler.command = ["del"];
+handler.command = ["del", "delguar"];
 export default handler;

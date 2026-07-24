@@ -1,160 +1,95 @@
 /**
- * adminCheck.js — Detección robusta de admin/owner para grupos LID y normales
- * Uso: import { isAdminInGroup, isOwnerCheck } from '../libs/adminCheck.js';
+ * libs/adminCheck.js — Permisos del bot (owner / admin) para Telegram.
+ *
+ * Uso en plugins:
+ *   import { isAdminInGroup, isOwnerCheck, getSenderPerms } from '../libs/adminCheck.js';
+ *
+ * En Telegram cada persona tiene un ID numérico fijo, así que ya no hace falta
+ * nada de la resolución LID/número que necesitaba WhatsApp.
  */
 
-const DIGITS = (s = "") => String(s || "").replace(/[^0-9]/g, "");
-const JID_NUM = (jid = "") => DIGITS(String(jid || "").split("@")[0].split(":")[0]);
+import fs from "fs";
+import path from "path";
 
-/**
- * Extrae todos los números posibles de un JID/string para comparación flexible.
- */
-function extractNumbers(value) {
-  const nums = new Set();
-  if (!value) return nums;
+const OWNER_PATH = path.resolve("./owner.json");
 
-  const s = String(value);
-  const main = JID_NUM(s);
-  if (main) {
-    nums.add(main);
-    // variante con 0 al final (números peruanos/latinoam)
-    if (!main.endsWith("0")) nums.add(main + "0");
-    // variante sin 0 al final
-    if (main.endsWith("0")) nums.add(main.slice(0, -1));
-  }
-  return nums;
-}
+/** Solo dígitos (los IDs de Telegram son numéricos) */
+export const soloId = (v) => String(v ?? "").replace(/[^0-9]/g, "");
 
-/**
- * Verifica si dos JIDs/números corresponden al mismo participante.
- * Compara por dígitos, resuelve LID via lidMap global si está disponible.
- */
-function sameParticipant(a, b) {
-  if (!a || !b) return false;
-  const sa = String(a);
-  const sb = String(b);
-  if (sa === sb) return true;
-
-  const na = JID_NUM(sa);
-  const nb = JID_NUM(sb);
-  if (na && nb && na === nb) return true;
-
-  // variantes con/sin cero
-  const numsA = extractNumbers(sa);
-  const numsB = extractNumbers(sb);
-  for (const n of numsA) {
-    if (numsB.has(n)) return true;
-  }
-
-  // resolución LID ↔ real via lidMap global
-  if (global.lidMap instanceof Map) {
-    const resolvedA = global.lidMap.get(sa) || global.lidMap.get(na ? `${na}@lid` : "") || global.lidMap.get(na ? `${na}@s.whatsapp.net` : "");
-    if (resolvedA) {
-      const rn = JID_NUM(String(resolvedA));
-      if (rn && numsB.has(rn)) return true;
-    }
-    const resolvedB = global.lidMap.get(sb) || global.lidMap.get(nb ? `${nb}@lid` : "") || global.lidMap.get(nb ? `${nb}@s.whatsapp.net` : "");
-    if (resolvedB) {
-      const rn = JID_NUM(String(resolvedB));
-      if (rn && numsA.has(rn)) return true;
-    }
-  }
-
-  return false;
-}
-
-/**
- * Verifica si un JID/número es admin en el grupo dado.
- * @param {object} conn - conexión Baileys
- * @param {string} chatId - JID del grupo
- * @param {string} senderJid - JID o número del remitente (puede ser @lid o @s.whatsapp.net)
- * @returns {Promise<boolean>}
- */
-export async function isAdminInGroup(conn, chatId, senderJid) {
+/** Lee owner.json y devuelve la lista de IDs dueños del bot */
+export function leerOwners() {
   try {
-    const meta = await conn.groupMetadata(chatId);
-    const participants = Array.isArray(meta?.participants) ? meta.participants : [];
+    if (!fs.existsSync(OWNER_PATH)) return [];
+    const data = JSON.parse(fs.readFileSync(OWNER_PATH, "utf-8"));
+    if (!Array.isArray(data)) return [];
+    return data
+      .map((entrada) => (Array.isArray(entrada) ? entrada[0] : entrada))
+      .map(soloId)
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
 
-    for (const p of participants) {
-      const isAdmin = p?.admin === "admin" || p?.admin === "superadmin";
-      if (!isAdmin) continue;
+/** Guarda la lista de owners (formato [[id, nombre], ...]) */
+export function guardarOwners(lista) {
+  fs.writeFileSync(OWNER_PATH, JSON.stringify(lista, null, 2));
+  global.owner = lista;
+}
 
-      // Comparar p.id directamente
-      if (sameParticipant(p.id, senderJid)) return true;
+/** ¿Este ID es dueño del bot? */
+export function isOwnerCheck(userId) {
+  const id = soloId(userId);
+  if (!id) return false;
 
-      // Comparar p.jid si existe (algunos clientes Baileys lo incluyen)
-      if (p.jid && sameParticipant(p.jid, senderJid)) return true;
-
-      // Si p.id es @lid, intentar resolver
-      if (typeof p.id === "string" && p.id.endsWith("@lid") && global.lidMap instanceof Map) {
-        const resolved = global.lidMap.get(p.id);
-        if (resolved && sameParticipant(resolved, senderJid)) return true;
-      }
+  if (Array.isArray(global.owner)) {
+    for (const entrada of global.owner) {
+      const valor = Array.isArray(entrada) ? entrada[0] : entrada;
+      if (soloId(valor) === id) return true;
     }
-
     return false;
+  }
+  return leerOwners().includes(id);
+}
+
+/** ¿Es admin del grupo? (creador incluido) */
+export async function isAdminInGroup(conn, chatId, userId) {
+  try {
+    return await conn.esAdmin(chatId, soloId(userId));
+  } catch {
+    return false;
+  }
+}
+
+/** ¿El bot es admin del grupo? */
+export async function isBotAdmin(conn, chatId) {
+  try {
+    return await conn.botEsAdmin(chatId);
   } catch {
     return false;
   }
 }
 
 /**
- * Verifica si un JID/número es owner del bot.
- * @param {string} senderJid
- * @returns {boolean}
- */
-export function isOwnerCheck(senderJid) {
-  try {
-    if (!senderJid) return false;
-    const sNum = JID_NUM(senderJid);
-    const sNums = extractNumbers(senderJid);
-
-    // via función global
-    if (typeof global.isOwner === "function") {
-      if (global.isOwner(senderJid)) return true;
-      if (sNum && global.isOwner(sNum)) return true;
-      if (sNum && global.isOwner(`${sNum}@s.whatsapp.net`)) return true;
-    }
-
-    // via array global.owner
-    if (Array.isArray(global.owner)) {
-      for (const entry of global.owner) {
-        const candidates = Array.isArray(entry) ? entry : [entry];
-        for (const c of candidates) {
-          const cn = JID_NUM(String(c || ""));
-          if (cn && sNums.has(cn)) return true;
-        }
-      }
-    }
-
-    return false;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Helper completo para plugins: retorna { isAdmin, isOwner, fromMe }
- * @param {object} conn
- * @param {object} msg
- * @returns {Promise<{ isAdmin: boolean, isOwner: boolean, fromMe: boolean, senderJid: string }>}
+ * Permisos completos de quien mandó el mensaje.
+ * @returns {Promise<{ isAdmin: boolean, isOwner: boolean, isBotAdmin: boolean, fromMe: boolean, senderId: string }>}
  */
 export async function getSenderPerms(conn, msg) {
-  const fromMe = !!msg.key?.fromMe;
-  const chatId = msg.key?.remoteJid || "";
-  const isGroup = chatId.endsWith("@g.us");
-
-  // Preferir msg.realJid (ya normalizado por index.js), sino participant, sino remoteJid
-  const senderJid = msg.realJid || msg.key?.participant || (fromMe ? (conn.user?.id || "") : chatId);
+  const senderId = String(msg.senderId ?? msg.from?.id ?? "");
+  const chatId = msg.chatId ?? msg.chat?.id;
+  const isGroup = msg.isGroup ?? (msg.chat?.type || "").includes("group");
+  const isOwner = isOwnerCheck(senderId);
 
   if (!isGroup) {
-    return { isAdmin: false, isOwner: isOwnerCheck(senderJid), fromMe, senderJid };
+    return { isAdmin: false, isOwner, isBotAdmin: false, fromMe: false, senderId };
   }
 
-  const [isAdmin, isOwner] = await Promise.all([
-    isAdminInGroup(conn, chatId, senderJid),
-    Promise.resolve(isOwnerCheck(senderJid))
+  const [isAdmin, botAdmin] = await Promise.all([
+    isAdminInGroup(conn, chatId, senderId),
+    isBotAdmin(conn, chatId)
   ]);
 
-  return { isAdmin, isOwner, fromMe, senderJid };
+  return { isAdmin: isAdmin || isOwner, isOwner, isBotAdmin: botAdmin, fromMe: false, senderId };
 }
+
+export default { isOwnerCheck, isAdminInGroup, isBotAdmin, getSenderPerms, leerOwners, guardarOwners, soloId };

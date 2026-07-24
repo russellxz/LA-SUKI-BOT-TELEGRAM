@@ -1,46 +1,18 @@
-
-import '../config.js'; // 🔁 Cargar config.js para acceder a global.reto
-
-function pickRandom(list) {
-  return list[Math.floor(Math.random() * list.length)];
-}
-
+// plugins/Reto.js — Reto al azar
 const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
+  await conn.react(chatId, msg.message_id, "🔥");
 
-  try {
-    if (!Array.isArray(global.reto) || global.reto.length === 0) {
-      throw new Error("No hay retos disponibles.");
-    }
-
-    const reto = pickRandom(global.reto);
-
-    await conn.sendMessage(chatId, {
-      react: { text: "🎲", key: msg.key }
-    });
-
-    // 📽️ Enviar el video como GIF
-    await conn.sendMessage(chatId, {
-      video: { url: 'https://cdn.russellxz.click/59d39370.mp4' },
-      gifPlayback: true,
-      caption: `𝘏𝘢𝘴 𝘦𝘴𝘤𝘰𝘨𝘪𝘥𝘰 *𝘙𝘌𝘛𝘖*\n\n╱╲❀╱╲╱╲❀╱╲╱╲❀╱╲\n◆ ${reto}\n╲╱❀╲╱╲╱❀╲╱╲╱❀╲╱\n\n© La Suki Bot`
-    }, { quoted: msg });
-
-    await conn.sendMessage(chatId, {
-      react: { text: "✅", key: msg.key }
-    });
-
-  } catch (e) {
-    console.error("❌ Error en el comando .reto:", e);
-    await conn.sendMessage(chatId, {
-      text: "❌ *Error:* " + e.message
-    }, { quoted: msg });
-
-    await conn.sendMessage(chatId, {
-      react: { text: "❌", key: msg.key }
-    });
+  const lista = Array.isArray(global.reto) ? global.reto : [];
+  if (!lista.length) {
+    return conn.sendMessage(chatId, { text: "❌ No tengo retos cargados." }, { quoted: msg });
   }
+
+  const reto = lista[Math.floor(Math.random() * lista.length)].trim();
+  await conn.sendMessage(chatId, {
+    text: `🔥 *RETO*\n\n${reto}\n\n👤 Para: *${msg.senderName}*`
+  }, { quoted: msg });
 };
 
-handler.command = ['reto'];
+handler.command = ["reto", "dare"];
 export default handler;

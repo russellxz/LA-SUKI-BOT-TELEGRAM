@@ -9,7 +9,7 @@ async function streamToBuffer(stream) {
 }
 
 const handler = async (msg, { conn, args, command }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
   const text = args.join(" ");
 
   if (!text) {

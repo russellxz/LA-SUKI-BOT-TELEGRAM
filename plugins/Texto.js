@@ -1,4 +1,4 @@
-import { createCanvas, loadImage } from 'canvas';
+import { createCanvas, loadImage } from '@napi-rs/canvas';
 import fs from 'fs';
 import path from 'path';
 
@@ -25,7 +25,7 @@ const quotedPush = q => (q?.pushName || q?.sender?.pushName || '');
 
 async function niceName(jid, conn, chatId, qPush, fallback = '') {
   if (qPush && qPush.trim() && !/^\d+$/.test(qPush)) return qPush;
-  if (chatId.endsWith('@g.us')) {
+  if (msg.isGroup) {
     try {
       const meta = await conn.groupMetadata(chatId);
       const p = meta.participants.find(p => p.id === jid);
@@ -41,7 +41,7 @@ async function niceName(jid, conn, chatId, qPush, fallback = '') {
   if (c?.notify && !/^\d+$/.test(c.notify)) return c.notify;
   if (c?.name && !/^\d+$/.test(c.name)) return c.name;
   if (fallback && fallback.trim() && !/^\d+$/.test(fallback)) return fallback;
-  return numberWithFlag(jid.split('@')[0]);
+  return numberWithFlag(jid);
 }
 
 const colores = {
@@ -57,11 +57,11 @@ const colores = {
 };
 
 const handler = async (msg, { conn, args }) => {
-  const chatId = msg.key.remoteJid;
-  const context = msg.message?.extendedTextMessage?.contextInfo;
+  const chatId = msg.chatId;
+  const context = msg.quoted;
   const quotedMsg = context?.quotedMessage;
 
-  let targetJid = msg.key.participant || msg.key.remoteJid;
+  let targetJid = msg.senderId;
   let fallbackPN = msg.pushName || '';
   let quotedName = '';
   let quotedText = '';

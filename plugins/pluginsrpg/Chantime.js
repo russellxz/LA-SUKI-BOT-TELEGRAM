@@ -12,10 +12,10 @@ function parseTiempo(str) {
 }
 
 const handler = async (msg, { conn, args }) => {
-  const chatId = msg.key.remoteJid;
-  const sender = msg.key.participant || msg.key.remoteJid;
+  const chatId = msg.chatId;
+  const sender = msg.senderId;
   const numero = (sender || "").replace(/\D/g, "");
-  const fromMe = msg.key.fromMe;
+  const fromMe = false;
   const botID = (conn.user?.id || "").replace(/\D/g, "");
 
   await conn.sendMessage(chatId, { react: { text: "⏳", key: msg.key } });
@@ -40,7 +40,7 @@ const handler = async (msg, { conn, args }) => {
 
   // ⛹️‍♂️ Obtener objetivo por respuesta o mención
   let targetJid = null;
-  const ctx = msg.message?.extendedTextMessage?.contextInfo;
+  const ctx = msg.quoted;
   if (ctx?.quotedMessage) targetJid = ctx.participant;
   if (!targetJid && ctx?.mentionedJid?.length) targetJid = ctx.mentionedJid[0];
 
@@ -81,7 +81,7 @@ const handler = async (msg, { conn, args }) => {
   if (!prestamo) {
     return conn.sendMessage(chatId, {
       text: `ℹ️ El usuario @${targetNum} no tiene un préstamo *activo*.`,
-      mentions: [`${targetNum}@s.whatsapp.net`],
+      mentions: [String(targetNum)],
       quoted: msg
     });
   }
@@ -110,7 +110,7 @@ const handler = async (msg, { conn, args }) => {
 🕒 Vence: *${new Date(prestamo.fechaLimite).toLocaleString()}*
 
 📌 Nota: Solo se modificó el plazo del *usuario citado/ mencionado*.`,
-    mentions: [`${targetNum}@s.whatsapp.net`],
+    mentions: [String(targetNum)],
     quoted: msg
   });
 

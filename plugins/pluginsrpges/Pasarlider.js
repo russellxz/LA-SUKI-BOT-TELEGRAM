@@ -9,8 +9,8 @@ function loadDB(p) { return fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, "ut
 function saveDB(p, o) { fs.writeFileSync(p, JSON.stringify(o, null, 2)); }
 
 const handler = async (msg, { conn, args }) => {
-  const chatId = msg.key.remoteJid;
-  const sender = msg.key.participant || msg.key.remoteJid;
+  const chatId = msg.chatId;
+  const sender = msg.senderId;
   const numero = (sender || "").replace(/\D/g, "");
 
   // Reacción inicial
@@ -18,8 +18,8 @@ const handler = async (msg, { conn, args }) => {
 
   // Obtener número del nuevo líder
   let nuevoNumero = args[0]?.replace(/\D/g, "");
-  if (!nuevoNumero && msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.length) {
-    nuevoNumero = msg.message.extendedTextMessage.contextInfo.mentionedJid[0].replace(/\D/g, "");
+  if (!nuevoNumero && msg.mencionados?.length) {
+    nuevoNumero = msg.mencionados[0].replace(/\D/g, "");
   }
 
   if (!nuevoNumero) {
@@ -72,7 +72,7 @@ const handler = async (msg, { conn, args }) => {
   await conn.sendMessage(chatId, { react: { text: "✅", key: msg.key } });
   return conn.sendMessage(chatId, {
     text: `✅ Liderazgo transferido.\n👑 Nuevo líder: @${nuevoUser.numero}\n🏷️ Clan: *${clan.nombre}*`,
-    mentions: [`${nuevoUser.numero}@s.whatsapp.net`],
+    mentions: [String(nuevoUser.numero)],
     quoted: msg
   });
 };

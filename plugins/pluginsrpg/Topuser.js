@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
 
   // Reacción inicial
   await conn.sendMessage(chatId, { react: { text: "🏅", key: msg.key } });
@@ -76,7 +76,7 @@ const handler = async (msg, { conn }) => {
   await conn.sendMessage(chatId, {
     image: { url: "https://cdn.russellxz.click/038c23a2.jpeg" },
     caption: texto,
-    mentions: ranking.map(u => `${u.numero}@s.whatsapp.net`),
+    mentions: ranking.map(u => String(u.numero)),
     quoted: msg
   });
 };

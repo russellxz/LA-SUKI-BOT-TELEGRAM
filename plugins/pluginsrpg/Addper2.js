@@ -8,10 +8,10 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 function normName(s) { return String(s || "").replace(/[^a-zA-Z0-9]/g, "").toLowerCase(); }
 
 const handler = async (msg, { conn, args, command }) => {
-  const chatId = msg.key.remoteJid;
-  const sender = msg.key.participant || msg.key.remoteJid;
+  const chatId = msg.chatId;
+  const sender = msg.senderId;
   const numero = (sender || "").replace(/\D/g, "");
-  const fromMe = msg.key.fromMe;
+  const fromMe = false;
   const botID = (conn.user?.id || "").replace(/\D/g, "");
 
   // Reacción inicial

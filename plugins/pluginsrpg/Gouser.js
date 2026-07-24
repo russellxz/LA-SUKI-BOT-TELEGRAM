@@ -45,8 +45,8 @@ async function editOrSend(conn, chatId, lastKey, text, mentions, quoted) {
 }
 
 const handler = async (msg, { conn, command }) => {
-  const chatId = msg.key.remoteJid;
-  const myJid = msg.key.participant || msg.key.remoteJid; // aceptante
+  const chatId = msg.chatId;
+  const myJid = msg.senderId; // aceptante
   const myNum = toNum(myJid);
 
   await conn.sendMessage(chatId, { react: { text: "🎌", key: msg.key } });
@@ -112,8 +112,8 @@ const handler = async (msg, { conn, command }) => {
   ensureUser(challenger);
   ensureUser(me);
 
-  const cTag = `${challenger.numero}@s.whatsapp.net`;
-  const mTag = `${me.numero}@s.whatsapp.net`;
+  const cTag = String(challenger.numero);
+  const mTag = String(me.numero);
   const mentions = [cTag, mTag];
 
   const nameC = `${challenger.nombre||""} ${challenger.apellido||""}`.trim() || challenger.numero;
@@ -220,7 +220,7 @@ const handler = async (msg, { conn, command }) => {
 `🏁 *Resultado: Batalla entre Usuarios*
 👑 Ganador: @${ganador.numero} (+${fmt(resG.cred)} créditos, +${fmt(resG.xp)} XP)
 💤 Perdedor: @${perdedor.numero} (+${fmt(resP.cred)} créditos, +${fmt(resP.xp)} XP)`,
-    [`${ganador.numero}@s.whatsapp.net`, `${perdedor.numero}@s.whatsapp.net`],
+    [String(ganador.numero), String(perdedor.numero)],
     msg
   );
 
@@ -234,7 +234,7 @@ const handler = async (msg, { conn, command }) => {
   if (extra) {
     await conn.sendMessage(
       chatId,
-      { text: extra, mentions: [`${ganador.numero}@s.whatsapp.net`, `${perdedor.numero}@s.whatsapp.net`] },
+      { text: extra, mentions: [String(ganador.numero), String(perdedor.numero)] },
       { quoted: msg }
     );
   }

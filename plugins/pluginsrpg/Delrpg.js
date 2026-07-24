@@ -1,11 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 
-const pendingDelete = {};
 
 const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
-  const sender = msg.key.participant || msg.key.remoteJid;
+  const chatId = msg.chatId;
+  const sender = msg.senderId;
   const numero = sender.replace(/[^0-9]/g, "");
 
   const sukirpgPath = path.join(process.cwd(), "sukirpg.json");
@@ -43,116 +42,76 @@ const handler = async (msg, { conn }) => {
     }, { quoted: msg });
   }
 
-  const confirmMsg = await conn.sendMessage(chatId, {
-    text: `⚠️ ¿Estás segur@ que deseas eliminar tu cuenta RPG?\n\n📝 *Responde este mensaje escribiendo:*\n*si quiero*`,
+  await conn.sendMessage(chatId, {
+    text:
+      "⚠️ *¿Segur@ que quieres eliminar tu cuenta RPG?*\n\n" +
+      "📝 Responde a este chat escribiendo:\n*si quiero*\n\n" +
+      "_Tienes 2 minutos para confirmar._"
   }, { quoted: msg });
 
-  const requestId = confirmMsg.key.id;
+  // Esperamos la confirmación de esa misma persona
+  const respuesta = await conn.esperarRespuesta(chatId, sender, 2 * 60 * 1000);
 
-  pendingDelete[requestId] = {
-    numero,
-    chatId,
-    autor: sender,
-    timer: setTimeout(() => {
-      delete pendingDelete[requestId];
-      conn.sendMessage(chatId, {
-        text: "⏳ La solicitud de eliminación RPG ha expirado por inactividad.",
-      }, { quoted: confirmMsg });
-    }, 2 * 60 * 1000) // 2 minutos
-  };
-
-  if (!conn._delrpgListener) {
-    conn._delrpgListener = true;
-    conn.ev.on("messages.upsert", async ev => {
-      for (const m of ev.messages) {
-        if (!m.message || m.key.fromMe) continue;
-
-        const context = m.message?.extendedTextMessage?.contextInfo;
-        const citado = context?.stanzaId;
-        const texto = (
-          m.message?.conversation?.toLowerCase() ||
-          m.message?.extendedTextMessage?.text?.toLowerCase() ||
-          ""
-        ).trim();
-
-        const job = pendingDelete[citado];
-        if (!job || texto !== "si quiero") continue;
-
-        const quienContesta = m.key.participant || m.key.remoteJid;
-        if (quienContesta !== job.autor) {
-          await conn.sendMessage(job.chatId, {
-            text: "🚫 Solo quien inició la solicitud puede confirmarla.",
-          }, { quoted: m });
-          return;
-        }
-
-        // Releer DB
-        const sukirpgPath = path.join(process.cwd(), "sukirpg.json");
-        let db = JSON.parse(fs.readFileSync(sukirpgPath));
-        db.usuarios = db.usuarios || [];
-        db.personajes = db.personajes || [];
-        db.banco = db.banco || null;
-
-        // 🚫 NUEVO: volver a verificar deuda por seguridad
-        const deudaActivaAhora = Array.isArray(db?.banco?.prestamos) && db.banco.prestamos.some(p => {
-          if (String(p.numero) !== job.numero || p.estado !== "activo") return false;
-          const prestadoBase = Number(p.cantidadSolicitada ?? p.cantidad ?? 0);
-          const totalAPagar = Number.isFinite(p.totalAPagar) ? Number(p.totalAPagar) : Math.ceil(prestadoBase * 1.20);
-          const pagado = Number(p.pagado || 0);
-          const pendiente = Number.isFinite(p.pendiente) ? Number(p.pendiente) : Math.max(totalAPagar - pagado, 0);
-          return pendiente > 0;
-        });
-
-        if (deudaActivaAhora) {
-          clearTimeout(job.timer);
-          delete pendingDelete[citado];
-          await conn.sendMessage(job.chatId, {
-            text: "🏦 No puedes eliminar tu RPG porque ahora tienes una *deuda activa* en el banco.\nPágala con *.pagarall* o espera a que el sistema la liquide.",
-          }, { quoted: m });
-          return;
-        }
-
-        const idx = db.usuarios.findIndex(u => u.numero === job.numero);
-        if (idx === -1) {
-          await conn.sendMessage(job.chatId, {
-            text: "❌ No se encontró tu perfil RPG.",
-          }, { quoted: m });
-          delete pendingDelete[citado];
-          return;
-        }
-
-        const user = db.usuarios[idx];
-
-        if (user.personajes?.length) {
-          for (const personaje of user.personajes) {
-            db.personajes.push({
-              nombre: personaje.nombre,
-              imagen: personaje.imagen,
-              precio: personaje.precio,
-              nivel: personaje.nivel,
-              habilidades: personaje.habilidades
-            });
-          }
-        }
-
-        db.usuarios.splice(idx, 1);
-        clearTimeout(job.timer);
-        delete pendingDelete[citado];
-
-        fs.writeFileSync(sukirpgPath, JSON.stringify(db, null, 2));
-
-        await conn.sendMessage(job.chatId, {
-          text: `✅ Tu cuenta RPG ha sido eliminada con éxito.\n\n🛒 Tus personajes fueron devueltos a la tienda.`,
-        }, { quoted: m });
-
-        await conn.sendMessage(job.chatId, {
-          react: { text: "🗑️", key: m.key }
-        });
-      }
-    });
+  if (!respuesta) {
+    return conn.sendMessage(chatId, {
+      text: "⏳ La solicitud de eliminación RPG expiró por inactividad."
+    }, { quoted: msg });
   }
+
+  if (String(respuesta.text || "").trim().toLowerCase() !== "si quiero") {
+    return conn.sendMessage(chatId, {
+      text: "❎ Cancelado. Tu cuenta RPG sigue intacta."
+    }, { quoted: respuesta });
+  }
+
+  // Releemos la base por si cambió mientras esperábamos
+  db = JSON.parse(fs.readFileSync(sukirpgPath));
+  db.usuarios = db.usuarios || [];
+  db.personajes = db.personajes || [];
+  db.banco = db.banco || null;
+
+  const deudaAhora = Array.isArray(db?.banco?.prestamos) && db.banco.prestamos.some(p => {
+    if (String(p.numero) !== numero || p.estado !== "activo") return false;
+    const prestadoBase = Number(p.cantidadSolicitada ?? p.cantidad ?? 0);
+    const totalAPagar = Number.isFinite(p.totalAPagar) ? Number(p.totalAPagar) : Math.ceil(prestadoBase * 1.20);
+    const pagado = Number(p.pagado || 0);
+    const pendiente = Number.isFinite(p.pendiente) ? Number(p.pendiente) : Math.max(totalAPagar - pagado, 0);
+    return pendiente > 0;
+  });
+
+  if (deudaAhora) {
+    return conn.sendMessage(chatId, {
+      text: "🏦 No puedes eliminar tu RPG: tienes una *deuda activa* en el banco.\nPágala con *.pagarall*."
+    }, { quoted: respuesta });
+  }
+
+  const idx = db.usuarios.findIndex(u => u.numero === numero);
+  if (idx === -1) {
+    return conn.sendMessage(chatId, { text: "❌ No encontré tu perfil RPG." }, { quoted: respuesta });
+  }
+
+  // Los personajes vuelven a la tienda
+  const user = db.usuarios[idx];
+  if (user.personajes?.length) {
+    for (const personaje of user.personajes) {
+      db.personajes.push({
+        nombre: personaje.nombre,
+        imagen: personaje.imagen,
+        precio: personaje.precio,
+        nivel: personaje.nivel,
+        habilidades: personaje.habilidades
+      });
+    }
+  }
+
+  db.usuarios.splice(idx, 1);
+  fs.writeFileSync(sukirpgPath, JSON.stringify(db, null, 2));
+
+  await conn.react(chatId, respuesta.message_id, "🗑️");
+  await conn.sendMessage(chatId, {
+    text: "✅ *Tu cuenta RPG fue eliminada.*\n\n🛒 Tus personajes volvieron a la tienda."
+  }, { quoted: respuesta });
 };
 
 handler.command = ["delrpg"];
-
 export default handler;

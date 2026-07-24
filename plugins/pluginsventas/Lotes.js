@@ -5,7 +5,7 @@ import path from 'path';
 const DB_PATH = path.resolve("./ventas365.json");
 
 const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
 
   if (!fs.existsSync(DB_PATH))
     return conn.sendMessage(chatId, { text: "❌ No hay datos guardados aún." }, { quoted: msg });
@@ -23,7 +23,7 @@ const handler = async (msg, { conn }) => {
 
   if (data.imagen) {
     try {
-      const buffer = Buffer.from(data.imagen, "base64");
+      const buffer = data.imagen;
       await conn.sendMessage(chatId, { image: buffer, caption: data.texto || "📦 Lotes" }, { quoted: msg });
     } catch (e) {
       console.error("[lotes] enviar imagen:", e);

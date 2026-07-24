@@ -1,10 +1,10 @@
 import fetch from 'node-fetch';
 
 const handler = async (msg, { conn, args, command }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
   const text = args.join(" ");
   const pref = global.prefixes?.[0] || ".";
-  const participant = msg.key.participant || msg.key.remoteJid;
+  const participant = msg.senderId;
   const userMention = `@${participant.replace(/[^0-9]/g, "")}`;
 
   try {

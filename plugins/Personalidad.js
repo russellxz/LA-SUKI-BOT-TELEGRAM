@@ -1,82 +1,34 @@
-const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
+// plugins/Personalidad.js — Análisis de personalidad (de broma)
+import { objetivoDe, mencion } from "../libs/grupo.js";
 
-  try {
-    let userId = null;
-    const ctx = msg.message?.extendedTextMessage?.contextInfo;
+const rand = () => Math.floor(Math.random() * 101);
+const barra = (n) => "█".repeat(Math.round(n / 10)) + "░".repeat(10 - Math.round(n / 10));
 
-    if (ctx?.quotedMessage) {
-      userId = ctx.participant;
-    } else if (ctx?.mentionedJid?.length > 0) {
-      userId = ctx.mentionedJid[0];
-    } else if (msg.mentionedJid?.length > 0) {
-      userId = msg.mentionedJid[0];
-    }
+const handler = async (msg, { conn, args }) => {
+  const chatId = msg.chatId;
+  await conn.react(chatId, msg.message_id, "🤔");
 
-    if (!userId) {
-      return conn.sendMessage(chatId, {
-        text: "⚠️ *Debes mencionar o responder a un usuario para analizar su personalidad.*"
-      }, { quoted: msg });
-    }
+  const objetivo = objetivoDe(msg, args) || { id: msg.senderId, nombre: msg.senderName };
 
-    await conn.sendMessage(chatId, {
-      react: { text: "🎭", key: msg.key }
-    });
+  const rasgos = {
+    "🌟 Carisma": rand(),
+    "🧠 Inteligencia": rand(),
+    "😂 Sentido del humor": rand(),
+    "💪 Fuerza de voluntad": rand(),
+    "❤️ Bondad": rand(),
+    "😈 Maldad": rand(),
+    "🎭 Drama": rand(),
+    "🍕 Glotonería": rand()
+  };
 
-    const personalidad = {
-      "🌟 Carisma": rand(),
-      "🧠 Inteligencia": rand(),
-      "💪 Fortaleza": rand(),
-      "😂 Humor": rand(),
-      "🔥 Pasión": rand(),
-      "🎨 Creatividad": rand(),
-      "💼 Responsabilidad": rand(),
-      "❤️ Empatía": rand(),
-      "🧘 Paciencia": rand(),
-      "🤖 Frialdad": rand(),
-      "👑 Liderazgo": rand()
-    };
+  const texto =
+    `🎭 *ANÁLISIS DE PERSONALIDAD*\n\n` +
+    `👤 ${mencion(objetivo.id, objetivo.nombre)}\n\n` +
+    Object.entries(rasgos).map(([k, v]) => `${k}\n${barra(v)} *${v}%*`).join("\n\n") +
+    `\n\n_Puro invento, no te lo tomes en serio 😄_`;
 
-    const userMention = `@${userId.split("@")[0]}`;
-    let msgTexto = `🎭 *Análisis de Personalidad* 🎭\n\n👤 *Usuario:* ${userMention}\n\n`;
-
-    for (const [atr, val] of Object.entries(personalidad)) {
-      const barra = "▓".repeat(Math.floor(val / 10)) + "░".repeat(10 - Math.floor(val / 10));
-      msgTexto += `*${atr}:* ${val}%\n${barra}\n\n`;
-    }
-
-    msgTexto += "📊 *Datos generados aleatoriamente. ¿Lo representa?* 🤔\n\n────────────\n🤖 _La Suki Bot_";
-
-    let profilePic = "https://cdn.russellxz.click/7427a830.jpg";
-    try {
-      profilePic = await conn.profilePictureUrl(userId, "image");
-    } catch {}
-
-    await conn.sendMessage(chatId, {
-      image: { url: profilePic },
-      caption: msgTexto,
-      mentions: [userId]
-    }, { quoted: msg });
-
-    await conn.sendMessage(chatId, {
-      react: { text: "✅", key: msg.key }
-    });
-
-  } catch (err) {
-    console.error("❌ Error en .personalidad:", err);
-    await conn.sendMessage(chatId, {
-      text: "❌ *Ocurrió un error al analizar la personalidad.*"
-    }, { quoted: msg });
-
-    await conn.sendMessage(chatId, {
-      react: { text: "❌", key: msg.key }
-    });
-  }
+  await conn.sendMessage(chatId, { text: texto, mentions: [objetivo.id] }, { quoted: msg });
 };
-
-function rand() {
-  return Math.floor(Math.random() * 100) + 1;
-}
 
 handler.command = ["personalidad"];
 export default handler;

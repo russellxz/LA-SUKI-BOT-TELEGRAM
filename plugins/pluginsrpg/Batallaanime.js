@@ -8,10 +8,10 @@ const RETO_MS = 2 * 60 * 1000;     // 2 min
 const FILE = path.join(process.cwd(), "sukirpg.json");
 const load = () => fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE, "utf-8")) : { usuarios: [] };
 const save = (db) => fs.writeFileSync(FILE, JSON.stringify(db, null, 2));
-const jid = (msg) => msg.key.participant || msg.key.remoteJid;
+const jid = (msg) => msg.senderId;
 
 const handler = async (msg, { conn, command }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
   const userId = jid(msg); // JID completo (con @)
   const pref = global.prefix || ".";
 
@@ -39,7 +39,7 @@ const handler = async (msg, { conn, command }) => {
 
   // detectar oponente (citar o mencionar)
   let opponentId;
-  const ctx = msg.message?.extendedTextMessage?.contextInfo;
+  const ctx = msg.quoted;
   if (ctx?.quotedMessage) opponentId = ctx.participant;
   if (!opponentId && ctx?.mentionedJid?.length) opponentId = ctx.mentionedJid[0];
   if (!opponentId) {
@@ -62,8 +62,8 @@ const handler = async (msg, { conn, command }) => {
   const habsUser = (Array.isArray(pMe.habilidades) ? pMe.habilidades : []).map(h => `⚡ *${h.nombre}:* Nivel ${h.nivel||1}`).join("\n") || "—";
   const habsOpp  = (Array.isArray(pOpp.habilidades) ? pOpp.habilidades : []).map(h => `⚡ *${h.nombre}:* Nivel ${h.nivel||1}`).join("\n") || "—";
 
-  const uTag = `${myNum}@s.whatsapp.net`;
-  const oTag = `${oppNum}@s.whatsapp.net`;
+  const uTag = String(myNum);
+  const oTag = String(oppNum);
 
   const mensajeDesafio =
 `🎌 *¡Desafío de Batalla Anime!* 🎌

@@ -1,15 +1,15 @@
 // plugins/comprarbank.js
 import fs from 'fs';
 import path from 'path';
-import { createCanvas, loadImage } from 'canvas';
+import { createCanvas, loadImage } from '@napi-rs/canvas';
 
 const normaliza = s => String(s || "")
   .toLowerCase()
   .replace(/[^a-z0-9]/gi, "");
 
 const handler = async (msg, { conn, args }) => {
-  const chatId = msg.key.remoteJid;
-  const sender = msg.key.participant || msg.key.remoteJid;
+  const chatId = msg.chatId;
+  const sender = msg.senderId;
   const numero = (sender || "").replace(/\D/g, "");
 
   // 🛒 Reacción inicial

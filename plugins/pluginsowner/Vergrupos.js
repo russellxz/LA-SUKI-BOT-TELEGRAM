@@ -1,75 +1,50 @@
-import fs from 'fs';
-import path from 'path';
-import { getAllConfigs, getConfig } from '../../db.js';
+// plugins/pluginsowner/Vergrupos.js — Ver los grupos donde está el bot
+import { listarChats } from "../../libs/usuarios.js";
 
-const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
-  const sender = msg.key.participant || msg.key.remoteJid;
-  const senderNum = sender.replace(/[^0-9]/g, "");
-  const isOwner = global.owner.some(([id]) => id === senderNum);
+const handler = async (msg, ctx) => {
+  const { conn, isOwner } = ctx;
+  const chatId = msg.chatId;
 
   if (!isOwner) {
-    await conn.sendMessage(chatId, {
+    return conn.sendMessage(chatId, {
       text: "⛔ Este comando solo puede usarlo el *dueño del bot*."
     }, { quoted: msg });
-    return;
   }
 
-  // ✅ Reacciona de una vez al comando
-  await conn.sendMessage(chatId, {
-    react: { text: "📄", key: msg.key }
-  });
+  await conn.react(chatId, msg.message_id, "⏳");
 
-  // 🌐 Estado del modoPrivado global
-  const modoPrivadoGlobal = (await getConfig("global", "modoprivado")) == 1 ? "✅" : "❌";
+  const grupos = listarChats("grupo").sort((a, b) => b.visto - a.visto);
+  const privados = listarChats("privado").length;
 
-  const groups = await conn.groupFetchAllParticipating();
-  const configKeys = [
-    ["antis", "🚫 Antis"],
-    ["antidelete", "🗑️ Antidelete"],
-    ["modoprivado", "🔒 ModoPrivado"],
-    ["apagado", "🛑 Apagado"],
-    ["modoadmins", "👮‍♂️ Solo Admins"],
-    ["antiarabe", "🚷 AntiArabe"],
-    ["antilink", "🔗 AntiLink WA"],
-    ["linkall", "🌐 AntiLink All"],
-    ["welcome", "👋 Bienvenida"],
-    ["despedidas", "👋 Despedida"]
-  ];
+  if (!grupos.length) {
+    return conn.sendMessage(chatId, {
+      text: "📭 Todavía no tengo grupos registrados.\n\n_Voy anotando cada grupo donde me escriben._"
+    }, { quoted: msg });
+  }
 
-  const resultLines = [];
-
-  for (const [id, data] of Object.entries(groups)) {
-    const name = data.subject || "Sin nombre";
-    const config = getAllConfigs(id);
-    const stateLines = configKeys.map(([k, label]) => {
-      const active = config[k] == 1 ? "✅" : "❌";
-      return `${label.padEnd(16)}: ${active}`;
-    }).join("\n");
-
-    let link = "🔒 No soy admin";
+  const lineas = [];
+  for (const g of grupos) {
+    let miembros = "?";
     try {
-      const code = await conn.groupInviteCode(id);
-      link = `https://chat.whatsapp.com/${code}`;
+      miembros = await conn.bot.getChatMemberCount(g.id);
     } catch {}
-
-    resultLines.push(`╭───────────────
-📛 *${name}*
-🔗 *Enlace:* ${link}
-${stateLines}
-╰───────────────\n`);
+    lineas.push(`│ 📌 *${g.titulo}*\n│    🆔 \`${g.id}\` · 👥 ${miembros}`);
   }
 
-  const listado = resultLines.length
-    ? resultLines.join("\n")
-    : "❌ No se encontraron grupos activos.";
+  const tandas = [];
+  for (let i = 0; i < lineas.length; i += 25) tandas.push(lineas.slice(i, i + 25));
 
-  const replyText = `🌐 *Modo Privado Global:* ${modoPrivadoGlobal}\n\n📋 *Listado de grupos y sus configuraciones:*\n\n${listado}`;
+  for (let i = 0; i < tandas.length; i++) {
+    const encabezado = i === 0
+      ? `╭──『 👥 *MIS GRUPOS* 』\n│ Total: *${grupos.length}* grupos\n│ Chats privados: *${privados}*\n│\n`
+      : "╭─────◆\n";
+    await conn.sendMessage(chatId, {
+      text: encabezado + tandas[i].join("\n") + "\n╰────────────────◆"
+    }, { quoted: i === 0 ? msg : undefined });
+  }
 
-  await conn.sendMessage(chatId, {
-    text: replyText
-  }, { quoted: msg });
+  await conn.react(chatId, msg.message_id, "✅");
 };
 
-handler.command = ["vergrupos"];
+handler.command = ["vergrupos", "grupos"];
 export default handler;

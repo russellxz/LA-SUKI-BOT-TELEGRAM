@@ -1,89 +1,87 @@
-import fs from 'fs';
-import path from 'path';
+// plugins/pluginsowner/Menuowner.js — Menú de comandos del dueño
+import fs from "fs";
+import path from "path";
 
-const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
-  const pref = global.prefixes?.[0] || ".";
+const ARCHIVO = path.resolve("./setmenu.json");
 
-  await conn.sendMessage2(chatId, {
-    react: { text: "👑", key: msg.key }
-  }, msg);
+const handler = async (msg, ctx) => {
+  const { conn, usedPrefix, isOwner } = ctx;
+  const chatId = msg.chatId;
 
-  try {
-    const filePath = path.resolve("./setmenu.json");
-    if (fs.existsSync(filePath)) {
-      const data = JSON.parse(fs.readFileSync(filePath, "utf-8")) || {};
-      const rawTexto = typeof data.texto_owner === "string" ? data.texto_owner : null;
-      const imgB64   = data.imagen_owner || null;
-
-      if ((rawTexto && rawTexto.trim()) || imgB64) {
-        const caption = (rawTexto || "").replace(/\{pref\}/g, pref).trim();
-
-        if (imgB64) {
-          const buffer = Buffer.from(imgB64, "base64");
-          await conn.sendMessage2(chatId, { image: buffer, caption: caption || undefined }, msg);
-        } else {
-          await conn.sendMessage2(chatId, { text: caption || " " }, msg);
-        }
-        return;
-      }
-    }
-  } catch (e) {
-    console.error("[menuowner] Error leyendo menú owner personalizado:", e);
+  if (!isOwner) {
+    return conn.sendMessage(chatId, { text: "⛔ *Este menú es solo para los dueños del bot.*" }, { quoted: msg });
   }
 
-  const caption = `╔════════════════╗
-   👑 𝙼𝙴𝙽𝚄 𝙳𝙴 𝙾𝚆𝙽𝙴𝚁 👑
-╚════════════════╝
+  await conn.react(chatId, msg.message_id, "👑");
 
-🧩 *COMANDOS EXCLUSIVOS*
+  // Menú personalizado con .setmenuowner
+  try {
+    if (fs.existsSync(ARCHIVO)) {
+      const data = JSON.parse(fs.readFileSync(ARCHIVO, "utf-8") || "{}");
+      const propio = data.menuowner;
+      if (propio?.texto || propio?.imagen) {
+        if (propio.imagen) {
+          return conn.sendMessage(chatId, { image: propio.imagen, caption: propio.texto || undefined }, { quoted: msg });
+        }
+        return conn.sendMessage(chatId, { text: propio.texto }, { quoted: msg });
+      }
+    }
+  } catch {}
+
+  const p = usedPrefix;
+  const texto =
+`╭━━━『 👑 *MENÚ OWNER* 』━━━◆
+│ Dueños registrados: ${global.owner.length}
+╰━━━━━━━━━━━━━━━━━━◆
+
+👑 *DUEÑOS*
 ╭─────◆
-│๛ ${pref}bc
-│๛ ${pref}bc2
-│๛ ${pref}rest
-│๛ ${pref}carga
-│๛ ${pref}modoprivado on/off
-│๛ ${pref}botfoto
-│๛ ${pref}botname
-│๛ ${pref}setprefix
-│๛ ${pref}git
-│๛ ${pref}re
-│๛ ${pref}unre
-│๛ ${pref}autoadmins
-│๛ ${pref}antideletepri on/off
-│๛ ${pref}apagado
-│๛ ${pref}addlista
-│๛ ${pref}dellista
-│๛ ${pref}vergrupos
-│๛ ${pref}addowner
-│๛ ${pref}delowner
-│๛ ${pref}dar
-│๛ ${pref}deleterpg
-│๛ ${pref}addfactura
-│๛ ${pref}delfactura
-│๛ ${pref}facpaga
-│๛ ${pref}verfac
-│๛ ${pref}setmenu
-│๛ ${pref}setmenugrupo
-│๛ ${pref}setmenuowner
-│๛ ${pref}delmenu
-│๛ ${pref}delmenugrupo 
-│๛ ${pref}botones on o off
-│๛ ${pref}delmenuowner
+│ ${p}addowner — agregar dueño
+│ ${p}delowner — quitar dueño
+│ ${p}addlista — permitir privado
+│ ${p}dellista — quitar permiso
 ╰─────◆
 
-🤖 *La Suki Bot - Modo Dios activado*
-`.trim();
+🤖 *EL BOT*
+╭─────◆
+│ ${p}botname <nombre>
+│ ${p}botfoto — foto y descripción
+│ ${p}carga — recargar plugins
+│ ${p}rest — reiniciar
+│ ${p}git <comando> — ver el código
+╰─────◆
 
-  await conn.sendMessage2(chatId, {
-    video: { url: "https://cdn.russellxz.click/a0b60c86.mp4" },
-    gifPlayback: true,
-    caption
-  }, msg);
+🔒 *CONTROL*
+╭─────◆
+│ ${p}modoprivado on/off
+│ ${p}apagado on/off — apagar aquí
+│ ${p}re <comando> — restringir
+│ ${p}unre <comando> — liberar
+│ ${p}autoadmins — darte admin
+╰─────◆
+
+📢 *DIFUSIÓN*
+╭─────◆
+│ ${p}bc <mensaje> — a los grupos
+│ ${p}bc2 <mensaje> — a los privados
+│ ${p}vergrupos — mis grupos
+╰─────◆
+
+🎨 *MENÚS*
+╭─────◆
+│ ${p}setmenu / ${p}delmenu
+│ ${p}setmenugrupo / ${p}delmenugrupo
+│ ${p}setmenuowner / ${p}delmenuowner
+╰─────◆
+
+🎯 *STICKERS CON COMANDO*
+╭─────◆
+│ ${p}addco <comando> — enlazar
+│ ${p}delco — desenlazar
+╰─────◆`;
+
+  await conn.sendMessage(chatId, { text: texto }, { quoted: msg });
 };
 
 handler.command = ["menuowner", "ownermenu"];
-handler.help = ["menuowner"];
-handler.tags = ["menu"];
-
 export default handler;

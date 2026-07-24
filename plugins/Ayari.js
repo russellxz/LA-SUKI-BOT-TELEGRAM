@@ -1,7 +1,4 @@
-"use strict";
-
-import crypto from 'crypto';
-
+// plugins/Ayari.js — Mensaje especial paso a paso (con botón "siguiente")
 const AYARI_STEPS = [
   {
     type: "text",
@@ -65,153 +62,59 @@ const AYARI_STEPS = [
   }
 ];
 
-const sessions = Object.create(null);
+// sesiones abiertas: id → { paso, chatId }
+const sesiones = new Map();
 
-function makeId() {
-  return crypto.randomBytes(5).toString("hex");
-}
+async function enviarPaso(conn, chatId, sesionId, indice, quoted = null) {
+  const paso = AYARI_STEPS[indice];
+  if (!paso) return;
 
-async function safeReact(conn, chatId, key, text) {
-  try {
-    await conn.sendMessage(chatId, { react: { text, key } });
-  } catch {}
-}
+  const esUltimo = indice >= AYARI_STEPS.length - 1;
+  const botones = esUltimo
+    ? null
+    : { inline_keyboard: [[{ text: "💌 Siguiente mensajito", callback_data: `ayari:${sesionId}:${indice + 1}` }]] };
 
-function buildButton(stepIndex, sessionId) {
-  const isLast = stepIndex >= AYARI_STEPS.length - 1;
-  const text = isLast
-    ? "💖 Final"
-    : (stepIndex === 0
-      ? "💌 Ver mensaje"
-      : (stepIndex === AYARI_STEPS.length - 2 ? "🌷 Ver último" : "➡️ Siguiente"));
+  const opciones = { quoted, ...(botones ? { reply_markup: botones } : {}) };
 
-  return [{ text, id: `ayari_next:${sessionId}:${stepIndex}` }];
-}
-
-async function sendStep(conn, chatId, quoted, sessionId, stepIndex) {
-  const step = AYARI_STEPS[stepIndex];
-  if (!step) return;
-
-  const isLast = stepIndex >= AYARI_STEPS.length - 1;
-  const buttons = !isLast ? buildButton(stepIndex, sessionId) : undefined;
-  const footer = !isLast ? "❦ Un detalle bonito de Russell para Ayari ❦" : undefined;
-
-  if (step.type === "image") {
-    if (buttons) {
-      try {
-        return await conn.sendMessage(chatId, {
-          image: { url: step.url },
-          caption: step.caption,
-          footer,
-          buttons,
-          headerType: 4
-        }, { quoted });
-      } catch {}
-    }
-
-    return await conn.sendMessage(chatId, {
-      image: { url: step.url },
-      caption: step.caption
-    }, { quoted });
+  if (paso.type === "image") {
+    return conn.sendMessage(chatId, { image: { url: paso.url }, caption: paso.caption || undefined }, opciones);
   }
-
-  if (buttons) {
-    try {
-      return await conn.sendMessage(chatId, {
-        text: step.text,
-        footer,
-        buttons
-      }, { quoted });
-    } catch {}
+  if (paso.type === "video") {
+    return conn.sendMessage(chatId, { video: { url: paso.url }, caption: paso.caption || undefined }, opciones);
   }
-
-  return await conn.sendMessage(chatId, { text: step.text }, { quoted });
+  if (paso.type === "audio") {
+    return conn.sendMessage(chatId, { audio: { url: paso.url }, ptt: true }, opciones);
+  }
+  return conn.sendMessage(chatId, { text: paso.text }, opciones);
 }
 
 const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
-  const sessionId = makeId();
-
-  sessions[sessionId] = {
-    chatId,
-    ownerJid: msg.key.participant || msg.key.remoteJid,
-    step: 0,
-    createdAt: Date.now()
-  };
-
-  setTimeout(() => {
-    delete sessions[sessionId];
-  }, 30 * 60 * 1000);
-
-  await safeReact(conn, chatId, msg.key, "🎂");
-  await sendStep(conn, chatId, msg, sessionId, 0);
-
-  if (!conn._ayariListener) {
-    conn._ayariListener = true;
-
-    conn.ev.on("messages.upsert", async ({ messages }) => {
-      for (const m of messages || []) {
-        try {
-          if (!m.message) continue;
-          const chat = m.key.remoteJid;
-
-          let selectedId = "";
-          const interactiveReply =
-            m.message?.interactiveResponseMessage?.nativeFlowResponseMessage ||
-            m.message?.buttonsResponseMessage ||
-            m.message?.templateButtonReplyMessage ||
-            m.message?.listResponseMessage ||
-            null;
-
-          if (m.message?.buttonsResponseMessage?.selectedButtonId) {
-            selectedId = m.message.buttonsResponseMessage.selectedButtonId;
-          } else if (m.message?.templateButtonReplyMessage?.selectedId) {
-            selectedId = m.message.templateButtonReplyMessage.selectedId;
-          } else if (m.message?.listResponseMessage?.singleSelectReply?.selectedRowId) {
-            selectedId = m.message.listResponseMessage.singleSelectReply.selectedRowId;
-          } else if (interactiveReply?.paramsJson) {
-            try {
-              const params = JSON.parse(interactiveReply.paramsJson);
-              selectedId = params.id || "";
-            } catch {}
-          } else if (interactiveReply?.body?.text) {
-            selectedId = interactiveReply.body.text;
-          }
-
-          if (!selectedId || !String(selectedId).startsWith("ayari_next:")) continue;
-
-          const [, sessionId, stepIndexRaw] = String(selectedId).split(":");
-          const session = sessions[sessionId];
-          if (!session) continue;
-          if (session.chatId !== chat) continue;
-
-          const senderJid = m.key.participant || m.key.remoteJid;
-          if (senderJid !== session.ownerJid) continue;
-
-          const currentStep = Number(stepIndexRaw);
-          if (!Number.isInteger(currentStep)) continue;
-
-          const nextStep = currentStep + 1;
-          if (!AYARI_STEPS[nextStep]) continue;
-
-          session.step = nextStep;
-          await safeReact(conn, chat, m.key, "💖");
-          await sendStep(conn, chat, m, sessionId, nextStep);
-
-          if (nextStep >= AYARI_STEPS.length - 1) {
-            delete sessions[sessionId];
-          }
-        } catch (e) {
-          console.error("Ayari listener error:", e);
-        }
-      }
-    });
-  }
+  const chatId = msg.chatId;
+  const sesionId = `${chatId}_${Date.now().toString(36)}`;
+  sesiones.set(sesionId, { paso: 0, chatId });
+  await enviarPaso(conn, chatId, sesionId, 0, msg);
 };
 
 handler.command = ["ayari"];
-handler.help = ["ayari"];
-handler.tags = ["fun"];
-handler.register = true;
+
+handler.iniciar = (conn) => {
+  conn.onCallback("ayari", async (query, datos) => {
+    const [sesionId, indiceTexto] = datos.split(":");
+    const indice = parseInt(indiceTexto);
+    const chatId = query.message.chat.id;
+
+    await conn.responderBoton(query.id);
+
+    if (Number.isNaN(indice) || !AYARI_STEPS[indice]) return;
+
+    // se quita el botón del mensaje anterior para que no se repita
+    await conn.bot.editMessageReplyMarkup({ inline_keyboard: [] }, {
+      chat_id: chatId,
+      message_id: query.message.message_id
+    }).catch(() => {});
+
+    await enviarPaso(conn, chatId, sesionId, indice);
+  });
+};
 
 export default handler;

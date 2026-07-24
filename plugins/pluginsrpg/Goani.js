@@ -42,8 +42,8 @@ async function editOrSend(conn, chatId, lastKey, text, mentions, quoted) {
 }
 
 const handler = async (msg, { conn, command }) => {
-  const chatId = msg.key.remoteJid;
-  const userId = msg.key.participant || msg.key.remoteJid; // aceptante
+  const chatId = msg.chatId;
+  const userId = msg.senderId; // aceptante
   const myNum = toNum(userId);
 
   await conn.sendMessage(chatId, { react: { text: "🎌", key: msg.key } });
@@ -99,8 +99,8 @@ const handler = async (msg, { conn, command }) => {
   me.cooldowns.batallaAnime = Date.now();
 
   // Animación (5 pasos, 1.5s) con nombres de personajes
-  const cTag = `${challenger.numero}@s.whatsapp.net`;
-  const mTag = `${me.numero}@s.whatsapp.net`;
+  const cTag = String(challenger.numero);
+  const mTag = String(me.numero);
   const mentions = [cTag, mTag];
 
   let sent = await conn.sendMessage(
@@ -204,7 +204,7 @@ const handler = async (msg, { conn, command }) => {
 `🏁 *Resultado de la Batalla Anime*
 👑 Ganador: @${ganador.numero} — *${gChar.nombre || "Su personaje"}* (+${formatPts(resG.cred)} créditos, +${formatPts(resG.xp)} XP)
 💤 Perdedor: @${perdedor.numero} — *${pChar.nombre || "Su personaje"}* (+${formatPts(resP.cred)} créditos, +${formatPts(resP.xp)} XP)`,
-    [`${ganador.numero}@s.whatsapp.net`, `${perdedor.numero}@s.whatsapp.net`],
+    [String(ganador.numero), String(perdedor.numero)],
     msg
   );
 
@@ -218,7 +218,7 @@ const handler = async (msg, { conn, command }) => {
   if (extra) {
     await conn.sendMessage(
       chatId,
-      { text: extra, mentions: [`${ganador.numero}@s.whatsapp.net`, `${perdedor.numero}@s.whatsapp.net`] },
+      { text: extra, mentions: [String(ganador.numero), String(perdedor.numero)] },
       { quoted: msg }
     );
   }

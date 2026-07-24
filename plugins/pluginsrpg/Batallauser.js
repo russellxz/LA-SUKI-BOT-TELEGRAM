@@ -10,8 +10,8 @@ const save = (db) => fs.writeFileSync(FILE, JSON.stringify(db, null, 2));
 const toNum = (j) => String(j || "").replace(/\D/g, "");
 
 const handler = async (msg, { conn, command }) => {
-  const chatId = msg.key.remoteJid;
-  const myJid = msg.key.participant || msg.key.remoteJid;
+  const chatId = msg.chatId;
+  const myJid = msg.senderId;
   const myNum = toNum(myJid);
 
   await conn.sendMessage(chatId, { react: { text: "🧍‍♂️", key: msg.key } });
@@ -29,7 +29,7 @@ const handler = async (msg, { conn, command }) => {
 
   // Oponente por cita o mención
   let opponentJid = null;
-  const ctx = msg.message?.extendedTextMessage?.contextInfo;
+  const ctx = msg.quoted;
   if (ctx?.quotedMessage) opponentJid = ctx.participant;
   if (!opponentJid && ctx?.mentionedJid?.length) opponentJid = ctx.mentionedJid[0];
   if (!opponentJid) {
@@ -75,7 +75,7 @@ const handler = async (msg, { conn, command }) => {
 
   await conn.sendMessage(chatId, {
     text,
-    mentions: [`${me.numero}@s.whatsapp.net`, `${opp.numero}@s.whatsapp.net`]
+    mentions: [String(me.numero), String(opp.numero)]
   }, { quoted: msg });
 
   // Guardar solicitud

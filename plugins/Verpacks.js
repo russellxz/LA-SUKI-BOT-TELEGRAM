@@ -1,107 +1,65 @@
-import fs from 'fs';
-import path from 'path';
+// plugins/Verpacks.js — Ver el contenido de un paquete guardado
+import fs from "fs";
+import path from "path";
 
-const RUTA_VIEJA = path.resolve("./guar.json");       // legacy (base64)
-const RUTA_NUEVA = path.resolve("./guar_files.json"); // nuevo (rutas)
+const FILES_DB = path.resolve("./guar_files.json");
 
-const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
-  await conn.sendMessage(chatId, {
-    react: { text: "📦", key: msg.key }
-  });
+const ICONOS = {
+  imagen: "🖼️", video: "🎬", audio: "🎵", nota: "🎤",
+  sticker: "🌟", documento: "📄", gif: "🎞️", texto: "💬"
+};
 
-  // ====== Cargar ambas bases de datos ======
-  let dbVieja = {};
-  let dbNueva = {};
+const handler = async (msg, { conn, args, usedPrefix, command }) => {
+  const chatId = msg.chatId;
+  await conn.react(chatId, msg.message_id, "📂");
 
-  if (fs.existsSync(RUTA_VIEJA)) {
-    try { dbVieja = JSON.parse(fs.readFileSync(RUTA_VIEJA, "utf-8")); } catch { dbVieja = {}; }
-  }
-  if (fs.existsSync(RUTA_NUEVA)) {
-    try { dbNueva = JSON.parse(fs.readFileSync(RUTA_NUEVA, "utf-8")); } catch { dbNueva = {}; }
-  }
+  let db = {};
+  try {
+    if (fs.existsSync(FILES_DB)) db = JSON.parse(fs.readFileSync(FILES_DB, "utf-8") || "{}");
+  } catch {}
 
-  // ====== Limpiar paquetes vacíos en ambos ======
-  let cambiosVieja = false, cambiosNueva = false;
-  for (const key in dbVieja) {
-    if (!Array.isArray(dbVieja[key]) || dbVieja[key].length === 0) {
-      delete dbVieja[key];
-      cambiosVieja = true;
-    }
-  }
-  for (const key in dbNueva) {
-    if (!Array.isArray(dbNueva[key]) || dbNueva[key].length === 0) {
-      delete dbNueva[key];
-      cambiosNueva = true;
-    }
-  }
-  if (cambiosVieja && fs.existsSync(RUTA_VIEJA)) {
-    try { fs.writeFileSync(RUTA_VIEJA, JSON.stringify(dbVieja, null, 2)); } catch {}
-  }
-  if (cambiosNueva && fs.existsSync(RUTA_NUEVA)) {
-    try { fs.writeFileSync(RUTA_NUEVA, JSON.stringify(dbNueva, null, 2)); } catch {}
-  }
-
-  // ====== Combinar las claves de ambas DBs ======
-  // Los viejos van primero, los nuevos después (mismo orden que usa .del)
-  const todasLasClaves = new Set([...Object.keys(dbVieja), ...Object.keys(dbNueva)]);
-
-  if (todasLasClaves.size === 0) {
+  const claves = Object.keys(db).filter((k) => Array.isArray(db[k]) && db[k].length);
+  if (!claves.length) {
     return conn.sendMessage(chatId, {
-      text: "📂 *Lista vacía:* No hay paquetes con contenido."
+      text: `📂 *Lista vacía:* todavía no hay nada guardado.\n\n_Guarda algo con ${usedPrefix}guar <palabra>_`
     }, { quoted: msg });
   }
 
-  // ====== Función auxiliar para determinar el tipo del archivo ======
-  const detectarTipo = (item) => {
-    const ext = item.ext?.toLowerCase() || "";
-    const mime = item.mime?.toLowerCase() || "";
+  const buscado = args.join(" ").trim().toLowerCase();
 
-    if (ext === "webp") return "🖼 Sticker";
-    if (mime === "audio/ogg" || mime === "audio/opus") return "🎙 Nota de Voz";
-    if (mime.startsWith("audio/")) return "🎵 Audio";
-    if (mime.startsWith("video/")) return "🎥 Video";
-    if (mime.startsWith("image/")) return "🖼 Imagen";
-    if (mime.startsWith("application/")) return "📄 Documento";
-    return "🗂 Desconocido";
-  };
-
-  // ====== Armar el texto de la lista ======
-  let texto = "🎒 *Lista de paquetes guardados:*\n\n";
-  const mentions = [];
-
-  // Ordenar claves alfabéticamente para que sea más limpio
-  const clavesOrdenadas = [...todasLasClaves].sort();
-
-  for (const key of clavesOrdenadas) {
-    const itemsViejos = Array.isArray(dbVieja[key]) ? dbVieja[key] : [];
-    const itemsNuevos = Array.isArray(dbNueva[key]) ? dbNueva[key] : [];
-    // Combinar: viejos primero, luego nuevos (igual que en .del)
-    const items = [...itemsViejos, ...itemsNuevos];
-
-    if (items.length === 0) continue;
-
-    texto += `📁 *${key}* (${items.length} archivo${items.length !== 1 ? "s" : ""}):\n`;
-
-    items.forEach((item, i) => {
-      // Retrocompatibilidad: viejo usa "de", nuevo usa "user"
-      const userId = item.user || item.de;
-      const num = userId ? String(userId).replace(/[^0-9]/g, "") : null;
-      const jid = num ? `${num}@s.whatsapp.net` : null;
-      if (jid && !mentions.includes(jid)) mentions.push(jid);
-
-      const tipo = detectarTipo(item);
-      texto += `   ${i + 1}. ${tipo} — Guardado por: ${jid ? `@${num}` : "🤷‍♂️ Desconocido"}\n`;
+  if (!buscado) {
+    const lineas = claves.sort().map((k) => {
+      const tipos = [...new Set(db[k].map((i) => i.tipo))].map((t) => ICONOS[t] || "📦").join("");
+      return `│ ${tipos} *${k}* — ${db[k].length}`;
     });
-
-    texto += "\n";
+    return conn.sendMessage(chatId, {
+      text:
+        `╭──『 📂 *PAQUETES GUARDADOS* 』\n│\n${lineas.join("\n")}\n│\n╰────────────────◆\n\n` +
+        `_Detalle de uno: ${usedPrefix}${command} <palabra>_`
+    }, { quoted: msg });
   }
 
-  return conn.sendMessage(chatId, {
-    text: texto.trim(),
-    mentions
+  const items = db[buscado];
+  if (!Array.isArray(items)) {
+    return conn.sendMessage(chatId, { text: `❌ No existe el paquete *"${buscado}"*.` }, { quoted: msg });
+  }
+
+  const detalle = items
+    .map((it, i) => {
+      const fecha = it.creado ? new Date(it.creado).toLocaleDateString("es-ES") : "?";
+      const peso = it.size ? ` · ${(it.size / 1024).toFixed(0)} KB` : "";
+      return `${i + 1}. ${ICONOS[it.tipo] || "📦"} ${it.tipo}${peso} · ${fecha}`;
+    })
+    .join("\n");
+
+  await conn.sendMessage(chatId, {
+    text:
+      `📂 *Paquete "${buscado}"*\n` +
+      `🔢 ${items.length} archivo(s)\n\n${detalle}\n\n` +
+      `_Enviar uno: ${usedPrefix}g ${buscado} 1_\n` +
+      `_Borrar uno: ${usedPrefix}del ${buscado} 1_`
   }, { quoted: msg });
 };
 
-handler.command = ["verpacks"];
+handler.command = ["verpacks", "verguar", "paquetes"];
 export default handler;

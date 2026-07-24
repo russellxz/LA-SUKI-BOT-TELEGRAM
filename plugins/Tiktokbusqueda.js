@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const handler = async (msg, { conn, text, args, usedPrefix, command }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
 
   if (!args.length) {
     return await conn.sendMessage(chatId, {

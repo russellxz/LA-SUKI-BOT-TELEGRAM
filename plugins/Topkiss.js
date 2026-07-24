@@ -1,76 +1,37 @@
-import fs from 'fs';
-import path from 'path';
+// plugins/Topkiss.js — Ranking de besos del grupo
+import fs from "fs";
+import path from "path";
+import { noEsGrupo, mencion } from "../libs/grupo.js";
 
-const handler = async (msg, { conn }) => {
-  const groupId = msg.key.remoteJid;
-  const isGroup = groupId.endsWith("@g.us");
-  const KISS_PATH = path.resolve("kiss_data.json");
+const DB = path.resolve("kiss_data.json");
 
-  if (!isGroup) {
-    return conn.sendMessage(groupId, {
-      text: "⚠️ Este comando solo funciona en grupos."
+const handler = async (msg, { conn, usedPrefix }) => {
+  const chatId = msg.chatId;
+  if (await noEsGrupo(msg, conn)) return;
+  await conn.react(chatId, msg.message_id, "😘");
+
+  let db = {};
+  try {
+    if (fs.existsSync(DB)) db = JSON.parse(fs.readFileSync(DB, "utf-8") || "{}");
+  } catch {}
+
+  const grupo = db[String(chatId)];
+  if (!grupo || !Object.keys(grupo).length) {
+    return conn.sendMessage(chatId, {
+      text: `📭 Todavía no hay besos en este grupo.`
     }, { quoted: msg });
   }
 
-  // Reacción inicial
-  await conn.sendMessage(groupId, {
-    react: { text: "💋", key: msg.key }
-  });
+  const orden = Object.entries(grupo).sort((a, b) => b[1] - a[1]).slice(0, 15);
+  const medallas = ["🥇", "🥈", "🥉"];
 
-  if (!fs.existsSync(KISS_PATH)) {
-    return conn.sendMessage(groupId, {
-      text: "📭 No hay datos de besos todavía en este grupo."
-    }, { quoted: msg });
-  }
-
-  const data = JSON.parse(fs.readFileSync(KISS_PATH));
-  const grupo = data[groupId];
-  if (!grupo) {
-    return conn.sendMessage(groupId, {
-      text: "📭 Este grupo aún no tiene besos registrados."
-    }, { quoted: msg });
-  }
-
-  const mentions = [];
-  const besosDados = Object.entries(grupo.besosDados || {}).map(([id, info]) => ({
-    id,
-    total: info.total
-  })).sort((a, b) => b.total - a.total).slice(0, 5);
-
-  const besosRecibidos = Object.entries(grupo.besosRecibidos || {}).map(([id, info]) => ({
-    id,
-    total: info.total
-  })).sort((a, b) => b.total - a.total).slice(0, 5);
-
-  const topBesadores = besosDados.map((user, i) => {
-    const tag = `@${user.id}`;
-    mentions.push(`${user.id}@s.whatsapp.net`);
-    return `🎯 ${i + 1}. ${tag} — ${user.total} 💋`;
-  }).join("\n");
-
-  const topBesados = besosRecibidos.map((user, i) => {
-    const tag = `@${user.id}`;
-    mentions.push(`${user.id}@s.whatsapp.net`);
-    return `❤️ ${i + 1}. ${tag} — ${user.total} 😘`;
-  }).join("\n");
-
-  const text = `╭〔 *TOP KISS DEL GRUPO* 〕╮
-
-👄 *Usuarios que MÁS besaron:*
-${topBesadores || "— Sin datos —"}
-
-──────────────────
-
-💗 *Usuarios MÁS besados:*
-${topBesados || "— Sin datos —"}
-
-╰─────────────────╯`;
-
-  await conn.sendMessage(groupId, {
-    text,
-    mentions
+  await conn.sendMessage(chatId, {
+    text:
+      `😘 *TOP BESOS DEL GRUPO*\n\n` +
+      orden.map(([id, n], i) => `${medallas[i] || `${i + 1}.`} ${mencion(id)} — *${n}*`).join("\n"),
+    mentions: orden.map(([id]) => id)
   }, { quoted: msg });
 };
 
-handler.command = ["topkiss"];
+handler.command = ["topkiss", "topbesos"];
 export default handler;

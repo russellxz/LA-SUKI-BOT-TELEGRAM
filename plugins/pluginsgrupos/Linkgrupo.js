@@ -1,31 +1,26 @@
-const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
+// plugins/pluginsgrupos/Linkgrupo.js — Obtener el enlace de invitación del grupo
+import { noEsGrupo, noEsAdmin, botNoPuede } from "../../libs/grupo.js";
 
-  if (!chatId.endsWith("@g.us")) {
-    return conn.sendMessage(chatId, {
-      text: "❌ Este comando solo funciona en grupos."
-    }, { quoted: msg });
-  }
+const handler = async (msg, ctx) => {
+  const { conn } = ctx;
+  const chatId = msg.chatId;
+
+  if (await noEsGrupo(msg, conn)) return;
+  if (await noEsAdmin(msg, ctx)) return;
+  if (await botNoPuede(msg, conn, "can_invite_users")) return;
 
   try {
-    const code = await conn.groupInviteCode(chatId);
-    const link = `https://chat.whatsapp.com/${code}`;
-
+    const link = await conn.linkGrupo(chatId);
+    await conn.react(chatId, msg.message_id, "✅");
     await conn.sendMessage(chatId, {
-      text: `🔗 *Link del grupo:*\n${link}`
-    }, { quoted: msg });
-
-    await conn.sendMessage(chatId, {
-      react: { text: "🔗", key: msg.key }
-    });
-
+      text: `🔗 *Enlace de ${msg.chatName}:*\n\n${link}`
+    }, { quoted: msg, preview: true });
   } catch (e) {
-    console.error("❌ Error al obtener link del grupo:", e);
     await conn.sendMessage(chatId, {
-      text: "⚠️ No se pudo obtener el enlace del grupo. Asegúrate que el bot sea admin."
+      text: `❌ No pude obtener el enlace.\n\n_${e?.response?.body?.description || e.message}_`
     }, { quoted: msg });
   }
 };
 
-handler.command = ["linkgrupo"];
+handler.command = ["linkgrupo", "link", "enlace"];
 export default handler;

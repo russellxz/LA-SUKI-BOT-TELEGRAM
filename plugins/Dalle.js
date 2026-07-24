@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const handler = async (msg, { conn, text, args, command }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
   const pref = global.prefixes?.[0] || ".";
 
   if (!args.length) {

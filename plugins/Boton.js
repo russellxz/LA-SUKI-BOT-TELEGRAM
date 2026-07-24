@@ -1,27 +1,22 @@
-// plugins/Boton.js — Prueba: envía un botón que copia el texto "1234"
+// plugins/Boton.js — Prueba de botones de Telegram
 const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
 
-  try {
-    await conn.sendMessage(
-      chatId,
-      {
-        text: "🔢 *Botón de prueba*\n\nToca el botón de abajo para copiar el código 👇",
-        footer: "❦ La Suki Bot ❦",
-        nativeFlow: [
-          {
-            text: "📋 Copiar código",
-            copy: "1234"
-          }
-        ]
-      },
-      { quoted: msg }
-    );
-  } catch (e) {
-    console.error("Error en boton:", e);
-    await conn.sendMessage(chatId, { text: "❌ No se pudo enviar el botón." }, { quoted: msg }).catch(() => {});
-  }
+  await conn.sendMessage(chatId, {
+    text: "🔢 *Botones de prueba*\n\nToca uno de los botones de abajo 👇",
+    buttons: [
+      [{ text: "✅ Botón 1", callback_data: "demo:1" }, { text: "🎉 Botón 2", callback_data: "demo:2" }],
+      [{ text: "🌐 Abrir YouTube", url: "https://youtube.com/@skyultraplus" }]
+    ]
+  }, { quoted: msg });
 };
 
-handler.command = ["boton"];
+handler.command = ["boton", "botones"];
+
+handler.iniciar = (conn) => {
+  conn.onCallback("demo", async (query, datos) => {
+    await conn.responderBoton(query.id, `Tocaste el botón ${datos} ✅`, true);
+  });
+};
+
 export default handler;

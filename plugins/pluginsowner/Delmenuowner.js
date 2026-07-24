@@ -1,54 +1,32 @@
-// plugins/delmenuowner.js
-import fs from 'fs';
-import path from 'path';
+// plugins/pluginsowner/Delmenuowner.js — Volver a el menú de owner original
+import fs from "fs";
+import path from "path";
 
-const DIGITS = (s = "") => String(s).replace(/\D/g, "");
+const ARCHIVO = path.resolve("./setmenu.json");
 
-function isOwnerByNumber(num) {
-  if (typeof global.isOwner === "function") return global.isOwner(num);
-  return Array.isArray(global.owner) && global.owner.some(([id]) => id === num);
-}
+const handler = async (msg, ctx) => {
+  const { conn, isOwner } = ctx;
+  const chatId = msg.chatId;
 
-const handler = async (msg, { conn }) => {
-  const chatId    = msg.key.remoteJid;
-  const senderJid = msg.key.participant || msg.key.remoteJid;
-  const senderNum = DIGITS(senderJid);
-  const fromMe    = !!msg.key.fromMe;
-
-  // 🔐 Permisos
-  const botNum = DIGITS(conn.user?.id || "");
-  const owner  = isOwnerByNumber(senderNum);
-  if (!owner && !fromMe && senderNum !== botNum) {
-    try { await conn.sendMessage(chatId, { react: { text: "❌", key: msg.key } }); } catch {}
-    return conn.sendMessage(chatId, {
-      text: "🚫 Este comando solo puede usarlo un *Owner* o el *bot*.",
-    }, { quoted: msg });
+  if (!isOwner) {
+    return conn.sendMessage(chatId, { text: "⛔ *Solo el dueño del bot puede usar este comando.*" }, { quoted: msg });
   }
 
-  const filePath = path.resolve("./setmenu.json");
-  if (!fs.existsSync(filePath)) {
-    try { await conn.sendMessage(chatId, { react: { text: "⚠️", key: msg.key } }); } catch {}
-    return conn.sendMessage(chatId, { text: "⚠️ No hay ningún *C-Menu Owner* guardado." }, { quoted: msg });
+  let data = {};
+  try {
+    if (fs.existsSync(ARCHIVO)) data = JSON.parse(fs.readFileSync(ARCHIVO, "utf-8") || "{}");
+  } catch {}
+
+  if (!data.menuowner) {
+    return conn.sendMessage(chatId, { text: "ℹ️ Ese menú no está personalizado, ya usa el original." }, { quoted: msg });
   }
 
-  const data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-  const hadAny = ("texto_owner" in data) || ("imagen_owner" in data);
+  delete data.menuowner;
+  fs.writeFileSync(ARCHIVO, JSON.stringify(data, null, 2));
 
-  delete data.texto_owner;
-  delete data.imagen_owner;
-
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-
-  try { await conn.sendMessage(chatId, { react: { text: "🗑️", key: msg.key } }); } catch {}
-  return conn.sendMessage(
-    chatId,
-    { text: hadAny ? "✅ *C-Menu Owner* eliminado." : "⚠️ No había *C-Menu Owner* para eliminar." },
-    { quoted: msg }
-  );
+  await conn.react(chatId, msg.message_id, "✅");
+  await conn.sendMessage(chatId, { text: "🗑️ *Listo.* Volví a el menú de owner original." }, { quoted: msg });
 };
 
 handler.command = ["delmenuowner"];
-handler.tags = ["menu"];
-handler.help = ["delmenuowner"];
-
 export default handler;

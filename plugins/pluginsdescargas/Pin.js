@@ -25,7 +25,7 @@ function pickBestImage(it) {
   );
 }
 
-// descarga imagen a buffer (para mandarla por whatsapp)
+// descarga la imagen a un buffer
 async function downloadImageBuffer(url) {
   const r = await axios.get(url, {
     responseType: "arraybuffer",
@@ -93,7 +93,7 @@ async function callPinterestImages(q) {
 
 // ---- command ----
 const handler = async (msg, { conn, text }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
   const pref = global.prefixes?.[0] || ".";
 
   const input = String(text || "").trim();

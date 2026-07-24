@@ -2,15 +2,15 @@ import fs from 'fs';
 import path from 'path';
 
 const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
 
   await conn.sendMessage(chatId, {
     react: { text: "📈", key: msg.key }
   });
 
   // Determinar número del usuario (autor o citado)
-  const isQuoted = msg.message?.extendedTextMessage?.contextInfo;
-  let numero = msg.key.participant || msg.key.remoteJid;
+  const isQuoted = msg.quoted;
+  let numero = msg.senderId;
   numero = numero.replace(/[^0-9]/g, "");
 
   let citado = isQuoted?.participant || null;
@@ -33,7 +33,7 @@ const handler = async (msg, { conn }) => {
   // Obtener avatar del usuario o usar uno por defecto
   let avatarURL = "https://cdn.russellxz.click/c1954949.jpeg";
   try {
-    const pp = await conn.profilePictureUrl(`${target}@s.whatsapp.net`, "image");
+    const pp = await conn.profilePictureUrl(String(target), "image");
     if (pp) avatarURL = pp;
   } catch {}
 

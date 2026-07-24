@@ -1,144 +1,207 @@
-import fs from 'fs';
-import Crypto from "crypto";
-import ff from 'fluent-ffmpeg';
-import webp from "node-webpmux";
+/**
+ * libs/fuctions.js — Conversión de multimedia para stickers de Telegram.
+ *
+ * Reglas de Telegram (por eso los tamaños son distintos a los de WhatsApp):
+ *   • Sticker estático  → WEBP, un lado exacto de 512px, máx 512 KB
+ *   • Sticker animado   → WEBM (VP9), máx 512x512, máx 3 segundos, máx 256 KB
+ *
+ * Se usa ffmpeg cuando está disponible y sharp como respaldo para imágenes,
+ * así el bot sigue haciendo stickers aunque el hosting no traiga ffmpeg.
+ */
+
+import fs from "fs";
 import path from "path";
-import { fileURLToPath } from 'url';
+import Crypto from "crypto";
+import { spawn, spawnSync } from "child_process";
+import { fileURLToPath } from "url";
 
-const __dirname = fileURLToPath(new URL('.', import.meta.url));
-
-// Ruta a la carpeta "tmp" en el mismo directorio que este script
+const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const tempFolder = path.join(__dirname, "../tmp/");
 
-// Verificar si la carpeta "tmp" existe, si no, crearla
-if (!fs.existsSync(tempFolder)) {
-    fs.mkdirSync(tempFolder, { recursive: true });
+if (!fs.existsSync(tempFolder)) fs.mkdirSync(tempFolder, { recursive: true });
+
+const tmpFile = (ext) =>
+  path.join(tempFolder, `${Date.now()}_${Crypto.randomBytes(4).toString("hex")}.${ext}`);
+
+let ffmpegDisponible = null;
+
+/** ¿Hay ffmpeg instalado en el sistema? (se comprueba una sola vez) */
+export function hayFfmpeg() {
+  if (ffmpegDisponible !== null) return ffmpegDisponible;
+  try {
+    const r = spawnSync("ffmpeg", ["-version"], { stdio: "ignore" });
+    ffmpegDisponible = !r.error && r.status === 0;
+  } catch {
+    ffmpegDisponible = false;
+  }
+  if (!ffmpegDisponible) {
+    console.log("⚠️  ffmpeg no está instalado: los stickers animados, audios y conversiones de video no funcionarán.");
+  }
+  return ffmpegDisponible;
 }
 
-async function imageToWebp(media) { 
-    const tmpFileOut = path.join(tempFolder, `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`); 
-    const tmpFileIn = path.join(tempFolder, `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.jpg`); 
+/**
+ * Ejecuta ffmpeg sobre un buffer y devuelve el resultado como buffer.
+ * @param {Buffer} buffer     archivo de entrada
+ * @param {string[]} args     argumentos de salida (filtros, códecs...)
+ * @param {string} extEntrada extensión del archivo de entrada
+ * @param {string} extSalida  extensión del resultado
+ * @param {string[]} previos  argumentos que van ANTES del -i (ej: ["-loop","1"])
+ */
+export function ffmpeg(buffer, args = [], extEntrada = "bin", extSalida = "mp4", previos = []) {
+  return new Promise((resolve, reject) => {
+    const entrada = tmpFile(extEntrada);
+    const salida = `${entrada}.${extSalida}`;
+    try {
+      fs.writeFileSync(entrada, buffer);
+    } catch (e) {
+      return reject(e);
+    }
 
-    fs.writeFileSync(tmpFileIn, media); 
+    const proc = spawn("ffmpeg", ["-y", ...previos, "-i", entrada, ...args, salida]);
+    let error = "";
+    proc.stderr.on("data", (d) => { error += d.toString(); });
 
-    await new Promise((resolve, reject) => { 
-        ff(tmpFileIn) 
-            .on("error", reject) 
-            .on("end", () => resolve(true)) 
-            .addOutputOptions([ 
-                "-vcodec", 
-                "libwebp", 
-                "-vf", 
-                "scale='min(320,iw)':min'(320,ih)':force_original_aspect_ratio=decrease,fps=15, pad=320:320:-1:-1:color=white@0.0, split [a][b]; [a] palettegen=reserve_transparent=on:transparency_color=ffffff [p]; [b][p] paletteuse" 
-            ]) 
-            .toFormat("webp") 
-            .save(tmpFileOut); 
-    }); 
+    proc.on("error", (e) => {
+      fs.unlink(entrada, () => {});
+      reject(e);
+    });
 
-    const buff = fs.readFileSync(tmpFileOut); 
-    fs.unlinkSync(tmpFileOut); 
-    fs.unlinkSync(tmpFileIn); 
-    return buff; 
+    proc.on("close", (code) => {
+      fs.unlink(entrada, () => {});
+      if (code !== 0 || !fs.existsSync(salida)) {
+        return reject(new Error(`ffmpeg salió con código ${code}: ${error.slice(-400)}`));
+      }
+      try {
+        const out = fs.readFileSync(salida);
+        fs.unlink(salida, () => {});
+        resolve(out);
+      } catch (e) {
+        reject(e);
+      }
+    });
+  });
 }
 
-async function videoToWebp(media) { 
-    const tmpFileOut = path.join(tempFolder, `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`); 
-    const tmpFileIn = path.join(tempFolder, `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.mp4`); 
-
-    fs.writeFileSync(tmpFileIn, media); 
-
-    await new Promise((resolve, reject) => { 
-        ff(tmpFileIn) 
-            .on("error", reject) 
-            .on("end", () => resolve(true)) 
-            .addOutputOptions([ 
-                "-vcodec", 
-                "libwebp", 
-                "-vf", 
-                "scale='min(320,iw)':min'(320,ih)':force_original_aspect_ratio=decrease,fps=15, pad=320:320:-1:-1:color=white@0.0, split [a][b]; [a] palettegen=reserve_transparent=on:transparency_color=ffffff [p]; [b][p] paletteuse", 
-                "-loop", 
-                "0", 
-                "-ss", 
-                "00:00:00", 
-                "-t", 
-                "00:00:05", 
-                "-preset", 
-                "default", 
-                "-an", 
-                "-vsync", 
-                "0" 
-            ]) 
-            .toFormat("webp") 
-            .save(tmpFileOut); 
-    }); 
-
-    const buff = fs.readFileSync(tmpFileOut); 
-    fs.unlinkSync(tmpFileOut); 
-    fs.unlinkSync(tmpFileIn); 
-    return buff; 
+/** Imagen → WEBP 512x512 listo para sticker de Telegram */
+export async function imageToWebp(media) {
+  try {
+    const { default: sharp } = await import("sharp");
+    return await sharp(media, { animated: false })
+      .resize(512, 512, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
+      .webp({ quality: 90 })
+      .toBuffer();
+  } catch (e) {
+    // Respaldo con ffmpeg si sharp no está disponible
+    return ffmpeg(
+      media,
+      [
+        "-vcodec", "libwebp",
+        "-vf",
+        "scale='min(512,iw)':'min(512,ih)':force_original_aspect_ratio=decrease,format=rgba,pad=512:512:-1:-1:color=#00000000"
+      ],
+      "jpg",
+      "webp"
+    );
+  }
 }
 
-async function writeExifImg(media, metadata) { 
-    let wMedia = await imageToWebp(media); 
-    const tmpFileIn = path.join(tempFolder, `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`); 
-    const tmpFileOut = path.join(tempFolder, `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`); 
-    fs.writeFileSync(tmpFileIn, wMedia); 
-
-    if (metadata.packname || metadata.author) { 
-        const img = new webp.Image(); 
-        const json = { "sticker-pack-id": `https://github.com/DikaArdnt/Hisoka-Morou`, "sticker-pack-name": metadata.packname, "sticker-pack-publisher": metadata.author, "emojis": metadata.categories ? metadata.categories : [""] }; 
-        const exifAttr = Buffer.from([0x49, 0x49, 0x2A, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x41, 0x57, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x16, 0x00, 0x00, 0x00]); 
-        const jsonBuff = Buffer.from(JSON.stringify(json), "utf-8"); 
-        const exif = Buffer.concat([exifAttr, jsonBuff]); 
-        exif.writeUIntLE(jsonBuff.length, 14, 4); 
-        await img.load(tmpFileIn); 
-        fs.unlinkSync(tmpFileIn); 
-        img.exif = exif; 
-        await img.save(tmpFileOut); 
-        return tmpFileOut; 
-    } 
+/** Video/GIF → WEBM VP9 para sticker animado de Telegram (máx 3s) */
+export async function videoToWebm(media, extEntrada = "mp4") {
+  return ffmpeg(
+    media,
+    [
+      "-t", "2.9",
+      "-an",
+      "-c:v", "libvpx-vp9",
+      "-b:v", "256k",
+      "-crf", "40",
+      "-vf", "scale='min(512,iw)':'min(512,ih)':force_original_aspect_ratio=decrease,fps=30",
+      "-pix_fmt", "yuva420p",
+      "-f", "webm"
+    ],
+    extEntrada,
+    "webm"
+  );
 }
 
-async function writeExifVid(media, metadata) { 
-    let wMedia = await videoToWebp(media); 
-    const tmpFileIn = path.join(tempFolder, `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`); 
-    const tmpFileOut = path.join(tempFolder, `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`); 
-    fs.writeFileSync(tmpFileIn, wMedia); 
+/** Alias histórico: en Telegram los animados van en WEBM */
+export const videoToWebp = videoToWebm;
 
-    if (metadata.packname || metadata.author) { 
-        const img = new webp.Image(); 
-        const json = { "sticker-pack-id": `https://github.com/DikaArdnt/Hisoka-Morou`, "sticker-pack-name": metadata.packname, "sticker-pack-publisher": metadata.author, "emojis": metadata.categories ? metadata.categories : [""] }; 
-        const exifAttr = Buffer.from([0x49, 0x49, 0x2A, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x41, 0x57, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x16, 0x00, 0x00, 0x00]); 
-        const jsonBuff = Buffer.from(JSON.stringify(json), "utf-8"); 
-        const exif = Buffer.concat([exifAttr, jsonBuff]); 
-        exif.writeUIntLE(jsonBuff.length, 14, 4); 
-        await img.load(tmpFileIn); 
-        fs.unlinkSync(tmpFileIn); 
-        img.exif = exif; 
-        await img.save(tmpFileOut); 
-        return tmpFileOut; 
-    } 
+/** Sticker WEBP/WEBM → PNG (para .toimg) */
+export async function webpToImage(media) {
+  try {
+    const { default: sharp } = await import("sharp");
+    return await sharp(media, { animated: false }).png().toBuffer();
+  } catch {
+    return ffmpeg(media, ["-vframes", "1"], "webp", "png");
+  }
 }
 
-async function writeExif(media, metadata) { 
-    let wMedia = /webp/.test(media.mimetype) ? media.data : /image/.test(media.mimetype) ? await imageToWebp(media.data) : /video/.test(media.mimetype) ? await videoToWebp(media.data) : ""; 
-    const tmpFileIn = path.join(tempFolder, `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`); 
-    const tmpFileOut = path.join(tempFolder, `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`); 
-    fs.writeFileSync(tmpFileIn, wMedia); 
-
-    if (metadata.packname || metadata.author) { 
-        const img = new webp.Image(); 
-        const json = { "sticker-pack-id": `https://github.com/DikaArdnt/Hisoka-Morou`, "sticker-pack-name": metadata.packname, "sticker-pack-publisher": metadata.author, "emojis": metadata.categories ? metadata.categories : [""] }; 
-        const exifAttr = Buffer.from([0x49, 0x49, 0x2A, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x41, 0x57, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x16, 0x00, 0x00, 0x00]); 
-        const jsonBuff = Buffer.from(JSON.stringify(json), "utf-8"); 
-        const exif = Buffer.concat([exifAttr, jsonBuff]); 
-        exif.writeUIntLE(jsonBuff.length, 14, 4); 
-        await img.load(tmpFileIn); 
-        fs.unlinkSync(tmpFileIn); 
-        img.exif = exif; 
-        await img.save(tmpFileOut); 
-        return tmpFileOut; 
-    } 
+/** Sticker animado → MP4 (para .tovideo) */
+export async function webmToMp4(media, extEntrada = "webm") {
+  return ffmpeg(
+    media,
+    ["-movflags", "faststart", "-pix_fmt", "yuv420p", "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2", "-c:v", "libx264", "-crf", "26"],
+    extEntrada,
+    "mp4"
+  );
 }
 
-export { imageToWebp, videoToWebp, writeExifImg, writeExifVid, writeExif };
+/** Cualquier audio → MP3 */
+export async function toAudio(buffer, ext = "mp3") {
+  return ffmpeg(buffer, ["-vn", "-ac", "2", "-b:a", "128k", "-ar", "44100", "-f", "mp3"], ext, "mp3");
+}
+
+/** Cualquier audio → nota de voz OGG/Opus */
+export async function toPTT(buffer, ext = "mp3") {
+  return ffmpeg(
+    buffer,
+    ["-vn", "-c:a", "libopus", "-b:a", "128k", "-vbr", "on", "-compression_level", "10", "-f", "ogg"],
+    ext,
+    "ogg"
+  );
+}
+
+/** Cualquier video → MP4 compatible */
+export async function toVideo(buffer, ext = "mp4") {
+  return ffmpeg(
+    buffer,
+    ["-c:v", "libx264", "-c:a", "aac", "-ab", "128k", "-ar", "44100", "-crf", "30", "-preset", "fast", "-pix_fmt", "yuv420p"],
+    ext,
+    "mp4"
+  );
+}
+
+/**
+ * Compatibilidad: en WhatsApp estas funciones escribían los metadatos (pack y
+ * autor) dentro del WEBP. Telegram no usa ese formato — los packs se manejan
+ * con la API de stickers — así que solo devuelven el sticker convertido.
+ */
+export async function writeExifImg(media) {
+  return imageToWebp(media);
+}
+
+export async function writeExifVid(media) {
+  return videoToWebm(media);
+}
+
+export async function writeExif(media, esVideo = false) {
+  return esVideo ? videoToWebm(media) : imageToWebp(media);
+}
+
+export default {
+  ffmpeg,
+  hayFfmpeg,
+  imageToWebp,
+  videoToWebm,
+  videoToWebp,
+  webpToImage,
+  webmToMp4,
+  toAudio,
+  toPTT,
+  toVideo,
+  writeExifImg,
+  writeExifVid,
+  writeExif
+};

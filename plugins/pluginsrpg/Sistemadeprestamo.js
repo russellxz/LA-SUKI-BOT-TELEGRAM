@@ -54,7 +54,7 @@ const runChecker = (conn) => {
         const prestamo = db.banco.prestamos[i];
         try {
           prestamo.numero = String(prestamo.numero || "");
-          prestamo.grupo = prestamo.grupo || `${prestamo.numero}@s.whatsapp.net`;
+          prestamo.grupo = prestamo.grupo || String(prestamo.numero);
           prestamo.fechaInicio = num(prestamo.fechaInicio, ahora);
           prestamo.fechaLimite = num(prestamo.fechaLimite, prestamo.fechaInicio + plazoMs);
 
@@ -77,7 +77,7 @@ const runChecker = (conn) => {
             continue;
           }
 
-          const mentionJid = `${usuario.numero}@s.whatsapp.net`;
+          const mentionJid = String(usuario.numero);
           const chatDestino = prestamo.grupo;
           let pendiente = Math.max(0, num(prestamo.pendiente, 0));
 

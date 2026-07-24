@@ -9,7 +9,7 @@ function formatNum(n) {
 }
 
 const handler = async (msg, { conn, command }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
 
   // Reacción inicial
   await conn.sendMessage(chatId, { react: { text: "💰", key: msg.key } });
@@ -58,7 +58,7 @@ const handler = async (msg, { conn, command }) => {
 
   // Armar caption
   const top = tabla.slice(0, LIMIT_TOP);
-  const mentions = top.map(t => `${t.numero}@s.whatsapp.net`);
+  const mentions = top.map(t => String(t.numero));
 
   let caption = `💎 *TOP MILLONARIOS* 💎\n` +
                 `Ranking por *total de créditos* (afuera + guardado)\n\n`;

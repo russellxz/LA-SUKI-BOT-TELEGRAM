@@ -1,7 +1,7 @@
 // plugins/transferir.js
 import fs from 'fs';
 import path from 'path';
-import { createCanvas, loadImage } from 'canvas';
+import { createCanvas, loadImage } from '@napi-rs/canvas';
 
 // ⏳ igual que en banco
 function formatoTiempo(msRestante) {
@@ -20,8 +20,8 @@ function formatoTiempo(msRestante) {
 }
 
 const handler = async (msg, { conn, args }) => {
-  const chatId = msg.key.remoteJid;
-  const sender = msg.key.participant || msg.key.remoteJid;
+  const chatId = msg.chatId;
+  const sender = msg.senderId;
   const numeroSender = (sender || "").replace(/\D/g, "");
 
   await conn.sendMessage(chatId, { react: { text: "💸", key: msg.key } });
@@ -40,11 +40,11 @@ const handler = async (msg, { conn, args }) => {
   let receptorNumero;
   let cantidad;
 
-  if (msg.message?.extendedTextMessage?.contextInfo?.participant) {
-    receptorNumero = msg.message.extendedTextMessage.contextInfo.participant.replace(/\D/g, "");
+  if (msg.quoted?.senderId) {
+    receptorNumero = msg.quoted?.senderId.replace(/\D/g, "");
     cantidad = parseInt(args[0], 10);
-  } else if (msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.length) {
-    receptorNumero = msg.message.extendedTextMessage.contextInfo.mentionedJid[0].replace(/\D/g, "");
+  } else if (msg.mencionados?.length) {
+    receptorNumero = msg.mencionados[0].replace(/\D/g, "");
     cantidad = parseInt(args[1], 10);
   } else {
     return conn.sendMessage(chatId, {

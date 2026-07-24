@@ -36,7 +36,7 @@ function sanitizeKey(key) {
 }
 
 const handler = async (msg, { conn, args }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
   const pref = global.prefixes?.[0] || ".";
 
   await conn.sendMessage(chatId, { react: { text: "🔄", key: msg.key } });
@@ -135,8 +135,10 @@ const handler = async (msg, { conn, args }) => {
 
         // Añadir entrada a dbNueva
         if (!Array.isArray(dbNueva[paquete])) dbNueva[paquete] = [];
+        const TIPOS = { image: "imagen", video: "video", audio: "audio", sticker: "sticker", document: "documento" };
+
         dbNueva[paquete].push({
-          type: item.type,
+          tipo: TIPOS[item.type] || item.type || "documento",
           path: relativePath,
           fileName,
           mime,
@@ -188,7 +190,7 @@ const handler = async (msg, { conn, args }) => {
   texto += `📊 Paquetes restantes en guar.json: *${restantes}*\n\n`;
 
   if (detalles.length > 0) {
-    // Si hay muchos paquetes, recortar para no superar límites de WhatsApp
+    // Si hay muchos paquetes, recortar para no superar el límite de Telegram
     const maxLineas = 20;
     if (detalles.length <= maxLineas) {
       texto += `*Detalles:*\n${detalles.join("\n")}`;
@@ -200,5 +202,5 @@ const handler = async (msg, { conn, args }) => {
   return conn.sendMessage(chatId, { text: texto }, { quoted: msg });
 };
 
-handler.command = ["trag"];
+handler.command = ["trag", "migrarguar"];
 export default handler;

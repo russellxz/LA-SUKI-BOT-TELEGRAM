@@ -1,7 +1,7 @@
 import fs from 'fs';
 
 const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
   const filePath = "./ventas365.json";
 
   if (!fs.existsSync(filePath)) {
@@ -20,7 +20,7 @@ const handler = async (msg, { conn }) => {
   }
 
   if (data.imagen) {
-    const buffer = Buffer.from(data.imagen, "base64");
+    const buffer = data.imagen;
     await conn.sendMessage(chatId, {
       image: buffer,
       caption: data.texto || "🎁 Promoción del grupo"

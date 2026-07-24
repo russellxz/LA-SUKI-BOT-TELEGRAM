@@ -11,8 +11,8 @@ function saveDB(p,o){ fs.writeFileSync(p, JSON.stringify(o, null, 2)); }
 function num(n){ return Number(n||0).toLocaleString("es-ES", { maximumFractionDigits: 0 }); }
 
 const handler = async (msg, { conn, args }) => {
-  const chatId = msg.key.remoteJid;
-  const sender = msg.key.participant || msg.key.remoteJid;
+  const chatId = msg.chatId;
+  const sender = msg.senderId;
   const numero = (sender || "").replace(/\D/g, "");
 
   // reacción inicial

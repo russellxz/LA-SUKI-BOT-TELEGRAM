@@ -15,7 +15,7 @@ const streamPipe = promisify(pipeline);
 const API_BASE = (process.env.API_BASE || "https://api-sky.ultraplus.click").replace(/\/+$/, "");
 const API_KEY  = process.env.API_KEY  || "Russellxz";
 
-// límites (WhatsApp suele limitar, pero aquí controlas tu lado)
+// límites de seguridad
 const MAX_MB = 500; // <- aquí tu límite (500MB)
 const TMP_DIR = path.join(__dirname, "../tmp");
 if (!fs.existsSync(TMP_DIR)) fs.mkdirSync(TMP_DIR, { recursive: true });
@@ -96,7 +96,7 @@ async function downloadToFile(url, outPath) {
 
 // ---------------- COMMAND ----------------
 const handler = async (msg, { conn, text }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
   const pref = global.prefixes?.[0] || ".";
 
   const url = String(text || "").trim();
