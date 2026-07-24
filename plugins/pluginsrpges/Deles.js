@@ -9,8 +9,8 @@ function cargarDB(p) { return fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, "
 function guardarDB(p, obj) { fs.writeFileSync(p, JSON.stringify(obj, null, 2)); }
 
 const handler = async (msg, { conn, args }) => {
-  const chatId = msg.key.remoteJid;
-  const sender = msg.key.participant || msg.key.remoteJid;
+  const chatId = msg.chatId;
+  const sender = msg.senderId;
   const ownerNum = (sender || "").replace(/\D/g, "");
 
   await conn.sendMessage(chatId, { react: { text: "🗑️", key: msg.key } });
@@ -76,7 +76,7 @@ const handler = async (msg, { conn, args }) => {
 
   await conn.sendMessage(chatId, {
     text: `🗑️ Se eliminó el contrato con @${slaveNum}.\nYa no es tu esclavo.`,
-    mentions: [`${slaveNum}@s.whatsapp.net`],
+    mentions: [String(slaveNum)],
     quoted: msg
   });
 

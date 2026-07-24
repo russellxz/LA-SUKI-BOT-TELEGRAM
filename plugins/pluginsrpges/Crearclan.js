@@ -12,8 +12,8 @@ function loadDB(p) { return fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, "ut
 function saveDB(p, o) { fs.writeFileSync(p, JSON.stringify(o, null, 2)); }
 
 const handler = async (msg, { conn, args }) => {
-  const chatId = msg.key.remoteJid;
-  const sender  = msg.key.participant || msg.key.remoteJid;
+  const chatId = msg.chatId;
+  const sender  = msg.senderId;
   const numero  = (sender || "").replace(/\D/g, "");
 
   await conn.sendMessage(chatId, { react: { text: "🏷️", key: msg.key } });
@@ -118,7 +118,7 @@ const handler = async (msg, { conn, args }) => {
 💳 Coste: -${COSTO_CREAR_CLAN.toLocaleString("es-ES")} créditos
 💼 Tu saldo ahora: *${lider.creditos.toLocaleString("es-ES")}*
 🗓️ Creado: ${new Date(ahora).toLocaleString()}`,
-    mentions: [`${lider.numero}@s.whatsapp.net`],
+    mentions: [String(lider.numero)],
     quoted: msg
   });
 

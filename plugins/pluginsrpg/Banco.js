@@ -19,7 +19,7 @@ function formatoTiempo(msRestante) {
 }
 
 const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
 
   await conn.sendMessage(chatId, { react: { text: "🏦", key: msg.key } });
 
@@ -85,7 +85,7 @@ Ej: .pagar 2000
 
   db.banco.prestamos.forEach((p, i) => {
     const numero = String(p.numero || "");
-    const tag = `${numero}@s.whatsapp.net`;
+    const tag = String(numero);
     mentions.push(tag);
 
     const nombre = `${p.nombre || "Usuario"} ${p.apellido || ""}`.trim();

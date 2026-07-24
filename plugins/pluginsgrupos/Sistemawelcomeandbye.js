@@ -74,8 +74,19 @@ function armarTexto(plantilla, datos) {
     .replace(/\{total\}/gi, String(datos.total));
 }
 
-/** Arma la tarjeta con la foto de perfil; si algo falla, devuelve null */
+/**
+ * Arma la tarjeta con la foto de perfil.
+ * Si algo falla o tarda más de 8 segundos, devuelve null y el aviso se manda
+ * como texto (nunca se queda un usuario sin bienvenida por culpa de una imagen).
+ */
 async function crearTarjeta(conn, user, chatId, tipo) {
+  return Promise.race([
+    dibujarTarjeta(conn, user, chatId, tipo),
+    new Promise((r) => setTimeout(() => r(null), 8000))
+  ]);
+}
+
+async function dibujarTarjeta(conn, user, chatId, tipo) {
   try {
     const { createCanvas, loadImage } = await import("@napi-rs/canvas");
 

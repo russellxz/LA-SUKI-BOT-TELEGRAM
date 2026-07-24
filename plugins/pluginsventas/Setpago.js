@@ -1,63 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 
-// ——— Helpers LID-aware ———
 const DIGITS = (s = "") => String(s).replace(/\D/g, "");
 
-/** Normaliza: si participante viene como @lid y trae .jid (real), usa .jid */
-function lidParser(participants = []) {
-  try {
-    return participants.map(v => ({
-      id: (typeof v?.id === "string" && v.id.endsWith("@lid") && v.jid) ? v.jid : v.id,
-      admin: v?.admin ?? null,
-      raw: v
-    }));
-  } catch {
-    return participants || [];
-  }
-}
-
 /** Admin por NÚMERO real (funciona en LID y no-LID) */
-async function isAdminByNumber(conn, chatId, number) {
-  try {
-    const meta = await conn.groupMetadata(chatId);
-    const raw  = Array.isArray(meta?.participants) ? meta.participants : [];
-    const norm = lidParser(raw);
-
-    const adminNums = new Set();
-    for (let i = 0; i < raw.length; i++) {
-      const r = raw[i], n = norm[i];
-      const isAdm = (r?.admin === "admin" || r?.admin === "superadmin" ||
-                     n?.admin === "admin" || n?.admin === "superadmin");
-      if (isAdm) {
-        [r?.id, r?.jid, n?.id].forEach(x => {
-          const d = DIGITS(x || "");
-          if (d) adminNums.add(d);
-        });
-      }
-    }
-    return adminNums.has(number);
-  } catch {
-    return false;
-  }
-}
 
 /** Extrae texto de un mensaje citado (manteniendo saltos/espacios) */
-function getQuotedText(msg) {
-  const q = msg?.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-  if (!q) return null;
-  return (
-    q.conversation ||
-    q?.extendedTextMessage?.text ||
-    q?.ephemeralMessage?.message?.conversation ||
-    q?.ephemeralMessage?.message?.extendedTextMessage?.text ||
-    q?.viewOnceMessageV2?.message?.conversation ||
-    q?.viewOnceMessageV2?.message?.extendedTextMessage?.text ||
-    q?.viewOnceMessageV2Extension?.message?.conversation ||
-    q?.viewOnceMessageV2Extension?.message?.extendedTextMessage?.text ||
-    null
-  );
-}
 
 /** Desencapsula viewOnce/ephemeral */
 function unwrapMessage(m) {
@@ -77,27 +25,19 @@ function unwrapMessage(m) {
   return node;
 }
 
-/** Asegura acceso a wa.downloadContentFromMessage */
-function ensureWA(wa, conn) {
-  if (wa && typeof wa.downloadContentFromMessage === "function") return wa;
-  if (conn && conn.wa && typeof conn.wa.downloadContentFromMessage === "function") return conn.wa;
-  if (global.wa && typeof global.wa.downloadContentFromMessage === "function") return global.wa;
-  return null;
-}
-
 const handler = async (msg, { conn, text, args, wa }) => {
-  const chatId    = msg.key.remoteJid;
-  const isGroup   = chatId.endsWith("@g.us");
-  const senderJid = msg.key.participant || msg.key.remoteJid; // puede ser @lid
+  const chatId    = msg.chatId;
+  const isGroup   = msg.isGroup;
+  const senderJid = msg.senderId;
   const senderNum = DIGITS(senderJid);
-  const isFromMe  = !!msg.key.fromMe;
+  const isFromMe  = !!false;
 
   if (!isGroup) {
     return conn.sendMessage(chatId, { text: "❌ Este comando solo funciona en grupos." }, { quoted: msg });
   }
 
   // Permisos: admin / owner / bot (LID-aware)
-  const isAdmin = await isAdminByNumber(conn, chatId, senderNum);
+  const isAdmin = await conn.esAdmin(chatId, msg.senderId);
   const isOwner = Array.isArray(global.owner) && global.owner.some(([id]) => id === senderNum);
 
   if (!isAdmin && !isOwner && !isFromMe) {
@@ -109,13 +49,13 @@ const handler = async (msg, { conn, text, args, wa }) => {
   const textoCrudo = rawFromDispatcher.startsWith(" ") ? rawFromDispatcher.slice(1) : rawFromDispatcher;
 
   // Si no escribió texto, usamos el del mensaje citado (si existe).
-  const quotedText = !textoCrudo ? getQuotedText(msg) : null;
+  const quotedText = !textoCrudo ? (msg.quoted?.text || null) : null;
 
   // Imagen citada opcional (desencapsulada)
-  const ctx  = msg.message?.extendedTextMessage?.contextInfo;
+  const ctx  = msg.quoted;
   const qRaw = ctx?.quotedMessage;
   const inner = qRaw ? unwrapMessage(qRaw) : null;
-  const quotedImage = inner?.imageMessage;
+  const quotedImage = (msg.quoted?.media?.tipo === "imagen" ? msg.quoted.media : (msg.media?.tipo === "imagen" ? msg.media : null));
 
   if (!textoCrudo && !quotedText && !quotedImage) {
     return conn.sendMessage(chatId, {
@@ -124,7 +64,6 @@ const handler = async (msg, { conn, text, args, wa }) => {
   }
 
   // Asegurar wa
-  const WA = ensureWA(wa, conn);
 
   // Cargar JSON primero para poder preservar imagen previa si no envían nueva
   const filePath = "./ventas365.json";
@@ -134,12 +73,9 @@ const handler = async (msg, { conn, text, args, wa }) => {
 
   // Procesar imagen (si viene citada)
   let imagenBase64 = null;
-  if (quotedImage && WA) {
+  if (quotedImage) {
     try {
-      const stream = await WA.downloadContentFromMessage(quotedImage, "image");
-      let buffer = Buffer.alloc(0);
-      for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
-      if (buffer.length) imagenBase64 = buffer.toString("base64");
+      imagenBase64 = quotedImage.fileId;
     } catch (e) {
       console.error("[setpago] error leyendo imagen citada:", e);
     }

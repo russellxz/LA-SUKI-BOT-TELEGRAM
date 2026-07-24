@@ -45,9 +45,9 @@ function ensureConfig() {
 ensureConfig();
 
 const handler = async (msg, { conn, args }) => {
-  const chatId = msg.key.remoteJid;
-  const senderId = (msg.key.participant || msg.key.remoteJid).replace(/[^0-9]/g, "");
-  const isFromMe = msg.key.fromMe;
+  const chatId = msg.chatId;
+  const senderId = (msg.senderId).replace(/[^0-9]/g, "");
+  const isFromMe = false;
   const pref = global.prefixes?.[0] || ".";
 
   // 🛡️ Permisos de owner (MISMO estilo que .carga)

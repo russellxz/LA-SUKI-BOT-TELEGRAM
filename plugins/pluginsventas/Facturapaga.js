@@ -1,7 +1,7 @@
 // plugins/facturapaga.js
 import fs from 'fs';
 import path from 'path';
-import { createCanvas, loadImage } from 'canvas';
+import { createCanvas, loadImage } from '@napi-rs/canvas';
 
 const limpiarNumero = n => String(n || "").replace(/\D/g, "");
 function formatFecha(ts) {
@@ -52,12 +52,12 @@ async function generarFacturaPagaPNG({ logoUrl, datos }) {
 }
 
 const handler = async (msg, { conn, args, command }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
   await conn.sendMessage(chatId, { react: { text: "💳", key: msg.key } });
 
-  const sender = msg.key.participant || msg.key.remoteJid;
+  const sender = msg.senderId;
   const numero = limpiarNumero(sender);
-  const fromMe = msg.key.fromMe;
+  const fromMe = false;
   const botID = limpiarNumero(conn.user?.id || "");
   if (!global.isOwner(numero) && !fromMe && numero !== botID) {
     await conn.sendMessage(chatId, { react: { text: "❌", key: msg.key } });
@@ -166,8 +166,8 @@ const handler = async (msg, { conn, args, command }) => {
   };
 
   await safeSend(chatId);
-  const cliJid = `${base.cliente.numero}@s.whatsapp.net`;
-  const venJid = `${base.vendedor.numero}@s.whatsapp.net`;
+  const cliJid = String(base.cliente.numero);
+  const venJid = String(base.vendedor.numero);
   if (cliJid !== chatId) await safeSend(cliJid);
   if (venJid !== chatId) await safeSend(venJid);
 

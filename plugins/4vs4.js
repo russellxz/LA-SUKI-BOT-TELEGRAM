@@ -65,9 +65,7 @@ const handler = async (msg, { conn, args }) => {
   const participantes = meta.participants.filter(p => p.id !== conn.user.id);
   if (participantes.length < 12) {
     return conn.sendMessage(chatId, {
-      text: "⚠️ Se necesitan al menos *12 usuarios* para formar 2 escuadras y suplentes.
-
-_Solo puedo contar a quienes he visto escribir en el grupo: Telegram no deja a los bots ver la lista completa de miembros._"
+      text: "⚠️ Se necesitan al menos *12 usuarios* para formar 2 escuadras y suplentes.\n\n_Solo puedo contar a quienes he visto escribir en el grupo: Telegram no deja a los bots ver la lista completa de miembros._"
     }, { quoted: msg });
   }
 

@@ -2,10 +2,10 @@ import fs from 'fs';
 import path from 'path';
 
 const handler = async (msg, { conn, args, participants }) => {
-  const chatId = msg.key.remoteJid;
-  const sender = msg.key.participant || msg.key.remoteJid;
+  const chatId = msg.chatId;
+  const sender = msg.senderId;
   const numero = sender.replace(/\D/g, "");
-  const isFromMe = msg.key.fromMe;
+  const isFromMe = false;
   const botID = (conn.user?.id || "").replace(/\D/g, "");
 
   await conn.sendMessage(chatId, { react: { text: "🎁", key: msg.key } });
@@ -27,8 +27,8 @@ const handler = async (msg, { conn, args, participants }) => {
   let cantidad = null;
 
   // 🧠 Si el mensaje es respuesta a otro mensaje
-  if (msg.message?.extendedTextMessage?.contextInfo?.participant) {
-    target = msg.message.extendedTextMessage.contextInfo.participant.replace(/\D/g, "");
+  if (msg.quoted?.senderId) {
+    target = msg.quoted?.senderId.replace(/\D/g, "");
     cantidad = parseInt(args[0]);
   }
 
@@ -39,8 +39,8 @@ const handler = async (msg, { conn, args, participants }) => {
   }
 
   // 🧠 Si se mencionó a alguien con @
-  if (!target && msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.length) {
-    target = msg.message.extendedTextMessage.contextInfo.mentionedJid[0].replace(/\D/g, "");
+  if (!target && msg.mencionados?.length) {
+    target = msg.mencionados[0].replace(/\D/g, "");
     cantidad = parseInt(args[0]);
   }
 
@@ -57,7 +57,7 @@ const handler = async (msg, { conn, args, participants }) => {
   if (!user) {
     return conn.sendMessage(chatId, {
       text: `❌ El usuario @${target} no está registrado en el RPG.`,
-      mentions: [`${target}@s.whatsapp.net`],
+      mentions: [String(target)],
       quoted: msg
     });
   }
@@ -69,7 +69,7 @@ const handler = async (msg, { conn, args, participants }) => {
   // Confirmación
   await conn.sendMessage(chatId, {
     text: `✅ Se le han dado *${cantidad} créditos 💳* a @${target} correctamente.`,
-    mentions: [`${target}@s.whatsapp.net`],
+    mentions: [String(target)],
     quoted: msg
   });
 

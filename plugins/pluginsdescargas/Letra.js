@@ -44,7 +44,7 @@ async function getLyricsFromSky(text) {
 }
 
 const handler = async (msg, { conn, args, command }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
   const pref   = (global.prefixes && global.prefixes[0]) || ".";
   const query  = (args || []).join(" ").trim();
 

@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
 
   await conn.sendMessage(chatId, { react: { text: "🛒", key: msg.key } });
 

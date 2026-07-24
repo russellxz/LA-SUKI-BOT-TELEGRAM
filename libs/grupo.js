@@ -7,7 +7,7 @@
 
 import fs from "fs";
 import path from "path";
-import { idPorUsername, nombreGuardado } from "./usuarios.js";
+import { idPorUsername, nombreGuardado, recordarNombre } from "./usuarios.js";
 
 const ESTADO_PATH = path.resolve("./setwelcome.json");
 
@@ -164,9 +164,14 @@ export function comoIndicarUsuario(prefijo, comando) {
   );
 }
 
-/** Enlace clickeable a un usuario */
+/**
+ * Menciona a un usuario.
+ * Devuelve "@<id>": el adaptador lo convierte en un enlace clickeable de
+ * Telegram al enviar el mensaje (así el texto se puede seguir formateando).
+ */
 export function mencion(id, nombre = null) {
-  return `<a href="tg://user?id=${id}">${nombre || nombreGuardado(id)}</a>`;
+  if (nombre) recordarNombre(id, nombre);
+  return `@${String(id).replace(/[^0-9]/g, "")}`;
 }
 
 export default {

@@ -5,7 +5,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { createCanvas, loadImage } from 'canvas';
+import { createCanvas, loadImage } from '@napi-rs/canvas';
 
 const CHECK_INTERVAL_MS = 15 * 1000;
 
@@ -180,8 +180,8 @@ const handler = async (conn) => {
             const buffer = await generarFacturaNoPagadaPNG(f);
             const caption = construirCaptionDetallado(f);
 
-            const clienteJid = limpiarNumero(f.cliente?.numero) + "@s.whatsapp.net";
-            const vendedorJid = limpiarNumero(f.vendedor?.numero) + "@s.whatsapp.net";
+            const clienteJid = limpiarNumero(f.cliente?.numero);
+            const vendedorJid = limpiarNumero(f.vendedor?.numero);
 
             // Enviar a ambos
             try { if (clienteJid.length > 15) await conn.sendMessage(clienteJid, { image: buffer, caption }); } catch (e) { console.error("[factura_watcher] Envío cliente:", e); }

@@ -20,8 +20,8 @@ function fmtFecha(ts) {
 }
 
 const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
-  const sender = msg.key.participant || msg.key.remoteJid;
+  const chatId = msg.chatId;
+  const sender = msg.senderId;
   const numero = (sender || "").replace(/\D/g, "");
 
   // Helpers que SIEMPRE citan el mensaje
@@ -71,7 +71,7 @@ const handler = async (msg, { conn }) => {
     const edad   = (u.edad !== undefined && u.edad !== null) ? String(u.edad) : "—";
     const rol    = (clan.lider && clan.lider.numero && String(clan.lider.numero) === n) ? "líder" : (m.rol || "miembro");
 
-    mentions.add(`${n}@s.whatsapp.net`);
+    mentions.add(String(n));
 
     lineas.push(
       `${i}. @${n}\n` +
@@ -97,9 +97,9 @@ const handler = async (msg, { conn }) => {
 
   // Menciones
   if (clan.lider && clan.lider.numero && clan.lider.numero !== "BOT") {
-    mentions.add(`${clan.lider.numero}@s.whatsapp.net`);
+    mentions.add(String(clan.lider.numero));
   }
-  mentions.add(`${numero}@s.whatsapp.net`);
+  mentions.add(String(numero));
 
   // Enviar con imagen si hay bannerUrl; SIEMPRE citando el mensaje original (quoted en 3er arg)
   if (clan.bannerUrl) {

@@ -15,7 +15,7 @@ function num(n) {
 }
 
 const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
 
   const file = path.join(process.cwd(), "sukirpg.json");
   const db = loadDB(file);
@@ -57,7 +57,7 @@ const handler = async (msg, { conn }) => {
 
     const supMentions = [];
     if (supremo.lider && supremo.lider.numero && supremo.lider.numero !== "BOT") {
-      supMentions.push(`${supremo.lider.numero}@s.whatsapp.net`);
+      supMentions.push(String(supremo.lider.numero));
     }
 
     if (supremo.bannerUrl) {
@@ -106,7 +106,7 @@ const handler = async (msg, { conn }) => {
         liderStr = "La Suki Bot";
       } else if (c.lider.numero) {
         liderStr = `@${c.lider.numero}`;
-        mentions.add(`${c.lider.numero}@s.whatsapp.net`);
+        mentions.add(String(c.lider.numero));
       } else if (c.lider.nombre) {
         liderStr = c.lider.nombre;
       }

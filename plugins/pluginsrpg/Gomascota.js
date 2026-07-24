@@ -46,8 +46,8 @@ async function editOrSend(conn, chatId, lastKey, text, mentions, quoted) {
 
 const handler = async (msg, { conn, command }) => {
   try {
-    const chatId = msg.key.remoteJid;
-    const myJid = msg.key.participant || msg.key.remoteJid; // aceptante
+    const chatId = msg.chatId;
+    const myJid = msg.senderId; // aceptante
     const myNum = toNum(myJid);
 
     await conn.sendMessage(chatId, { react: { text: "🎌", key: msg.key } });
@@ -113,8 +113,8 @@ const handler = async (msg, { conn, command }) => {
     const pM = ensurePet(me);
 
     // Animación con menciones (5 frames, 1.5s)
-    const cTag = `${challenger.numero}@s.whatsapp.net`;
-    const mTag = `${me.numero}@s.whatsapp.net`;
+    const cTag = String(challenger.numero);
+    const mTag = String(me.numero);
     const mentions = [cTag, mTag];
 
     let sent = await conn.sendMessage(
@@ -217,7 +217,7 @@ const handler = async (msg, { conn, command }) => {
 `🏁 *Resultado: Batalla de Mascotas*
 👑 Ganador: @${ganador.numero} — *${gPet.nombre || "Su mascota"}* (+${format(resG.cred)} créditos, +${format(resG.xp)} XP)
 💤 Perdedor: @${perdedor.numero} — *${pPet.nombre || "Su mascota"}* (+${format(resP.cred)} créditos, +${format(resP.xp)} XP)`,
-      [`${ganador.numero}@s.whatsapp.net`, `${perdedor.numero}@s.whatsapp.net`],
+      [String(ganador.numero), String(perdedor.numero)],
       msg
     );
 
@@ -231,7 +231,7 @@ const handler = async (msg, { conn, command }) => {
     if (extra) {
       await conn.sendMessage(
         chatId,
-        { text: extra, mentions: [`${ganador.numero}@s.whatsapp.net`, `${perdedor.numero}@s.whatsapp.net`] },
+        { text: extra, mentions: [String(ganador.numero), String(perdedor.numero)] },
         { quoted: msg }
       );
     }
@@ -240,7 +240,7 @@ const handler = async (msg, { conn, command }) => {
   } catch (e) {
     console.error("❌ Error en gomascota:", e);
     try {
-      await conn.sendMessage(msg.key.remoteJid, { text: "❌ Ocurrió un error al procesar la batalla de mascotas." }, { quoted: msg });
+      await conn.sendMessage(msg.chatId, { text: "❌ Ocurrió un error al procesar la batalla de mascotas." }, { quoted: msg });
     } catch {}
   }
 };

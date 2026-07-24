@@ -26,7 +26,6 @@ const handler = async (msg, { conn, args, command }) => {
     
     const videoUrl = json.video_url.trim();
 
-
     const videoRes = await fetch(videoUrl);
     const buffer = await videoRes.arrayBuffer().then(ab => Buffer.from(ab));
 

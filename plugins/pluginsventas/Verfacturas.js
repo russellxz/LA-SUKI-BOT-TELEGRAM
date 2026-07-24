@@ -20,7 +20,7 @@ function formatearTiempoRestante(ms) {
 }
 
 const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
 
   await conn.sendMessage(chatId, { react: { text: "📄", key: msg.key } });
 

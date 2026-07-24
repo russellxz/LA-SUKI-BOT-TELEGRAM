@@ -29,10 +29,10 @@ function isOwnerNumber(numero, conn) {
 }
 
 const handler = async (msg, { conn, args }) => {
-  const chatId = msg.key.remoteJid;
-  const sender = msg.key.participant || msg.key.remoteJid;
+  const chatId = msg.chatId;
+  const sender = msg.senderId;
   const numero = (sender || "").replace(/\D/g, "");
-  const fromMe = !!msg.key.fromMe;
+  const fromMe = !!false;
 
   // === Chequeo de owner igual que en addowner ===
   if (!isOwnerNumber(numero, conn) && !fromMe) {

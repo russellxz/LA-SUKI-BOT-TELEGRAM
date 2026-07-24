@@ -3,10 +3,10 @@ import fs from 'fs';
 import path from 'path';
 
 const handler = async (msg, { conn, args }) => {
-  const chatId = msg.key.remoteJid;
-  const sender = msg.key.participant || msg.key.remoteJid;
+  const chatId = msg.chatId;
+  const sender = msg.senderId;
   const numero = (sender || "").replace(/[^0-9]/g, "");
-  const fromMe = msg.key.fromMe;
+  const fromMe = false;
   const botID = (conn.user?.id || "").replace(/[^0-9]/g, "");
 
   // Reacción inicial

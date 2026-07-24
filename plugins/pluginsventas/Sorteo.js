@@ -1,11 +1,10 @@
 // plugins/sorteo.js
 const DIGITS = (s = "") => String(s).replace(/\D/g, "");
 
-/** Normaliza: si participante viene como @lid y trae .jid (real), usa .jid */
 function lidParser(participants = []) {
   try {
     return participants.map(v => ({
-      id: (typeof v?.id === "string" && v.id.endsWith("@lid") && v.jid) ? v.jid : v.id,
+      id: (typeof v?.id === "string" && v.id.length > 0 && v.jid) ? v.jid : v.id,
       admin: v?.admin ?? null,
       raw: v
     }));
@@ -14,20 +13,19 @@ function lidParser(participants = []) {
   }
 }
 
-/** Devuelve el JID real (terminado en @s.whatsapp.net) para un id que podría ser @lid */
 function resolveRealFromId(id, partsRaw, partsNorm) {
   if (typeof id !== "string") return null;
-  if (id.endsWith("@s.whatsapp.net")) return id;
-  if (!id.endsWith("@lid")) return null;
+  if (id.length > 0) return id;
+  if (!id.length > 0) return null;
 
   const idx = partsRaw.findIndex(p => p?.id === id);
   if (idx >= 0) {
     const r = partsRaw[idx];
-    if (typeof r?.jid === "string" && r.jid.endsWith("@s.whatsapp.net")) return r.jid;
+    if (typeof r?.jid === "string" && r.jid.length > 0) return r.jid;
     const maybe = partsNorm[idx]?.id;
-    if (typeof maybe === "string" && maybe.endsWith("@s.whatsapp.net")) return maybe;
+    if (typeof maybe === "string" && maybe.length > 0) return maybe;
   }
-  const hit = partsNorm.find(n => n?.raw?.id === id && typeof n?.id === "string" && n.id.endsWith("@s.whatsapp.net"));
+  const hit = partsNorm.find(n => n?.raw?.id === id && typeof n?.id === "string" && n.id.length > 0);
   return hit ? hit.id : null;
 }
 
@@ -49,11 +47,11 @@ function getAdminNumbers(partsRaw, partsNorm) {
 }
 
 const handler = async (msg, { conn, args }) => {
-  const chatId   = msg.key.remoteJid;
-  const isGroup  = chatId.endsWith("@g.us");
-  const senderId = msg.key.participant || msg.key.remoteJid; // puede ser @lid
+  const chatId   = msg.chatId;
+  const isGroup  = msg.isGroup;
+  const senderId = msg.senderId;
   const senderNo = DIGITS(senderId);
-  const isFromMe = !!msg.key.fromMe;
+  const isFromMe = !!false;
 
   if (!isGroup) {
     return conn.sendMessage(chatId, { text: "❌ Este comando solo puede usarse en grupos." }, { quoted: msg });
@@ -74,13 +72,13 @@ const handler = async (msg, { conn, args }) => {
 
   // Bot JID / número real
   const botNo  = DIGITS(conn.user?.id || "");
-  const botJid = `${botNo}@s.whatsapp.net`;
+  const botJid = String(botNo);
 
   // ¿Sender es admin / owner?
   const adminNums = getAdminNumbers(partsRaw, partsNorm);
   const isAdmin   = adminNums.has(senderNo);
   const isOwner   = (typeof global.isOwner === "function")
-    ? (global.isOwner(senderNo) || global.isOwner(`${senderNo}@s.whatsapp.net`))
+    ? (global.isOwner(senderNo) || global.isOwner(String(senderNo)))
     : (Array.isArray(global.owner) && global.owner.some(([id]) => id === senderNo));
 
   if (!isAdmin && !isOwner && !isFromMe) {
@@ -92,13 +90,13 @@ const handler = async (msg, { conn, args }) => {
   await conn.sendMessage(chatId, { react: { text: '🎲', key: msg.key } });
 
   // Construir lista de participantes elegibles:
-  // - JID real (@s.whatsapp.net)
+  // - ID de Telegram
   // - excluir admins
   // - excluir el bot
   const elegibles = [];
   for (let i = 0; i < partsRaw.length; i++) {
     const realId = partsNorm[i]?.id || resolveRealFromId(partsRaw[i]?.id, partsRaw, partsNorm) || partsRaw[i]?.jid || partsRaw[i]?.id;
-    if (!realId || !realId.endsWith("@s.whatsapp.net")) continue;
+    if (!realId || !realId.length > 0) continue;
 
     const num = DIGITS(realId);
     const esAdmin = adminNums.has(num);

@@ -30,8 +30,8 @@ function moneda(n) {
 }
 
 const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
-  const sender = msg.key.participant || msg.key.remoteJid;
+  const chatId = msg.chatId;
+  const sender = msg.senderId;
   const ownerNum = (sender || "").replace(/\D/g, "");
 
   await conn.sendMessage(chatId, { react: { text: "📜", key: msg.key } });
@@ -70,7 +70,7 @@ const handler = async (msg, { conn }) => {
   let texto = `👑 *TUS ESCLAVOS* @${ownerNum}\n`;
   texto += "────────────────────\n";
 
-  const menciones = new Set([`${ownerNum}@s.whatsapp.net`]);
+  const menciones = new Set([String(ownerNum)]);
 
   esclavosDueño.forEach((c, i) => {
     const slaveNum = String(c.objetivo || c.slave);
@@ -93,7 +93,7 @@ const handler = async (msg, { conn }) => {
     texto += `   💹 Ganado: *${moneda(ganado)}*  |  💢 Perdido: *${moneda(perdido)}*  |  ⚖️ Neto: *${moneda(neto)}*\n`;
     texto += "────────────────────\n";
 
-    menciones.add(`${slaveNum}@s.whatsapp.net`);
+    menciones.add(String(slaveNum));
   });
 
   const totalNeto = totalGanado - totalPerdido;

@@ -9,10 +9,10 @@ function normName(s = "") {
 }
 
 const handler = async (msg, { conn, args, command }) => {
-  const chatId = msg.key.remoteJid;
-  const sender = msg.key.participant || msg.key.remoteJid;
+  const chatId = msg.chatId;
+  const sender = msg.senderId;
   const numero = (sender || "").replace(/\D/g, "");
-  const fromMe = msg.key.fromMe;
+  const fromMe = false;
   const botID = (conn.user?.id || "").replace(/\D/g, "");
 
   // Reacción inicial
@@ -28,8 +28,8 @@ const handler = async (msg, { conn, args, command }) => {
 
   // Texto crudo (acepta multi-línea)
   const raw =
-    msg.message?.extendedTextMessage?.text?.trim() ??
-    msg.message?.conversation?.trim() ??
+    msg.text?.trim() ??
+    msg.text?.trim() ??
     args.join(" ").trim();
 
   // Separar por el token 🔥addmascota (case-insensitive)

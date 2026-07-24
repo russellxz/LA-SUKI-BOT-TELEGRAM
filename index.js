@@ -205,9 +205,11 @@ global.buildPluginIndex();
 console.log(chalk.green(`✅ ${global.plugins.length} plugins cargados (${global.pluginIndex.size} comandos)`));
 
 const bot = new TelegramBot(token, {
+  // El polling se enciende más abajo, cuando ya están listos los manejadores:
+  // así no se pierde ningún mensaje que llegue durante el arranque.
   polling: {
     interval: 300,
-    autoStart: true,
+    autoStart: false,
     params: {
       timeout: 30,
       allowed_updates: JSON.stringify([
@@ -216,7 +218,10 @@ const bot = new TelegramBot(token, {
       ])
     }
   },
-  filepath: false
+  filepath: false,
+  // Permite usar un servidor propio de la Bot API (sube archivos de hasta 2 GB).
+  // Se activa con la variable TELEGRAM_API_URL.
+  ...(process.env.TELEGRAM_API_URL ? { baseApiUrl: process.env.TELEGRAM_API_URL.replace(/\/+$/, "") } : {})
 });
 
 const conn = new Conn(bot);
@@ -884,5 +889,8 @@ if (fs.existsSync(RESTART_FILE)) {
   } catch {}
   fs.unlinkSync(RESTART_FILE);
 }
+
+// Ahora sí: a escuchar mensajes (todos los manejadores ya están registrados)
+await bot.startPolling();
 
 console.log(chalk.green("\n✅ Bot en línea. Esperando mensajes...\n"));

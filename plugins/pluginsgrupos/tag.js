@@ -21,11 +21,12 @@ const handler = async (msg, ctx) => {
   for (const a of admins) if (!a.user.is_bot) ids.add(String(a.user.id));
   for (const u of miembrosDe(chatId)) if (!u.bot) ids.add(String(u.id));
 
-  // Menciones invisibles: se etiqueta sin llenar el mensaje de nombres
-  const invisibles = [...ids].map((id) => `<a href="tg://user?id=${id}">⁣</a>`).join("");
+  // Menciones invisibles: etiqueta a todos sin llenar el mensaje de nombres
+  const invisibles = [...ids].map((id) => `@${id}`).join(" ");
 
   await conn.sendMessage(chatId, {
-    text: `📢 *AVISO PARA TODOS*\n\n${aviso}${invisibles}`
+    text: `📢 *AVISO PARA TODOS*\n\n${aviso}\n\n${invisibles}`,
+    mentions: [...ids]
   });
   await conn.react(chatId, msg.message_id, "✅");
 };

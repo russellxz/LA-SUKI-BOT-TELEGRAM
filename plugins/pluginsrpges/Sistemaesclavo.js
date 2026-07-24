@@ -169,14 +169,14 @@ async function procesarRecompensas(conn) {
           const key = dueno.numero;
           if (!negativosPorDueno.has(key)) {
             negativosPorDueno.set(key, {
-              chat: c.origenChat || `${dueno.numero}@s.whatsapp.net`,
+              chat: c.origenChat || String(dueno.numero),
               lines: [],
-              mentions: new Set([`${dueno.numero}@s.whatsapp.net`])
+              mentions: new Set([String(dueno.numero)])
             });
           }
           const pack = negativosPorDueno.get(key);
           pack.lines.push(`• ${texto}`);
-          pack.mentions.add(`${esclavo.numero}@s.whatsapp.net`);
+          pack.mentions.add(String(esclavo.numero));
           // si algún contrato trae origenChat (grupo), úsalo como destino preferido
           if (c.origenChat) pack.chat = c.origenChat;
         }
@@ -218,7 +218,7 @@ async function procesarRecompensas(conn) {
         });
       } catch {
         try {
-          await _lastConnRef.sendMessage(`${duenoNum}@s.whatsapp.net`, {
+          await _lastConnRef.sendMessage(String(duenoNum), {
             text: caption,
             mentions: Array.from(mentions)
           });

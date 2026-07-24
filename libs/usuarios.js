@@ -128,6 +128,15 @@ export function nombreGuardado(userId) {
   return data.users[String(userId)]?.nombre || String(userId);
 }
 
+/** Guarda un nombre suelto (lo usan las menciones de los plugins) */
+export function recordarNombre(userId, nombre) {
+  if (!userId || !nombre) return;
+  const id = String(userId);
+  if (data.users[id]?.nombre === nombre) return;
+  data.users[id] = { ...(data.users[id] || {}), nombre, visto: Date.now() };
+  save();
+}
+
 /** Resuelve un @usuario a su ID numérico (si el bot ya lo vio alguna vez) */
 export function idPorUsername(username) {
   if (!username) return null;
@@ -216,6 +225,7 @@ export default {
   registrarSalida,
   obtenerUsuario,
   nombreGuardado,
+  recordarNombre,
   idPorUsername,
   miembrosDe,
   mensajesDe,

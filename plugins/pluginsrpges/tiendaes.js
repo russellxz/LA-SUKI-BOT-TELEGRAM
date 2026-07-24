@@ -43,8 +43,8 @@ function formatoTiempo(msRestante) {
 }
 
 const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
-  const sender = msg.key.participant || msg.key.remoteJid;
+  const chatId = msg.chatId;
+  const sender = msg.senderId;
   const numero = (sender || "").replace(/\D/g, "");
 
   await conn.sendMessage(chatId, { react: { text: "🛒", key: msg.key } });
@@ -144,11 +144,11 @@ const handler = async (msg, { conn }) => {
     caption += `No hay esclavos disponibles.\n`;
   }
 
-  const mentions = new Set([`${numero}@s.whatsapp.net`]);
-  for (const n of disponibles) mentions.add(`${n}@s.whatsapp.net`);
+  const mentions = new Set([String(numero)]);
+  for (const n of disponibles) mentions.add(String(n));
   for (const c of comprados) {
-    mentions.add(`${c.slave}@s.whatsapp.net`);
-    mentions.add(`${c.owner}@s.whatsapp.net`);
+    mentions.add(String(c.slave));
+    mentions.add(String(c.owner));
   }
 
   await conn.sendMessage(chatId, {

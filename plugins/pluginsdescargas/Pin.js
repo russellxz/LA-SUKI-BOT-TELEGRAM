@@ -93,7 +93,7 @@ async function callPinterestImages(q) {
 
 // ---- command ----
 const handler = async (msg, { conn, text }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
   const pref = global.prefixes?.[0] || ".";
 
   const input = String(text || "").trim();

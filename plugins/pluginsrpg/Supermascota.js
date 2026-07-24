@@ -24,8 +24,8 @@ const TEXTOS_SUPERMASCOTA = [
 ];
 
 const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
-  const sender = msg.key.participant || msg.key.remoteJid;
+  const chatId = msg.chatId;
+  const sender = msg.senderId;
   const numero = (sender || "").replace(/\D/g, "");
 
   await conn.sendMessage(chatId, { react: { text: "🐲", key: msg.key } });

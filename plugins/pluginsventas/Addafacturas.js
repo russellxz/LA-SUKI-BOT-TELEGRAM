@@ -4,21 +4,9 @@ const __dirname = __filename.substring(0, __filename.lastIndexOf('/'));
 // plugins/addfactura.js — ESM-safe + wa.download fallback
 import fs from 'fs';
 import path from 'path';
-import { createCanvas, loadImage } from 'canvas';
+import { createCanvas, loadImage } from '@napi-rs/canvas';
 import FormData from 'form-data';
 import axios from 'axios';
-
-// ——— helpers Baileys (sin importar ESM en top) ———
-async function getDownloader(wa) {
-  if (wa && typeof wa.downloadContentFromMessage === "function")
-    return wa.downloadContentFromMessage;
-  try {
-    const m = await import("@whiskeysockets/baileys");
-    return m.downloadContentFromMessage;
-  } catch {
-    return null;
-  }
-}
 
 // ——— unwrap (efímeros / view-once) ———
 function unwrapMessage(m) {
@@ -38,16 +26,7 @@ function unwrapMessage(m) {
   return n;
 }
 function getQuoted(msg) {
-  const root = unwrapMessage(msg?.message) || {};
-  const ctx =
-    root?.extendedTextMessage?.contextInfo ||
-    root?.imageMessage?.contextInfo ||
-    root?.videoMessage?.contextInfo ||
-    root?.documentMessage?.contextInfo ||
-    root?.audioMessage?.contextInfo ||
-    root?.stickerMessage?.contextInfo ||
-    null;
-  return ctx?.quotedMessage ? unwrapMessage(ctx.quotedMessage) : null;
+  return msg?.quoted || null;
 }
 
 // ——— lógica negocio ———
@@ -73,27 +52,15 @@ function isOwnerByNumber(num) {
   } catch { return false; }
 }
 
-async function subirLogoDesdeCita(msg, wa) {
+async function subirLogoDesdeCita(msg, conn) {
   const quoted = getQuoted(msg);
-  if (!quoted?.imageMessage) throw new Error("Debes *responder a una imagen* que será usada como logo.");
+  if (quoted?.media?.tipo !== "imagen") {
+    throw new Error("Debes *responder a una imagen* que será usada como logo.");
+  }
 
-  const DL = await getDownloader(wa);
-  if (!DL) throw new Error("No puedo descargar la imagen (Baileys no disponible).");
-
-  const stream = await DL(quoted.imageMessage, "image");
-  const tmpDir = path.join(__dirname, "tmp");
-  if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
-  const tmpPath = path.join(tmpDir, `${Date.now()}_logo.jpg`);
-  const ws = fs.createWriteStream(tmpPath);
-  for await (const chunk of stream) ws.write(chunk);
-  ws.end(); await new Promise(r => ws.on("finish", r));
-
-  const form = new FormData();
-  form.append("file", fs.createReadStream(tmpPath));
-  const res = await axios.post("https://cdn.russellxz.click/upload.php", form, { headers: form.getHeaders() });
-  fs.unlinkSync(tmpPath);
-  if (!res.data?.url) throw new Error("No se pudo subir el logo.");
-  return res.data.url;
+  const buffer = await conn.downloadMedia(quoted.media.fileId);
+  const { subirArchivo } = await import("../../libs/subir.js");
+  return subirArchivo(buffer, "logo.jpg");
 }
 
 async function generarFacturaPNG({ logoUrl, datos }) {
@@ -152,12 +119,12 @@ async function generarFacturaPNG({ logoUrl, datos }) {
 }
 
 const handler = async (msg, { conn, args, command, wa }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
   await conn.sendMessage(chatId, { react: { text: "🧾", key: msg.key } });
 
-  const sender = msg.key.participant || msg.key.remoteJid;
+  const sender = msg.senderId;
   const numero = limpiarNumero(sender);
-  const fromMe = !!msg.key.fromMe;
+  const fromMe = !!false;
   const botID = limpiarNumero(conn.user?.id || "");
 
   if (!isOwnerByNumber(numero) && !fromMe && numero !== botID) {
@@ -192,7 +159,7 @@ const handler = async (msg, { conn, args, command, wa }) => {
   }
 
   let logoUrl;
-  try { logoUrl = await subirLogoDesdeCita(msg, wa); }
+  try { logoUrl = await subirLogoDesdeCita(msg, conn); }
   catch (e) {
     await conn.sendMessage(chatId, { react: { text: "❌", key: msg.key } });
     return conn.sendMessage(chatId, { text: `❌ ${e.message}` }, { quoted: msg });
@@ -248,8 +215,8 @@ const handler = async (msg, { conn, args, command, wa }) => {
   };
 
   await safeSend(chatId);
-  const clienteJid = `${numCliente}@s.whatsapp.net`;
-  const vendedorJid = `${numVendedor}@s.whatsapp.net`;
+  const clienteJid = String(numCliente);
+  const vendedorJid = String(numVendedor);
   if (clienteJid !== chatId) await safeSend(clienteJid);
   if (vendedorJid !== chatId) await safeSend(vendedorJid);
 

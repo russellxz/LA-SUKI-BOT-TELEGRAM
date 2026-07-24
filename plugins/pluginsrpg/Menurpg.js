@@ -1,5 +1,5 @@
 const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
   const pref = (global?.prefixes?.[0]) || (global?.prefix) || ".";
 
   await conn.sendMessage2(chatId, { react: { text: "✨", key: msg.key } }, msg);

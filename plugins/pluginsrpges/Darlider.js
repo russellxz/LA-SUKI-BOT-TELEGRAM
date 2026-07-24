@@ -16,10 +16,10 @@ function isOwnerNumber(numero, conn) {
 }
 
 const handler = async (msg, { conn, args }) => {
-  const chatId = msg.key.remoteJid;
-  const sender = msg.key.participant || msg.key.remoteJid;
+  const chatId = msg.chatId;
+  const sender = msg.senderId;
   const numero = (sender || "").replace(/\D/g, "");
-  const fromMe = !!msg.key.fromMe;
+  const fromMe = !!false;
 
   // Permisos (igual que addowner)
   if (!isOwnerNumber(numero, conn) && !fromMe) {
@@ -34,7 +34,7 @@ const handler = async (msg, { conn, args }) => {
 
   // Obtener objetivo: número por arg, respuesta o mención
   let objetivoNum = (args?.[0] || "").replace(/\D/g,"");
-  const ctx = msg.message?.extendedTextMessage?.contextInfo;
+  const ctx = msg.quoted;
   if (!objetivoNum && ctx?.participant) objetivoNum = ctx.participant.replace(/\D/g,"");
   if (!objetivoNum && ctx?.mentionedJid?.length) objetivoNum = ctx.mentionedJid[0].replace(/\D/g,"");
 
@@ -115,7 +115,7 @@ const handler = async (msg, { conn, args }) => {
 👥 Miembros: ${clan.miembros.length}
 
 Si deseas cambiarlo de nuevo, repite *.darlider* con otro usuario.`,
-    mentions: [`${usuario.numero}@s.whatsapp.net`],
+    mentions: [String(usuario.numero)],
     quoted: msg
   });
 

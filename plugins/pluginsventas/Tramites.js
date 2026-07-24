@@ -1,7 +1,7 @@
 import fs from 'fs';
 
 const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
   const filePath = "./ventas365.json";
 
   const data = fs.existsSync(filePath) ? JSON.parse(fs.readFileSync(filePath)) : {};

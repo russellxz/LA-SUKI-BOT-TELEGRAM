@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 
 const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
+  const chatId = msg.chatId;
 
   // Reacción inicial
   await conn.sendMessage(chatId, { react: { text: "🏦", key: msg.key } });
@@ -42,7 +42,7 @@ const handler = async (msg, { conn }) => {
     const h1 = p.habilidades?.[0]?.nombre || "-";
     const h2 = p.habilidades?.[1]?.nombre || "-";
     const deNumero = p.decomisadoDe?.numero ? String(p.decomisadoDe.numero) : null;
-    const deTag = deNumero ? `${deNumero}@s.whatsapp.net` : null;
+    const deTag = deNumero ? String(deNumero) : null;
     if (deTag) mentions.push(deTag);
 
     texto +=

@@ -1,5 +1,5 @@
 // plugins/Creador.js — Contacto del creador del bot
-import { nombreGuardado } from "../libs/usuarios.js";
+import { mencion } from "../libs/grupo.js";
 
 const handler = async (msg, { conn }) => {
   const chatId = msg.chatId;
@@ -7,7 +7,7 @@ const handler = async (msg, { conn }) => {
 
   const duenos = global.owner
     .map((o) => (Array.isArray(o) ? o : [o]))
-    .map(([id, nombre]) => `• <a href="tg://user?id=${id}">${nombre || nombreGuardado(id)}</a>`)
+    .map(([id, nombre]) => `• ${mencion(id, nombre)}`)
     .join("\n");
 
   await conn.sendMessage(chatId, {
