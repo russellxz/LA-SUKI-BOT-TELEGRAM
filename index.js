@@ -24,7 +24,7 @@ import TelegramBot from "node-telegram-bot-api";
 
 import { Conn } from "./libs/telegram.js";
 import { normalizarMensaje } from "./libs/mensajes.js";
-import { registrarUsuario, registrarEntrada, registrarSalida, nombreDe } from "./libs/usuarios.js";
+import { registrarUsuario, registrarEntrada, registrarSalida, registrarChat, olvidarChat, nombreDe } from "./libs/usuarios.js";
 import { getConfig, setConfig, getAllConfigs } from "./db.js";
 import "./config.js";
 
@@ -326,6 +326,7 @@ async function manejarMensaje(raw) {
   if (msg.esBot) return;
 
   registrarUsuario(msg.from, chatId, true);
+  registrarChat(msg.chat);
 
   const texto = msg.text || "";
   const prefijoUsado = global.prefixes.find((p) => texto.startsWith(p));
@@ -764,6 +765,7 @@ bot.on("new_chat_members", async (raw) => {
         // El bot fue agregado a un grupo
         console.log(chalk.green(`➕ Agregado al grupo: ${raw.chat.title} (${chatId})`));
         presentados.delete(String(chatId));
+        registrarChat(raw.chat);
         await presentarse(chatId);
         continue;
       }
@@ -782,6 +784,7 @@ bot.on("left_chat_member", async (raw) => {
     if (!user) return;
     if (String(user.id) === String(conn.user.id)) {
       console.log(chalk.yellow(`➖ Me sacaron del grupo: ${raw.chat.title} (${chatId})`));
+      olvidarChat(chatId);
       return;
     }
     registrarSalida(user.id, chatId);

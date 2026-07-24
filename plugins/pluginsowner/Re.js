@@ -1,52 +1,41 @@
-import fs from 'fs';
-import path from 'path';
+// plugins/pluginsowner/Re.js — Restringir un comando en este chat
+import { agregarALista, listaChat } from "../../libs/grupo.js";
 
-const handler = async (msg, { conn, args }) => {
-  const chatId = msg.key.remoteJid;
-  const sender = msg.key.participant || msg.key.remoteJid;
-  const senderClean = sender.replace(/[^0-9]/g, "");
-  const isFromMe = msg.key.fromMe;
-  const isOwner = global.owner.some(([id]) => id === senderClean);
+const handler = async (msg, ctx) => {
+  const { conn, args, usedPrefix, command, isOwner } = ctx;
+  const chatId = msg.chatId;
 
-  if (!isOwner && !isFromMe) {
+  if (!isOwner) {
     return conn.sendMessage(chatId, {
-      text: "❌ Solo el *owner* o el *bot mismo* puede restringir comandos.",
+      text: "❌ Solo el *dueño del bot* puede restringir comandos."
     }, { quoted: msg });
   }
 
-  if (!args[0]) {
+  const objetivo = String(args[0] || "").toLowerCase().replace(/^[./#]/, "");
+  if (!objetivo) {
+    const actuales = listaChat(chatId, "restringidos");
     return conn.sendMessage(chatId, {
-      text: "⚠️ Usa: *re [comando]* para restringirlo en este grupo.",
+      text:
+        `⚠️ Usa: *${usedPrefix}${command} <comando>* para restringirlo aquí.\n\n` +
+        (actuales.length
+          ? `*Restringidos ahora:*\n${actuales.map((c) => `• ${c}`).join("\n")}`
+          : "_Ahora mismo no hay comandos restringidos en este chat._")
     }, { quoted: msg });
   }
 
-  const comando = args[0].toLowerCase();
-  const welcomePath = path.resolve("setwelcome.json");
-
-  const data = fs.existsSync(welcomePath)
-    ? JSON.parse(fs.readFileSync(welcomePath, "utf-8"))
-    : {};
-
-  data[chatId] = data[chatId] || {};
-  data[chatId].restringidos = data[chatId].restringidos || [];
-
-  if (data[chatId].restringidos.includes(comando)) {
+  if (!agregarALista(chatId, "restringidos", objetivo)) {
     return conn.sendMessage(chatId, {
-      text: `⚠️ El comando *${comando}* ya está restringido en este grupo.`,
+      text: `⚠️ El comando *${objetivo}* ya estaba restringido aquí.`
     }, { quoted: msg });
   }
 
-  data[chatId].restringidos.push(comando);
-  fs.writeFileSync(welcomePath, JSON.stringify(data, null, 2));
-
+  await conn.react(chatId, msg.message_id, "✅");
   await conn.sendMessage(chatId, {
-    react: { text: "🔒", key: msg.key }
-  });
-
-  return conn.sendMessage(chatId, {
-    text: `✅ El comando *${comando}* ha sido *restringido* en este grupo.`,
+    text:
+      `🔒 El comando *${objetivo}* quedó *restringido* en este chat.\n\n` +
+      `Solo los admins y el dueño podrán usarlo.\n_Para liberarlo: ${usedPrefix}unre ${objetivo}_`
   }, { quoted: msg });
 };
 
-handler.command = ["re"];
+handler.command = ["re", "restringir"];
 export default handler;

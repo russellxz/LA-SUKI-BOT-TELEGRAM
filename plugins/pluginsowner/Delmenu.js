@@ -1,74 +1,32 @@
-// plugins/delmenu.js
-import fs from 'fs';
-import path from 'path';
+// plugins/pluginsowner/Delmenu.js — Volver a el menú principal original
+import fs from "fs";
+import path from "path";
 
-const handler = async (msg, { conn }) => {
-  const chatId = msg.key.remoteJid;
-  const sender = msg.key.participant || msg.key.remoteJid;
-  const numero = sender.replace(/\D/g, "");
-  const fromMe = !!msg.key.fromMe;
-  const botID = (conn.user?.id || "").replace(/\D/g, "");
+const ARCHIVO = path.resolve("./setmenu.json");
 
-  // 🧹 Reacción inicial
-  try { await conn.sendMessage(chatId, { react: { text: "🧹", key: msg.key } }); } catch {}
+const handler = async (msg, ctx) => {
+  const { conn, isOwner } = ctx;
+  const chatId = msg.chatId;
 
-  // 🔐 Permiso: solo owners o el bot
-  const isOwner = (typeof global.isOwner === "function")
-    ? global.isOwner(numero)
-    : (Array.isArray(global.owner) && global.owner.some(([id]) => id === numero));
-
-  if (!isOwner && !fromMe && numero !== botID) {
-    try { await conn.sendMessage(chatId, { react: { text: "❌", key: msg.key } }); } catch {}
-    return conn.sendMessage(chatId, {
-      text: "🚫 Solo los *owners* o el *bot* pueden usar este comando."
-    }, { quoted: msg });
-  }
-
-  const filePath = path.resolve("./setmenu.json");
-
-  if (!fs.existsSync(filePath)) {
-    try { await conn.sendMessage(chatId, { react: { text: "ℹ️", key: msg.key } }); } catch {}
-    return conn.sendMessage(chatId, { text: "ℹ️ No hay *menú personalizado* guardado." }, { quoted: msg });
+  if (!isOwner) {
+    return conn.sendMessage(chatId, { text: "⛔ *Solo el dueño del bot puede usar este comando.*" }, { quoted: msg });
   }
 
   let data = {};
   try {
-    data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-  } catch {
-    // Si está corrupto, eliminar archivo
-    try { fs.unlinkSync(filePath); } catch {}
-    try { await conn.sendMessage(chatId, { react: { text: "✅", key: msg.key } }); } catch {}
-    return conn.sendMessage(chatId, { text: "✅ Menú personalizado eliminado." }, { quoted: msg });
+    if (fs.existsSync(ARCHIVO)) data = JSON.parse(fs.readFileSync(ARCHIVO, "utf-8") || "{}");
+  } catch {}
+
+  if (!data.menu) {
+    return conn.sendMessage(chatId, { text: "ℹ️ Ese menú no está personalizado, ya usa el original." }, { quoted: msg });
   }
 
-  let changed = false;
-  if (typeof data === "object" && data) {
-    if ("texto" in data) { delete data.texto; changed = true; }
-    if ("imagen" in data) { delete data.imagen; changed = true; }
-  }
+  delete data.menu;
+  fs.writeFileSync(ARCHIVO, JSON.stringify(data, null, 2));
 
-  if (!changed) {
-    // No había claves de menú personalizadas
-    if (!data || Object.keys(data).length === 0) {
-      try { fs.unlinkSync(filePath); } catch {}
-    }
-    try { await conn.sendMessage(chatId, { react: { text: "ℹ️", key: msg.key } }); } catch {}
-    return conn.sendMessage(chatId, { text: "ℹ️ No había *menú personalizado* que borrar." }, { quoted: msg });
-  }
-
-  // Si quedó vacío, borrar archivo; si no, guardar cambios
-  if (Object.keys(data).length === 0) {
-    try { fs.unlinkSync(filePath); } catch {}
-  } else {
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-  }
-
-  try { await conn.sendMessage(chatId, { react: { text: "✅", key: msg.key } }); } catch {}
-  return conn.sendMessage(chatId, { text: "✅ *Menú personalizado eliminado* correctamente." }, { quoted: msg });
+  await conn.react(chatId, msg.message_id, "✅");
+  await conn.sendMessage(chatId, { text: "🗑️ *Listo.* Volví a el menú principal original." }, { quoted: msg });
 };
 
 handler.command = ["delmenu"];
-handler.help = ["delmenu"];
-handler.tags = ["menu"];
-
 export default handler;

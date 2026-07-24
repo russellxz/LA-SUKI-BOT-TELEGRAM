@@ -35,6 +35,7 @@ try {
 data.users = data.users || {};
 data.chats = data.chats || {};
 data.usernames = data.usernames || {};
+data.grupos = data.grupos || {};
 
 let timer = null;
 function save() {
@@ -165,6 +166,47 @@ export function reiniciarConteo(chatId) {
 /** Total de mensajes contados en un chat */
 export function totalMensajes(chatId) {
   return miembrosDe(chatId).reduce((acc, u) => acc + u.msgs, 0);
+}
+
+/* ───────────── Registro de chats ─────────────
+ * Telegram no deja preguntar "¿en qué grupos estoy?", así que el bot va
+ * anotando cada grupo donde lo escriben. De ahí salen .vergrupos y .bc
+ */
+
+/** Guarda/actualiza un chat donde está el bot */
+export function registrarChat(chat) {
+  if (!chat?.id) return;
+  const id = String(chat.id);
+  const prev = data.grupos[id] || {};
+  data.grupos[id] = {
+    id,
+    titulo: chat.title || chat.first_name || prev.titulo || "Chat",
+    tipo: chat.type || prev.tipo || "private",
+    usuario: chat.username || prev.usuario || null,
+    desde: prev.desde || Date.now(),
+    visto: Date.now()
+  };
+  save();
+}
+
+/** Olvida un chat (por ejemplo, cuando sacan al bot del grupo) */
+export function olvidarChat(chatId) {
+  const id = String(chatId);
+  if (data.grupos[id]) {
+    delete data.grupos[id];
+    save();
+  }
+}
+
+/**
+ * Chats conocidos.
+ * @param {"grupo"|"privado"|"todos"} tipo
+ */
+export function listarChats(tipo = "todos") {
+  const todos = Object.values(data.grupos);
+  if (tipo === "grupo") return todos.filter((c) => c.tipo === "group" || c.tipo === "supergroup");
+  if (tipo === "privado") return todos.filter((c) => c.tipo === "private");
+  return todos;
 }
 
 export default {
