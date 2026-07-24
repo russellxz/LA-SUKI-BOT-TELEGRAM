@@ -25,7 +25,7 @@ function pickBestImage(it) {
   );
 }
 
-// descarga imagen a buffer (para mandarla por whatsapp)
+// descarga la imagen a un buffer
 async function downloadImageBuffer(url) {
   const r = await axios.get(url, {
     responseType: "arraybuffer",

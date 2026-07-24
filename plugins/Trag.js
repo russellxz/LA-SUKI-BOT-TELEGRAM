@@ -190,7 +190,7 @@ const handler = async (msg, { conn, args }) => {
   texto += `📊 Paquetes restantes en guar.json: *${restantes}*\n\n`;
 
   if (detalles.length > 0) {
-    // Si hay muchos paquetes, recortar para no superar límites de WhatsApp
+    // Si hay muchos paquetes, recortar para no superar el límite de Telegram
     const maxLineas = 20;
     if (detalles.length <= maxLineas) {
       texto += `*Detalles:*\n${detalles.join("\n")}`;

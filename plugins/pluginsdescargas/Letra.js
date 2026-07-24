@@ -83,7 +83,7 @@ Ej: ${pref}${command || "letra"} yemil difícil amarte`,
 
 `;
 
-    // WhatsApp suele cortar mensajes muy largos: dividimos en partes seguras
+    // Telegram corta los mensajes muy largos: se dividen en partes seguras
     const MAX_CHUNK = 3500;
 
     const fullText = header + lyrics;
