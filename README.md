@@ -104,11 +104,70 @@ Para cambiarlos (solo el dueño):
 
 ```
 .setprefix . # !        → deja activos . # ! y /
+.setprefix 🔥 ✨         → sí, también valen emojis: 🔥menu
 .setprefix reset        → vuelve a los de siempre
 .setprefix              → muestra los actuales
 ```
 
+Se aceptan símbolos y emojis (hasta 4 caracteres visibles). **No** se aceptan letras
+ni números, porque entonces cualquier palabra suelta dispararía comandos.
+
 El cambio es inmediato y se guarda en `prefijos.json`.
+
+---
+
+## 👑 Dueños y quién puede usar el bot
+
+### Hacerte dueño la primera vez
+
+Al arrancar sin dueños, la consola te da un código:
+
+```
+⚠️  Todavía no hay ningún dueño configurado.
+   Escríbele al bot por privado:  .soyowner 483920
+```
+
+Le mandas ese comando **por privado** al bot y quedas registrado como dueño en
+`owner.json`. El código solo sirve una vez: en cuanto hay un dueño, deja de existir.
+
+### Agregar más dueños
+
+Con el comando `.addowner`, de cualquiera de estas tres formas:
+
+```
+.addowner                    (respondiendo a un mensaje suyo)
+.addowner @usuario
+.addowner 123456789          (su ID; lo ve con .id)
+```
+
+Para quitarlo: `.delowner` (igual). No se puede quitar al único dueño que quede.
+
+### Quién puede escribirle por privado
+
+Por seguridad, **en privado el bot solo le responde a los dueños y a quien esté
+en la lista de acceso**. Así, si alguien encuentra tu bot por su @usuario, no
+puede usarlo por su cuenta. En los **grupos no aplica**: ahí responde a todos.
+
+```
+.addlista        (respondiendo, con @usuario o con su ID)  → le das acceso al privado
+.dellista        → se lo quitas
+.addlista        (sin nada) → muestra la lista completa
+```
+
+Los dueños siempre tienen acceso, estén o no en la lista.
+
+> Si todavía no hay ningún dueño configurado, el filtro no se aplica: si no, no
+> podrías mandar `.soyowner` para reclamar el bot.
+
+### Otros controles de acceso
+
+| Comando | Qué hace |
+|---|---|
+| `.modoprivado on` | Solo los dueños pueden usar el bot, también en grupos |
+| `.apagado on` | Apaga el bot en ese chat (solo el dueño lo prende) |
+| `.ban` / `.unban` | Prohíbe a alguien usar el bot en ese grupo |
+| `.modoadmins on` | En ese grupo, solo los admins usan comandos |
+| `.re` / `.unre` | Restringe un comando concreto en un chat |
 
 ---
 
@@ -137,7 +196,7 @@ Escribe `.menu` para el menú completo o `.allmenu` para la lista de todos.
 | `.configrupo` · `.infogrupo` · `.id` | Información |
 
 ### 👑 Owner
-`.addowner` · `.delowner` · `.bc` · `.bc2` · `.vergrupos` · `.botname` · `.carga` · `.rest` · `.modoprivado` · `.apagado` · `.re` / `.unre` · `.setmenu` · `.git` · `.addco` / `.delco`
+`.addowner` · `.delowner` · `.addlista` (acceso al privado) · `.dellista` · `.bc` · `.bc2` · `.vergrupos` · `.botname` · `.carga` · `.rest` · `.modoprivado` · `.apagado` · `.re` / `.unre` · `.setmenu` · `.git` · `.addco` / `.delco`
 
 ### 🎨 Stickers
 `.s` (foto/video → sticker) · `.sks` (54 efectos con botones) · `.toimg` · `.tovideo` · `.qc` · `.aniemoji` · `.mixemoji` · `.guarsk` / `.versk` / `.sendsk` / `.delsk`

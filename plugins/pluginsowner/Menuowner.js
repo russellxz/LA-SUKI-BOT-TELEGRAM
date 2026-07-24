@@ -38,7 +38,8 @@ const handler = async (msg, ctx) => {
 ╭─────◆
 │ ${p}addowner — agregar dueño
 │ ${p}delowner — quitar dueño
-│ ${p}addlista / ${p}dellista — VIP
+│ ${p}addlista — permitir privado
+│ ${p}dellista — quitar permiso
 ╰─────◆
 
 🤖 *EL BOT*

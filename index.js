@@ -288,6 +288,21 @@ function listaDeChat(chatId, clave) {
 }
 global.listaDeChat = listaDeChat;
 
+/**
+ * Lista de usuarios autorizados a usar el bot por privado (.addlista).
+ * Se guarda en setwelcome.json bajo la clave "lista", igual que antes.
+ */
+function leerListaPrivada() {
+  const estado = leerEstado();
+  return Array.isArray(estado.lista) ? estado.lista.map(String) : [];
+}
+global.leerListaPrivada = leerListaPrivada;
+
+function enListaPrivada(userId) {
+  return leerListaPrivada().includes(String(userId));
+}
+global.enListaPrivada = enListaPrivada;
+
 const activo = (valor) => {
   const v = String(valor ?? "").trim().toLowerCase();
   return v === "1" || v === "on" || v === "true" || v === "si" || v === "sí";
@@ -464,20 +479,30 @@ async function bloqueadoPorFiltros({ msg, comando, esOwner, esAdmin }) {
   }
   if (!esOwner && listaDeChat("global", "banned").includes(String(senderId))) return true;
 
-  // 2) Bot apagado en este grupo (solo el dueño puede prenderlo)
+  // 2) EN PRIVADO el bot solo atiende a los dueños y a los de la lista (.addlista).
+  //    Así cualquiera que lo encuentre por su @usuario no puede usarlo por su
+  //    cuenta. Esto aplica siempre, aunque el modo privado esté apagado.
+  if (msg.isPrivate && global.owner.length && !esOwner && !enListaPrivada(senderId)) {
+    console.log(
+      chalk.gray(`⛔ Privado bloqueado · ${msg.senderName} (${senderId}) · ${comando}`)
+    );
+    return true;
+  }
+
+  // 3) Bot apagado en este grupo (solo el dueño puede prenderlo)
   if (activo(getConfig(chatId, "apagado")) && !esOwner && comando !== "on" && comando !== "prender") {
     return true;
   }
 
-  // 3) Modo privado global: solo owners
+  // 4) Modo privado global: en grupos, solo los dueños
   if (activo(getConfig("global", "modoprivado")) && !esOwner) return true;
 
-  // 4) Modo solo-admins del grupo
+  // 5) Modo solo-admins del grupo
   if (msg.isGroup && activo(getConfig(chatId, "modoadmins")) && !esAdmin && !esOwner) {
     return true;
   }
 
-  // 5) Comandos restringidos en este grupo (.re / .unre)
+  // 6) Comandos restringidos en este grupo (.re / .unre)
   const restringidos = listaDeChat(chatId, "restringidos");
   if (restringidos.includes(comando) && !esAdmin && !esOwner) {
     await conn.sendMessage(chatId, {

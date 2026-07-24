@@ -30,15 +30,26 @@ const handler = async (msg, { conn, args, usedPrefix, command, isOwner }) => {
     }, { quoted: msg });
   }
 
-  // Se aceptan solo símbolos de 1 o 2 caracteres (nada de letras ni números)
-  const nuevos = [...new Set(args.filter((a) => a.length >= 1 && a.length <= 2 && !/[\p{L}\p{N}]/u.test(a)))];
+  // Se aceptan símbolos y emojis (hasta 4 caracteres visibles), pero no
+  // letras ni números: si no, cualquier palabra suelta dispararía comandos.
+  const esPrefijoValido = (p) => {
+    const visibles = [...p].length;              // cuenta emojis como 1
+    if (visibles < 1 || visibles > 4) return false;
+    if (/[\p{L}\p{N}]/u.test(p)) return false;   // nada de letras ni números
+    if (/\s/.test(p)) return false;               // ni espacios
+    return true;
+  };
+
+  const nuevos = [...new Set(args.filter(esPrefijoValido))];
+  const rechazados = args.filter((a) => !esPrefijoValido(a));
 
   if (!nuevos.length) {
     return conn.sendMessage(chatId, {
       text:
         "🔣 *Prefijos del bot*\n\n" +
         `Ahora mismo respondo a: ${global.prefixes.map((p) => `「 ${p} 」`).join(" ")}\n\n` +
-        `*Para cambiarlos:*\n${usedPrefix}${command} . # !\n\n` +
+        `*Para cambiarlos:*\n${usedPrefix}${command} . # !\n` +
+        `También valen emojis: *${usedPrefix}${command} 🔥 ✨*\n\n` +
         `*Para dejarlos como estaban:*\n${usedPrefix}${command} reset\n\n` +
         "_El prefijo / siempre queda activo: es el que usa Telegram para su menú de comandos._"
     }, { quoted: msg });
@@ -54,6 +65,9 @@ const handler = async (msg, { conn, args, usedPrefix, command, isOwner }) => {
     text:
       `✅ *Prefijos actualizados:* ${nuevos.map((p) => `「 ${p} 」`).join(" ")}\n\n` +
       `Pruébalo: *${nuevos[0]}menu*\n\n` +
+      (rechazados.length
+        ? `⚠️ No acepté: ${rechazados.map((r) => `\`${r}\``).join(" ")}\n_Solo símbolos o emojis, sin letras ni números._\n\n`
+        : "") +
       "_El cambio es inmediato y se guarda para los próximos reinicios._"
   }, { quoted: msg });
 };
