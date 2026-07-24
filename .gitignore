@@ -1,10 +1,13 @@
 node_modules/
 package-lock.json
-sessions/
+token.json
+.env
+database/
+guar_media/
 tmp/*
 !tmp/.gitkeep
 *.log
 .DS_Store
-activoss.json
-subbots/
-subplugins/tmp/
+lastRestarter.json
+activos.db
+antidelete.db
