@@ -4,7 +4,7 @@
 // bot te devuelve el sticker ya convertido al formato de Telegram.
 import fs from "fs";
 import path from "path";
-import { ffmpeg, hayFfmpeg, imageToWebp } from "../libs/fuctions.js";
+import { ffmpeg, hayFfmpeg, imageToWebp, videoToWebm } from "../libs/fuctions.js";
 
 const EFECTOS = {
   normal: { label: "🖼️ Normal", filtro: null },
@@ -103,17 +103,14 @@ async function crearSticker(buffer, efecto, esVideo, ext) {
 
   const cadena = info.filtro ? `${info.filtro},${filtroBase}` : filtroBase;
 
-  // Animado: siempre WEBM (VP9)
+  // Animado: siempre WEBM (VP9). videoToWebm ajusta la calidad hasta que el
+  // sticker entra en los 256 KB que acepta Telegram sin quedar borroso.
   if (esVideo || info.animado) {
-    const args = [
-      "-t", "2.9", "-an",
-      "-c:v", "libvpx-vp9", "-b:v", "256k", "-crf", "42",
-      "-vf", `${cadena},fps=24`,
-      "-pix_fmt", "yuva420p", "-f", "webm"
-    ];
-    // Si la entrada es una foto hay que repetirla para que dure
-    const previos = esVideo ? [] : ["-loop", "1"];
-    const data = await ffmpeg(buffer, args, ext, "webm", previos);
+    const data = await videoToWebm(buffer, ext, {
+      filtro: info.filtro || "",
+      // Si la entrada es una foto hay que repetirla para que dure
+      previos: esVideo ? [] : ["-loop", "1"]
+    });
     return { data, nombre: "sticker.webm" };
   }
 

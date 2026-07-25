@@ -3,7 +3,10 @@ import { descargarFacebook, descargarBuffer } from "../../libs/descargas.js";
 
 const handler = async (msg, { conn, text, usedPrefix, command }) => {
   const chatId = msg.chatId;
-  const url = (text || "").trim();
+  let url = (text || "").trim().replace(/^<|>$/g, "");
+
+  // Igual que el bot de WhatsApp: se acepta el enlace aunque venga sin https://
+  if (/^(www\.)?(facebook\.com|fb\.watch|fb\.me)\//i.test(url)) url = `https://${url.replace(/^\/+/, "")}`;
 
   if (!url || !/facebook\.com|fb\.watch|fb\.me/i.test(url)) {
     return conn.sendMessage(chatId, {
@@ -19,16 +22,22 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
 
   try {
     const datos = await descargarFacebook(url);
-    if (!datos.video) throw new Error("No encontré el video en ese enlace");
 
-    let buffer, tam;
-    try {
-      ({ buffer, tam } = await descargarBuffer(datos.video));
-    } catch (e) {
-      // Si el proxy de la API falla, se prueba con el enlace directo
-      if (!datos.directo || datos.directo === datos.video) throw e;
-      ({ buffer, tam } = await descargarBuffer(datos.directo));
+    // Primero el endpoint de la API (ya sirve el archivo listo) y, si falla,
+    // el enlace directo del CDN de Facebook.
+    const candidatos = [datos.video, datos.directo].filter((v, i, a) => v && a.indexOf(v) === i);
+
+    let buffer, tam, ultimo;
+    for (const enlace of candidatos) {
+      try {
+        ({ buffer, tam } = await descargarBuffer(enlace));
+        break;
+      } catch (e) {
+        ultimo = e;
+        console.log("⚠️ fb:", e.message);
+      }
     }
+    if (!buffer) throw ultimo || new Error("No pude bajar el video");
 
     if (aviso?.message_id) await conn.deleteMessage(chatId, aviso.message_id);
 

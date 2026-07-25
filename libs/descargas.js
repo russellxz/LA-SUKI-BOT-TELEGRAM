@@ -17,7 +17,7 @@ import axios from "axios";
 
 export const API_BASE = (process.env.API_BASE || "https://api-sky.ultraplus.click").replace(/\/+$/, "");
 export const API_KEY = process.env.API_KEY || "Russellxz";
-export const NEOXR_BASE = "https://api.neoxr.eu/api";
+export const NEOXR_BASE = (process.env.NEOXR_BASE || "https://api.neoxr.eu/api").replace(/\/+$/, "");
 export const NEOXR_KEY = process.env.NEOXR_KEY || "russellxz";
 
 const TIEMPO = 180000;
@@ -47,8 +47,23 @@ const esApiPropia = (url = "") => {
 
 const esNeoxr = (url = "") => /neoxr\./i.test(String(url));
 
+/** Página desde la que "viene" la descarga (algunos CDN la exigen) */
+function refererDe(url = "") {
+  const u = String(url);
+  if (/cdninstagram|fbcdn\.net.*instagram|instagram\./i.test(u)) return "https://www.instagram.com/";
+  if (/fbcdn\.net|facebook\.|fb\.watch/i.test(u)) return "https://www.facebook.com/";
+  if (/tiktokcdn|tiktok\./i.test(u)) return "https://www.tiktok.com/";
+  if (/twimg\.com|twitter\.|x\.com/i.test(u)) return "https://twitter.com/";
+  return "";
+}
+
 function respuestaOk(data) {
-  return data && (data.status === true || data.status === "true" || data.ok === true || data.success === true);
+  return Boolean(
+    data &&
+      (data.status === true || data.status === "true" ||
+        data.ok === true || data.success === true ||
+        data.code === 200 || data.status === 200)
+  );
 }
 
 /** Completa las rutas relativas que devuelve la API */
@@ -133,12 +148,16 @@ export async function neoxr(ruta, params = {}) {
  *
  * @returns {Promise<{ buffer: Buffer, tipo: string, tam: number }>}
  */
-export async function descargarBuffer(url, { maximo = MAX_SUBIDA } = {}) {
+export async function descargarBuffer(url, { maximo = MAX_SUBIDA, referer = "" } = {}) {
   if (!url) throw new Error("No hay enlace de descarga");
 
   const headers = { "User-Agent": NAVEGADOR, Accept: "*/*" };
   if (esApiPropia(url)) headers.apikey = API_KEY;
   if (esNeoxr(url)) headers.apikey = NEOXR_KEY;
+
+  // Los CDN de Instagram y Facebook cortan la descarga si no viene el Referer
+  const deDonde = referer || refererDe(url);
+  if (deDonde) headers.Referer = deDonde;
 
   const r = await axios.get(url, {
     responseType: "arraybuffer",
@@ -277,40 +296,152 @@ export async function descargarTiktok(url) {
     titulo: r.title || "TikTok",
     autor: r.author?.nickname || r.author?.name || r.author || "",
     duracion: r.duration || 0,
-    video: urlCompleta(media.video || media.play || media.nowatermark || ""),
+    video: urlCompleta(
+      media.video || media.video_hd || media.play || media.nowatermark || media.hd || media.sd || buscarEnlace(media)
+    ),
     audio: urlCompleta(media.audio || media.music || ""),
     portada: urlCompleta(media.cover || r.thumbnail || ""),
     imagenes: media.images || r.images || []
   };
 }
 
+/**
+ * Facebook.
+ *
+ * La API devuelve el video en `result.media.video_hd` y `result.media.video_sd`
+ * (así lo leía el bot de WhatsApp). Antes aquí solo se buscaba `hd`/`sd`/`video`
+ * y por eso siempre salía "No encontré el video en ese enlace".
+ */
 export async function descargarFacebook(url) {
   const r = await apiPost("/facebook", { url });
   const media = r.media || r;
-  const directo = media.hd || media.sd || media.video || media.url || buscarEnlace(r);
+
+  const directo =
+    media.video_hd || media.video_sd ||
+    media.hd || media.sd ||
+    media.video || media.url ||
+    buscarEnlace(r, ["video_hd", "video_sd", "hd", "sd", "video", "dl_download", "download", "url", "link"]);
+
+  if (!directo) throw new Error("La API no devolvió ningún video (puede ser privado o un reel protegido)");
 
   // La API tiene un endpoint propio que sirve el archivo ya listo
-  const porProxy = directo
-    ? `${API_BASE}/facebook/dl?type=video&src=${encodeURIComponent(directo)}&filename=${encodeURIComponent("video.mp4")}&download=1`
-    : "";
+  const porProxy = `${API_BASE}/facebook/dl?type=video&src=${encodeURIComponent(directo)}&filename=${encodeURIComponent("video.mp4")}&download=1`;
 
   return {
     titulo: r.title || "Facebook",
-    video: porProxy || urlCompleta(directo),
+    miniatura: urlCompleta(r.thumbnail || r.image || ""),
+    video: porProxy,
     directo: urlCompleta(directo)
   };
 }
 
+/* ─────────────────────── Instagram ─────────────────────── */
+
+const RE_URL = /^https?:\/\//i;
+
+/** Descarta enlaces que no son el archivo (perfil, la propia publicación...) */
+function enlaceInutil(url = "", clave = "") {
+  const u = String(url);
+  const k = String(clave).toLowerCase();
+  if (!RE_URL.test(u)) return true;
+  if (/instagram\.com\/(p|reel|tv|stories)\//i.test(u)) return true;
+  return ["profile", "avatar", "owner", "user_pic", "profile_pic"].some((x) => k.includes(x));
+}
+
+const esMiniatura = (clave = "") =>
+  ["thumb", "thumbnail", "cover"].some((x) => String(clave).toLowerCase().includes(x));
+
+/** Adivina si un enlace es video o imagen */
+function tipoDeMedia(url = "", mime = "", clave = "") {
+  const u = String(url).toLowerCase();
+  const m = String(mime).toLowerCase();
+  const k = String(clave).toLowerCase();
+  if (m.startsWith("video/")) return "video";
+  if (m.startsWith("image/")) return "imagen";
+  if (k.includes("video")) return "video";
+  if (k.includes("image") || k.includes("photo") || k.includes("display")) return "imagen";
+  if (/\.(mp4|mov|webm|m4v)(\?|#|$)/i.test(u)) return "video";
+  if (/\.(jpg|jpeg|png|webp)(\?|#|$)/i.test(u)) return "imagen";
+  return "video";
+}
+
+/**
+ * Recorre toda la respuesta de la API y saca los archivos.
+ * Es el mismo recorrido que hacía el bot de WhatsApp: las APIs de Instagram
+ * devuelven el JSON con formas muy distintas según el tipo de publicación.
+ */
+export function extraerMediosInstagram(datos, maximo = 10) {
+  const encontrados = [];
+
+  const recorrer = (valor, clave = "", hondura = 0) => {
+    if (hondura > 7 || valor == null) return;
+
+    if (typeof valor === "string") {
+      if (RE_URL.test(valor) && !enlaceInutil(valor, clave)) {
+        encontrados.push({ url: valor, tipo: tipoDeMedia(valor, "", clave), miniatura: esMiniatura(clave) });
+      }
+      return;
+    }
+
+    if (Array.isArray(valor)) {
+      for (const item of valor) recorrer(item, clave, hondura + 1);
+      return;
+    }
+
+    if (typeof valor !== "object") return;
+
+    const posible =
+      valor.url || valor.dl || valor.link || valor.download || valor.downloadUrl ||
+      valor.download_url || valor.media || valor.src || valor.video || valor.image ||
+      valor.display_url || "";
+
+    if (typeof posible === "string" && !enlaceInutil(posible, clave)) {
+      const bruto = String(valor.type || valor.media_type || valor.mime || valor.mimetype || "").toLowerCase();
+      let tipo = "";
+      if (bruto.includes("video") || bruto.includes("mp4")) tipo = "video";
+      else if (bruto.includes("image") || bruto.includes("photo") || bruto.includes("jpg") || bruto.includes("png")) tipo = "imagen";
+      encontrados.push({
+        url: posible,
+        tipo: tipo || tipoDeMedia(posible, valor.mime || valor.mimetype || "", clave),
+        miniatura: esMiniatura(clave)
+      });
+    }
+
+    for (const [k, v] of Object.entries(valor)) recorrer(v, k, hondura + 1);
+  };
+
+  recorrer(datos);
+
+  const vistos = new Set();
+  const unicos = encontrados.filter((x) => x.url && !vistos.has(x.url) && vistos.add(x.url));
+  const sinMiniaturas = unicos.filter((x) => !x.miniatura);
+
+  return (sinMiniaturas.length ? sinMiniaturas : unicos).slice(0, maximo);
+}
+
+/**
+ * Instagram. La API de respaldo (neoxr /ig) es la que usaba el bot de WhatsApp
+ * y la que mejor responde, así que va primero; la principal queda de reserva.
+ */
 export async function descargarInstagram(url) {
-  try {
-    const r = await apiPost("/instagram", { url });
-    const lista = r.media || r.data || r.result || r;
-    return Array.isArray(lista) ? lista : [lista];
-  } catch {
-    const datos = await neoxr("/ig", { url });
-    const lista = datos.data || datos;
-    return Array.isArray(lista) ? lista : [lista];
+  const intentos = [
+    () => neoxr("/ig", { url }),
+    () => apiPost("/instagram", { url })
+  ];
+
+  let fallo = null;
+  for (const intentar of intentos) {
+    try {
+      const datos = await intentar();
+      const medios = extraerMediosInstagram(datos);
+      if (medios.length) return medios;
+      fallo = new Error("La API respondió pero sin archivos");
+    } catch (e) {
+      fallo = e;
+    }
   }
+
+  throw fallo || new Error("No encontré nada en ese enlace");
 }
 
 export async function descargarTwitter(url) {
@@ -318,7 +449,7 @@ export async function descargarTwitter(url) {
   const media = r.media || r;
   return {
     titulo: r.title || r.description || "Twitter / X",
-    video: urlCompleta(media.hd || media.sd || media.video || media.url || ""),
+    video: urlCompleta(media.video_hd || media.video_sd || media.hd || media.sd || media.video || media.url || ""),
     imagen: urlCompleta(media.image || media.thumbnail || "")
   };
 }
