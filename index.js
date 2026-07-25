@@ -185,6 +185,9 @@ global.recargarPlugins = async function () {
   global.buildPluginIndex();
   await iniciarPlugins();
 
+  return global.plugins.length;
+};
+
 /**
  * Registra los comandos en el menú "/" de la app de Telegram.
  * Es lo que hace que al escribir "/" salga la lista con descripciones.
@@ -218,10 +221,6 @@ async function publicarComandos() {
     console.log(chalk.gray(`⚠️ No pude publicar el menú de comandos: ${e.message}`));
   }
 }
-
-await publicarComandos();
-  return global.plugins.length;
-};
 
 async function iniciarPlugins() {
   for (const plugin of global.plugins) {
@@ -299,6 +298,7 @@ console.log(
 );
 
 await iniciarPlugins();
+await publicarComandos();
 
 /* ═════════════════════ 5. UTILIDADES DEL NÚCLEO ═════════════════════ */
 
