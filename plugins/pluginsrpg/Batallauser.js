@@ -1,6 +1,7 @@
 // plugins/batallauser.js
 import fs from 'fs';
 import path from 'path';
+import { objetivoDe } from "../../libs/grupo.js";
 
 const COOLDOWN_MS = 7 * 60 * 1000;
 const FILE = path.join(process.cwd(), "sukirpg.json");
@@ -9,7 +10,7 @@ const load = () => fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE, "utf-8
 const save = (db) => fs.writeFileSync(FILE, JSON.stringify(db, null, 2));
 const toNum = (j) => String(j || "").replace(/\D/g, "");
 
-const handler = async (msg, { conn, command }) => {
+const handler = async (msg, { conn, args, command }) => {
   const chatId = msg.chatId;
   const myJid = msg.senderId;
   const myNum = toNum(myJid);
@@ -29,9 +30,7 @@ const handler = async (msg, { conn, command }) => {
 
   // Oponente por cita o mención
   let opponentJid = null;
-  const ctx = msg.quoted;
-  if (ctx?.quotedMessage) opponentJid = ctx.participant;
-  if (!opponentJid && ctx?.mentionedJid?.length) opponentJid = ctx.mentionedJid[0];
+  opponentJid = objetivoDe(msg, args)?.id;
   if (!opponentJid) {
     return conn.sendMessage(chatId, { text: "⚔️ *Menciona o responde a un usuario para retarlo (usuarios).*" }, { quoted: msg });
   }

@@ -101,7 +101,7 @@ const handler = async (msg, { conn }) => {
 │๛ ${pref}addmoney      — Agregar créditos
 │๛ ${pref}restbank      — Resetear ajustes del banco
 │๛ ${pref}delrpg        — Eliminar registro RPG de un usuario
-│๛ ${pref}detelerpg     — Eliminar/depurar por número (RPG)
+│๛ ${pref}deleterpg     — Eliminar/depurar por número (RPG)
 │๛ ${pref}dar
 │๛ ${pref}addbank
 ╰─────◆

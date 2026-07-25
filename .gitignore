@@ -20,3 +20,11 @@ tmp/*
 !tmp/.gitkeep
 *.log
 .DS_Store
+
+# Datos que genera el bot al usarse (cada instalación tiene los suyos)
+guar_files.json
+guar2.json
+tiempo_grupo.json
+tiempogrupo2.json
+ventas365.json
+activoss.json

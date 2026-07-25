@@ -1,6 +1,7 @@
 // plugins/batallaanime.js
 import fs from 'fs';
 import path from 'path';
+import { objetivoDe } from "../../libs/grupo.js";
 
 const COOLDOWN_MS = 7 * 60 * 1000; // 7 min
 const RETO_MS = 2 * 60 * 1000;     // 2 min
@@ -10,7 +11,7 @@ const load = () => fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE, "utf-8
 const save = (db) => fs.writeFileSync(FILE, JSON.stringify(db, null, 2));
 const jid = (msg) => msg.senderId;
 
-const handler = async (msg, { conn, command }) => {
+const handler = async (msg, { conn, args, command }) => {
   const chatId = msg.chatId;
   const userId = jid(msg); // JID completo (con @)
   const pref = global.prefix || ".";
@@ -39,9 +40,7 @@ const handler = async (msg, { conn, command }) => {
 
   // detectar oponente (citar o mencionar)
   let opponentId;
-  const ctx = msg.quoted;
-  if (ctx?.quotedMessage) opponentId = ctx.participant;
-  if (!opponentId && ctx?.mentionedJid?.length) opponentId = ctx.mentionedJid[0];
+  opponentId = objetivoDe(msg, args)?.id;
   if (!opponentId) {
     return conn.sendMessage(chatId, { text: `⚔️ *Menciona o responde (cita) a un usuario para retarlo.*` }, { quoted: msg });
   }

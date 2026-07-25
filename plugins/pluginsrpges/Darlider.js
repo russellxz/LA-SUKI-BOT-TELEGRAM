@@ -4,6 +4,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { objetivoDe } from "../../libs/grupo.js";
 
 function loadDB(p){ return fs.existsSync(p) ? JSON.parse(fs.readFileSync(p,"utf8")) : {}; }
 function saveDB(p,o){ fs.writeFileSync(p, JSON.stringify(o,null,2)); }
@@ -34,9 +35,7 @@ const handler = async (msg, { conn, args }) => {
 
   // Obtener objetivo: número por arg, respuesta o mención
   let objetivoNum = (args?.[0] || "").replace(/\D/g,"");
-  const ctx = msg.quoted;
-  if (!objetivoNum && ctx?.participant) objetivoNum = ctx.participant.replace(/\D/g,"");
-  if (!objetivoNum && ctx?.mentionedJid?.length) objetivoNum = ctx.mentionedJid[0].replace(/\D/g,"");
+  if (!objetivoNum) objetivoNum = String(objetivoDe(msg, args)?.id || "").replace(/\D/g, "");
 
   if (!objetivoNum) {
     return conn.sendMessage(chatId, {

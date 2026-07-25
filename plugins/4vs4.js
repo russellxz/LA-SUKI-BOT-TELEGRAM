@@ -64,7 +64,7 @@ const handler = async (msg, { conn, args }) => {
 
   await conn.sendMessage(chatId, { react: { text: '🎮', key: msg.key } });
 
-  const participantes = meta.participants.filter(p => p.id !== conn.user.id);
+  const participantes = meta.participants.filter(p => String(p.id) !== String(conn.user.id));
   if (participantes.length < 12) {
     return conn.sendMessage(chatId, {
       text: "⚠️ Se necesitan al menos *12 usuarios* para formar 2 escuadras y suplentes.\n\n_Solo puedo contar a quienes he visto escribir en el grupo: Telegram no deja a los bots ver la lista completa de miembros._"

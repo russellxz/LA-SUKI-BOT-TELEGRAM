@@ -23,13 +23,13 @@ function numberWithFlag(num) {
 
 const quotedPush = q => (q?.pushName || q?.sender?.pushName || '');
 
-async function niceName(jid, conn, chatId, qPush, fallback = '') {
+async function niceName(jid, conn, chatId, qPush, fallback = '', esGrupo = false) {
   if (qPush && qPush.trim() && !/^\d+$/.test(qPush)) return qPush;
-  if (msg.isGroup) {
+  if (esGrupo) {
     try {
       const meta = await conn.groupMetadata(chatId);
-      const p = meta.participants.find(p => p.id === jid);
-      const n = p?.notify || p?.name;
+      const p = meta.participants.find(p => String(p.id) === String(jid));
+      const n = p?.nombre || p?.notify || p?.name;
       if (n && n.trim() && !/^\d+$/.test(n)) return n;
     } catch {}
   }
@@ -91,11 +91,13 @@ const handler = async (msg, { conn, args }) => {
     }, { quoted: msg });
   }
 
-  const displayName = await niceName(targetJid, conn, chatId, quotedName, fallbackPN);
+  const displayName = await niceName(targetJid, conn, chatId, quotedName, fallbackPN, msg.isGroup);
 
-  let avatarUrl = 'https://telegra.ph/file/24fa902ead26340f3df2c.png';
+  const AVATAR_POR_DEFECTO = 'https://telegra.ph/file/24fa902ead26340f3df2c.png';
+  let avatarUrl = AVATAR_POR_DEFECTO;
+  // Si el usuario no tiene foto de perfil, profilePictureUrl devuelve null
   try {
-    avatarUrl = await conn.profilePictureUrl(targetJid, 'image');
+    avatarUrl = (await conn.profilePictureUrl(targetJid, chatId)) || AVATAR_POR_DEFECTO;
   } catch {}
 
   await conn.sendMessage(chatId, { react: { text: '🖼️', key: msg.key } });
@@ -109,12 +111,13 @@ const handler = async (msg, { conn, args }) => {
   draw.fillStyle = grad;
   draw.fillRect(0, 0, 1080, 1080);
 
-  const avatar = await loadImage(avatarUrl);
+  // Si la foto no carga, se sigue sin ella en vez de fallar el comando
+  const avatar = await loadImage(avatarUrl).catch(() => loadImage(AVATAR_POR_DEFECTO).catch(() => null));
   draw.save();
   draw.beginPath();
   draw.arc(100, 100, 80, 0, Math.PI * 2);
   draw.clip();
-  draw.drawImage(avatar, 20, 20, 160, 160);
+  if (avatar) draw.drawImage(avatar, 20, 20, 160, 160);
   draw.restore();
 
   draw.font = 'bold 40px Sans-serif';
@@ -145,12 +148,15 @@ const handler = async (msg, { conn, args }) => {
 
   // ... (todo tu código igual que lo mandaste arriba, hasta aquí)
 
-  const logo = await loadImage('https://cdn.russellxz.click/3b171450.png');
-const logoWidth = 140;
-const logoHeight = 140;
-const x = canvas.width - logoWidth - 40;
-const y = canvas.height - logoHeight - 40;
-draw.drawImage(logo, x, y, logoWidth, logoHeight);
+  // La marca de agua es un adorno: si el CDN no responde, se sigue sin ella
+  const logo = await loadImage('https://cdn.russellxz.click/3b171450.png').catch(() => null);
+  if (logo) {
+    const anchoLogo = 140;
+    const altoLogo = 140;
+    const x = canvas.width - anchoLogo - 40;
+    const y = canvas.height - altoLogo - 40;
+    draw.drawImage(logo, x, y, anchoLogo, altoLogo);
+  }
 
   const fileName = `./tmp/texto-${Date.now()}.png`;
   const out = fs.createWriteStream(fileName);

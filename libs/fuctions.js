@@ -244,13 +244,29 @@ export async function webmToMp4(media, extEntrada = "webm") {
   );
 }
 
+/** ¿El archivo trae pista de audio? (un video mudo no se puede convertir) */
+export function tieneAudio(buffer, extEntrada = "mp4") {
+  const entrada = tmpFile(extEntrada);
+  try {
+    fs.writeFileSync(entrada, buffer);
+    const r = spawnSync("ffmpeg", ["-hide_banner", "-i", entrada], { encoding: "utf8" });
+    return /Stream #\d+:\d+.*: Audio:/.test(`${r.stderr || ""}${r.stdout || ""}`);
+  } catch {
+    return true;   // ante la duda, se intenta igual
+  } finally {
+    fs.unlink(entrada, () => {});
+  }
+}
+
 /** Cualquier audio → MP3 */
 export async function toAudio(buffer, ext = "mp3") {
+  if (!tieneAudio(buffer, ext)) throw new Error("Ese archivo no tiene pista de audio");
   return ffmpeg(buffer, ["-vn", "-ac", "2", "-b:a", "128k", "-ar", "44100", "-f", "mp3"], ext, "mp3");
 }
 
 /** Cualquier audio → nota de voz OGG/Opus */
 export async function toPTT(buffer, ext = "mp3") {
+  if (!tieneAudio(buffer, ext)) throw new Error("Ese archivo no tiene pista de audio");
   return ffmpeg(
     buffer,
     ["-vn", "-c:a", "libopus", "-b:a", "128k", "-vbr", "on", "-compression_level", "10", "-f", "ogg"],
@@ -289,6 +305,7 @@ export async function writeExif(media, esVideo = false) {
 export default {
   ffmpeg,
   hayFfmpeg,
+  tieneAudio,
   imageToWebp,
   videoToWebm,
   videoToWebp,

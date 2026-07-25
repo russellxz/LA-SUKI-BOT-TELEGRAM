@@ -6,6 +6,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { objetivoDe } from '../../libs/grupo.js';
 
 const COOLDOWN_MS = 7 * 60 * 1000;
 const TOPE_CREDITOS_DIA = 8000;
@@ -51,18 +52,15 @@ function hoyStrLocal() {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 }
 
-const handler = async (msg, { conn }) => {
+const handler = async (msg, { conn, args }) => {
   const chatId = msg.chatId;
   const thiefJid = msg.senderId;
   const thiefNum = toNum(thiefJid);
 
   await conn.sendMessage(chatId, { react: { text: "🕶️", key: msg.key } });
 
-  // Detectar objetivo por cita o mención
-  let targetJid = null;
-  const ctx = msg.quoted;
-  if (ctx?.quotedMessage) targetJid = ctx.participant;
-  if (!targetJid && ctx?.mentionedJid?.length) targetJid = ctx.mentionedJid[0];
+  // Detectar objetivo por cita, mención o ID escrito
+  const targetJid = objetivoDe(msg, args)?.id;
 
   if (!targetJid) {
     return conn.sendMessage(chatId, {

@@ -32,7 +32,9 @@ const handler = async (msg, { conn, usedPrefix, command }) => {
   } catch (e) {
     await conn.react(chatId, msg.message_id, "❌");
     await conn.sendMessage(chatId, {
-      text: `❌ No pude convertirlo.\n\n_${String(e.message).slice(0, 200)}_`
+      text: /pista de audio/i.test(String(e.message))
+        ? "🔇 *Ese video no tiene audio*, no hay nada que convertir."
+        : `❌ No pude convertirlo.\n\n_${String(e.message).slice(0, 200)}_`
     }, { quoted: msg });
   }
 };
