@@ -14,14 +14,21 @@
  * Telegram solo le entrega al bot los mensajes que empiezan con "/".
  */
 
+// Los paneles de hosting pintan colores aunque Node no los detecte
+if (!process.env.FORCE_COLOR) process.env.FORCE_COLOR = "3";
+
+// Avisos de node-telegram-bot-api que solo ensucian la consola
+process.env.NTBA_FIX_319 = "1";
+process.env.NTBA_FIX_350 = "1";
+
 import fs from "fs";
 import path from "path";
 import readline from "readline";
 import { pathToFileURL } from "url";
 import chalk from "chalk";
-import figlet from "figlet";
 import TelegramBot from "node-telegram-bot-api";
 
+import { mostrarBanner } from "./libs/banner.js";
 import { Conn } from "./libs/telegram.js";
 import { normalizarMensaje } from "./libs/mensajes.js";
 import { registrarUsuario, registrarEntrada, registrarSalida, registrarChat, olvidarChat, nombreDe } from "./libs/usuarios.js";
@@ -177,6 +184,42 @@ global.recargarPlugins = async function () {
   await cargarPlugins("./plugins");
   global.buildPluginIndex();
   await iniciarPlugins();
+
+/**
+ * Registra los comandos en el menú "/" de la app de Telegram.
+ * Es lo que hace que al escribir "/" salga la lista con descripciones.
+ */
+async function publicarComandos() {
+  const lista = [
+    ["start", "Empezar a usar el bot"],
+    ["menu", "Ver todos los comandos"],
+    ["allmenu", "Lista completa de comandos"],
+    ["menugrupo", "Comandos para administrar grupos"],
+    ["menurpg", "Menú del juego RPG"],
+    ["play", "Descargar música de YouTube"],
+    ["ytmp4", "Descargar video de YouTube"],
+    ["tiktok", "Descargar de TikTok"],
+    ["s", "Convertir en sticker"],
+    ["sks", "Sticker con efectos"],
+    ["chatgpt", "Preguntarle a la IA"],
+    ["tts", "Convertir texto en voz"],
+    ["guar", "Guardar multimedia con una palabra"],
+    ["id", "Ver tu ID de Telegram"],
+    ["ping", "Ver si el bot responde"],
+    ["info", "Información del bot"]
+  ]
+    .filter(([c]) => global.pluginIndex.has(c))
+    .map(([command, description]) => ({ command, description }));
+
+  try {
+    await bot.setMyCommands(lista);
+    console.log(chalk.gray(`📋 ${lista.length} comandos publicados en el menú de Telegram`));
+  } catch (e) {
+    console.log(chalk.gray(`⚠️ No pude publicar el menú de comandos: ${e.message}`));
+  }
+}
+
+await publicarComandos();
   return global.plugins.length;
 };
 
@@ -195,8 +238,8 @@ async function iniciarPlugins() {
 
 /* ═════════════════════ 4. ARRANQUE ═════════════════════ */
 
-console.log(chalk.cyan(figlet.textSync("La Suki Bot", { font: "Standard" })));
-console.log(chalk.magenta("           💜 Versión Telegram 💜\n"));
+console.clear();
+await mostrarBanner("La Suki Bot", "💜 Versión Telegram 💜");
 
 const token = await obtenerToken();
 
@@ -482,7 +525,9 @@ async function bloqueadoPorFiltros({ msg, comando, esOwner, esAdmin }) {
   // 2) EN PRIVADO el bot solo atiende a los dueños y a los de la lista (.addlista).
   //    Así cualquiera que lo encuentre por su @usuario no puede usarlo por su
   //    cuenta. Esto aplica siempre, aunque el modo privado esté apagado.
-  if (msg.isPrivate && global.owner.length && !esOwner && !enListaPrivada(senderId)) {
+  // /start siempre pasa: si no, quien abra el bot no vería ni un saludo
+  const comandosLibres = ["start", "iniciar", "hola", "soyowner"];
+  if (msg.isPrivate && global.owner.length && !esOwner && !enListaPrivada(senderId) && !comandosLibres.includes(comando)) {
     console.log(
       chalk.gray(`⛔ Privado bloqueado · ${msg.senderName} (${senderId}) · ${comando}`)
     );

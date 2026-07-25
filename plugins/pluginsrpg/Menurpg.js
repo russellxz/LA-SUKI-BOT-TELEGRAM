@@ -120,5 +120,5 @@ const handler = async (msg, { conn }) => {
   await conn.sendMessage2(chatId, { react: { text: "✅", key: msg.key } }, msg);
 };
 
-handler.command = ["menurpg", "menuRPG"];
+handler.command = ["menurpg", "rpgmenu"];
 export default handler;

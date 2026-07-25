@@ -2,6 +2,10 @@
 import fs from "fs";
 import path from "path";
 
+// Animación del menú (la misma que usaba el bot de WhatsApp)
+const MEDIA_MENU = { tipo: "video", url: "https://cdn.russellxz.click/18bf4be2.mp4" };
+
+
 const FILES_DB = path.resolve("./guar_files.json");
 
 const ICONOS = {
@@ -39,22 +43,19 @@ const handler = async (msg, { conn, usedPrefix }) => {
 
   const total = claves.reduce((acc, k) => acc + db[k].length, 0);
 
-  // Se envía por tandas para no pasarse del límite de Telegram
-  const tandas = [];
-  for (let i = 0; i < lineas.length; i += 60) tandas.push(lineas.slice(i, i + 60));
+  const texto =
+    `╭──『 🎵 *PALABRAS GUARDADAS* 』\n│\n` +
+    `│ 📦 Paquetes: *${claves.length}*\n│ 📁 Archivos: *${total}*\n│\n` +
+    lineas.join("\n") +
+    "\n╰────────────────◆\n\n" +
+    `_Escribe la palabra y te mando el archivo._\n` +
+    `_Para borrar uno: ${usedPrefix}del <palabra> <número>_`;
 
-  for (let i = 0; i < tandas.length; i++) {
-    const encabezado = i === 0
-      ? `╭──『 🎵 *PALABRAS GUARDADAS* 』\n│\n│ 📦 Paquetes: *${claves.length}*\n│ 📁 Archivos: *${total}*\n│\n`
-      : "╭─────◆\n";
-    await conn.sendMessage(chatId, {
-      text:
-        encabezado + tandas[i].join("\n") + "\n╰────────────────◆" +
-        (i === tandas.length - 1
-          ? `\n\n_Escribe la palabra y te mando el archivo._\n_Para borrar uno: ${usedPrefix}del <palabra> <número>_`
-          : "")
-    }, { quoted: i === 0 ? msg : undefined });
-  }
+  await conn.sendMessage(chatId, {
+    [MEDIA_MENU.tipo]: MEDIA_MENU.url,
+    gifPlayback: true,
+    caption: texto
+  }, { quoted: msg });
 };
 
 handler.command = ["menuaudio", "guardados", "listaguar"];

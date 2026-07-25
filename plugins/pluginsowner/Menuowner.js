@@ -2,6 +2,10 @@
 import fs from "fs";
 import path from "path";
 
+// Animación del menú (la misma que usaba el bot de WhatsApp)
+const MEDIA_MENU = { tipo: "video", url: "https://cdn.russellxz.click/a0b60c86.mp4" };
+
+
 const ARCHIVO = path.resolve("./setmenu.json");
 
 const handler = async (msg, ctx) => {
@@ -80,7 +84,11 @@ const handler = async (msg, ctx) => {
 │ ${p}delco — desenlazar
 ╰─────◆`;
 
-  await conn.sendMessage(chatId, { text: texto }, { quoted: msg });
+  await conn.sendMessage(chatId, {
+    [MEDIA_MENU.tipo]: MEDIA_MENU.url,
+    ...(MEDIA_MENU.tipo === "video" ? { gifPlayback: true } : {}),
+    caption: texto
+  }, { quoted: msg });
 };
 
 handler.command = ["menuowner", "ownermenu"];
