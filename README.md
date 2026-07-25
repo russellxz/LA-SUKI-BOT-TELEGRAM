@@ -1,121 +1,159 @@
-<!-- ══════════════════ PORTADA ══════════════════ -->
+<!-- ═══════════════════════ PORTADA ═══════════════════════ -->
 
-<table width="100%">
-<tr>
-<td width="34%" align="center" valign="middle">
+<div align="center">
 
-<img src="https://cdn.russellxz.click/4df98cb6.jpg" alt="La Suki Bot" width="100%"/>
+<img src="https://capsule-render.vercel.app/api?type=waving&height=260&color=gradient&customColorList=12,20,24,30&text=%F0%9F%A6%8B%20LA%20SUKI%20BOT%20%F0%9F%A6%8B&fontSize=62&fontColor=ffffff&fontAlignY=36&desc=E%20D%20I%20C%20I%20%C3%93%20N%20%20%20%20T%20E%20L%20E%20G%20R%20A%20M&descSize=20&descAlignY=56&animation=twinkling" width="100%"/>
 
-<sub>💜 <b>La Suki</b> · edición Telegram</sub>
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%"/>
 
-</td>
-<td width="66%" valign="middle">
+<!-- ─────────── LA SUKI EN GRANDE ─────────── -->
 
-<h1>⚡ LA&nbsp;SUKI&nbsp;BOT · TELEGRAM</h1>
+<img src="https://cdn.russellxz.click/4df98cb6.jpg" alt="La Suki Bot" width="92%"/>
 
-<img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=700&size=19&duration=2600&pause=700&color=2AABEE&width=520&lines=%E2%9A%A1%20525%20comandos%20en%20un%20solo%20bot;%F0%9F%8E%A8%20Stickers%2C%20IA%2C%20descargas%20y%20juegos;%F0%9F%91%AE%20Administraci%C3%B3n%20total%20de%20tus%20grupos;%F0%9F%94%97%20Con%C3%A9ctalo%20con%20tu%20token%20de%20%40BotFather" alt="typing"/>
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%"/>
 
-El bot que corría en WhatsApp con Baileys, **reescrito de cero para la Bot API
-de Telegram**. Un token de [@BotFather](https://t.me/BotFather), `npm start`, y
-ya tienes tus 525 comandos andando.
+<!-- ─────────── LETRAS QUE SE MUEVEN ─────────── -->
 
-<a href="#-01--instalación-en-2-minutos"><img src="https://img.shields.io/badge/▶_Empezar_ahora-2AABEE?style=flat-square&logoColor=white"/></a>
-<a href="https://youtu.be/xH_gQrqw4HI"><img src="https://img.shields.io/badge/▶_Video_tutorial-FF0000?style=flat-square&logo=youtube&logoColor=white"/></a>
-<a href="https://dash.skyultraplus.com"><img src="https://img.shields.io/badge/☁_Hosting-FFB300?style=flat-square&logoColor=white"/></a>
+<img src="https://readme-typing-svg.demolab.com?font=Orbitron&weight=900&size=32&duration=2400&pause=500&color=A855F7&center=true&vCenter=true&width=850&height=60&lines=%F0%9F%A6%8B%20LA%20SUKI%20BOT%20%C2%B7%20TELEGRAM%20%F0%9F%A6%8B;%E2%9A%A1%20525%20COMANDOS%20%C2%B7%20300%20PLUGINS%20%E2%9A%A1;%F0%9F%9A%80%20EL%20BOT%20M%C3%81S%20COMPLETO%20DE%20TELEGRAM" alt="titulo"/>
 
-</td>
-</tr>
-</table>
+<img src="https://readme-typing-svg.demolab.com?font=Orbitron&weight=700&size=22&duration=2800&pause=600&color=2AABEE&center=true&vCenter=true&width=800&height=45&lines=%F0%9F%8E%A8%20Stickers%2C%20IA%2C%20descargas%20y%20juegos;%F0%9F%91%AE%20Administraci%C3%B3n%20total%20de%20tus%20grupos;%F0%9F%8E%AE%20RPG%2C%20clanes%2C%20mascotas%20y%20econom%C3%ADa;%F0%9F%94%9E%20Y%20mucho%20m%C3%A1s%20que%20vas%20a%20descubrir" alt="que hace"/>
 
-<p align="center">
-<img src="https://img.shields.io/badge/plugins-300-2AABEE?style=flat-square&labelColor=161b22"/>
-<img src="https://img.shields.io/badge/comandos-525-A855F7?style=flat-square&labelColor=161b22"/>
-<img src="https://img.shields.io/badge/node-%E2%89%A5%2020-3C873A?style=flat-square&labelColor=161b22&logo=nodedotjs&logoColor=white"/>
-<img src="https://img.shields.io/badge/subbots-0_(no_hacen_falta)-6b7280?style=flat-square&labelColor=161b22"/>
-<img src="https://img.shields.io/badge/licencia-ISC-EC4899?style=flat-square&labelColor=161b22"/>
-</p>
+<img src="https://readme-typing-svg.demolab.com?font=Orbitron&weight=700&size=20&duration=2600&pause=600&color=FFD700&center=true&vCenter=true&width=800&height=42&lines=%E2%98%81%EF%B8%8F%20Alojada%20en%20el%20MEJOR%20hosting%20del%20mundo;%F0%9F%92%8E%20SKY%20ULTRA%20PLUS%20%C2%B7%2024%2F7%20sin%20ca%C3%ADdas;%F0%9F%94%A5%20Velocidad%2C%20potencia%20y%20estabilidad" alt="hosting"/>
 
----
+<br/>
 
-## 🧭 Índice
+<!-- ─────────── MURO DE INSIGNIAS ─────────── -->
+
+<img src="https://img.shields.io/badge/TELEGRAM-BOT-2AABEE?style=for-the-badge&logo=telegram&logoColor=white&labelColor=0d1117"/>
+<img src="https://img.shields.io/badge/NODE-20%2B-3C873A?style=for-the-badge&logo=nodedotjs&logoColor=white&labelColor=0d1117"/>
+<img src="https://img.shields.io/badge/BOT%20API-OFICIAL-00D4FF?style=for-the-badge&logo=telegram&logoColor=white&labelColor=0d1117"/>
+<br/>
+<img src="https://img.shields.io/badge/PLUGINS-300%20%E2%9A%A1-A855F7?style=for-the-badge&labelColor=0d1117"/>
+<img src="https://img.shields.io/badge/COMANDOS-525%20%F0%9F%94%A5-FF2BD6?style=for-the-badge&labelColor=0d1117"/>
+<img src="https://img.shields.io/badge/BOTONES-NATIVOS%20%F0%9F%94%98-48D597?style=for-the-badge&labelColor=0d1117"/>
+<br/>
+<img src="https://img.shields.io/badge/HOSTING-SKY%20ULTRA%20PLUS%20%F0%9F%9A%80-FFD700?style=for-the-badge&labelColor=0d1117"/>
+<img src="https://img.shields.io/badge/LICENCIA-ISC-EC4899?style=for-the-badge&labelColor=0d1117"/>
+
+<br/><br/>
+
+<!-- ─────────── BOTONES GRANDES ─────────── -->
+
+<a href="#-01--instalación-exprés"><img src="https://img.shields.io/badge/%E2%96%B6%20EMPEZAR%20AHORA-A855F7?style=for-the-badge&labelColor=0d1117"/></a>
+<a href="https://youtu.be/xH_gQrqw4HI"><img src="https://img.shields.io/badge/%F0%9F%93%BA%20VIDEO%20TUTORIAL-FF0000?style=for-the-badge&logo=youtube&logoColor=white&labelColor=0d1117"/></a>
+<a href="https://dash.skyultraplus.com"><img src="https://img.shields.io/badge/%E2%98%81%EF%B8%8F%20CONSIGUE%20TU%20HOSTING-FFD700?style=for-the-badge&labelColor=0d1117"/></a>
+
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%"/>
+
+</div>
+
+<!-- ═══════════════════════ ÍNDICE ═══════════════════════ -->
+
+<div align="center">
+
+<img src="https://readme-typing-svg.demolab.com?font=Orbitron&weight=800&size=24&duration=3000&pause=800&color=00D4FF&center=true&vCenter=true&width=700&height=45&lines=%F0%9F%A7%AD%20%C2%BF%20P%20O%20R%20%20%20D%20%C3%93%20N%20D%20E%20%20%20E%20M%20P%20I%20E%20Z%20O%20%3F" alt="indice"/>
 
 |  | Sección | De qué va |
 |:--:|:--|:--|
-| **01** | [Instalación en 2 minutos](#-01--instalación-en-2-minutos) | BotFather, token y arranque |
-| **02** | [Pterodactyl](#-02--pterodactyl) | Egg, variables y detalles del hosting |
-| **03** | [Prefijos](#-03--prefijos) | `.` `#` `/` y cómo cambiarlos (sí, con emojis) |
-| **04** | [Dueños y accesos](#-04--dueños-y-accesos) | `.soyowner`, `.addowner`, quién le habla en privado |
-| **05** | [Catálogo de comandos](#-05--catálogo-de-comandos) | Los 525, por categorías |
-| **06** | [Cómo funciona por dentro](#-06--cómo-funciona-por-dentro) | El recorrido de un mensaje y la estructura |
-| **07** | [Qué cambia respecto a WhatsApp](#-07--qué-cambia-respecto-a-whatsapp) | Lo que se fue y lo que llegó |
-| **08** | [Si algo falla](#-08--si-algo-falla) | Los cinco problemas de siempre |
-| **09** | [Hosting, créditos y comunidad](#-09--hosting-créditos-y-comunidad) | Sky Ultra Plus y los grupos |
+| 🚀 **01** | [Instalación exprés](#-01--instalación-exprés) | BotFather, token y a volar |
+| 🦖 **02** | [Pterodactyl](#-02--pterodactyl) | Egg, variables y detalles del hosting |
+| 🔣 **03** | [Prefijos](#-03--prefijos) | `.` `#` `/` y cómo cambiarlos (sí, con emojis) |
+| 👑 **04** | [Dueños y accesos](#-04--dueños-y-accesos) | `.soyowner`, `.addowner`, quién le habla en privado |
+| 📚 **05** | [Catálogo de comandos](#-05--catálogo-de-comandos) | Los 525, por categorías |
+| 🔍 **06** | [Por dentro](#-06--por-dentro) | El recorrido de un mensaje y la estructura |
+| ⚔️ **07** | [WhatsApp vs Telegram](#-07--whatsapp-vs-telegram) | Lo que se fue y lo que llegó |
+| 🔧 **08** | [Si algo falla](#-08--si-algo-falla) | Los problemas de siempre |
+| ☁️ **09** | [Hosting y créditos](#-09--hosting-y-créditos) | Sky Ultra Plus y la comunidad |
 
----
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%"/>
 
-## ⚙️ Lo que trae
+</div>
+
+<!-- ═══════════════════════ QUÉ TRAE ═══════════════════════ -->
+
+<div align="center">
+
+<img src="https://capsule-render.vercel.app/api?type=rect&height=52&color=gradient&customColorList=12,20,24,30&text=%E2%9A%99%EF%B8%8F%20%20L%20O%20%20%20Q%20U%20E%20%20%20T%20R%20A%20E&fontSize=24&fontColor=ffffff&fontAlignY=60&animation=twinkling" width="100%"/>
+
+</div>
 
 <table>
 <tr>
-<td width="33%" valign="top">
+<td width="33%" valign="top" align="center">
 
-#### 📥 Descargas
+### 📥
+### Descargas
 YouTube · TikTok · Instagram · Facebook · Twitter · Spotify · MediaFire · APKs.
-El bot **baja el archivo él mismo** y lo sube a Telegram.
+
+**Todas con botones** para elegir normal o documento.
 
 </td>
-<td width="33%" valign="top">
+<td width="33%" valign="top" align="center">
 
-#### 🎨 Stickers
-De foto, de video y de GIF. **54 efectos** con botones, `.qc`, emojis animados
-y stickers con comando propio.
+### 🎨
+### Stickers
+De foto, de video y de GIF. **54 efectos** con botones, `.qc`, emojis animados y stickers con comando propio.
 
 </td>
-<td width="33%" valign="top">
+<td width="33%" valign="top" align="center">
 
-#### 🧠 Inteligencia artificial
-ChatGPT, Gemini, Groq, generación de imágenes, mejora de calidad y voz.
-`.chat on` y responde sola en el grupo.
+### 🧠
+### Inteligencia artificial
+ChatGPT, Gemini, Groq, generación de imágenes, mejora de calidad y voz. `.chat on` y responde sola.
 
 </td>
 </tr>
 <tr>
-<td valign="top">
+<td valign="top" align="center">
 
-#### 👮 Administración
-Antilink, antispam, mute con tiempo, bienvenidas con imagen, apertura y cierre
-del grupo por horario.
-
-</td>
-<td valign="top">
-
-#### 💾 Multimedia guardada
-`.guar <palabra>` y el bot manda ese archivo cada vez que alguien escriba la
-palabra. Con copia local de respaldo.
+### 👮
+### Administración
+Antilink, antispam, mute con tiempo, bienvenidas con imagen, apertura y cierre del grupo por horario.
 
 </td>
-<td valign="top">
+<td valign="top" align="center">
 
-#### 🎮 Juegos y RPG
-Economía, clanes, mascotas, batallas, verdad y reto, y los modos `.4vs4`
-hasta `.24vs24`.
+### 💾
+### Multimedia guardada
+`.guar <palabra>` y el bot manda ese archivo cada vez que alguien escriba la palabra.
+
+</td>
+<td valign="top" align="center">
+
+### 🎮
+### Juegos y RPG
+Economía, clanes, mascotas, batallas, verdad y reto, y los modos `.4vs4` hasta `.24vs24`.
 
 </td>
 </tr>
 </table>
 
----
+<div align="center">
 
-## 🚀 01 · Instalación en 2 minutos
+<img src="https://readme-typing-svg.demolab.com?font=Orbitron&weight=700&size=20&duration=2600&pause=600&color=48D597&center=true&vCenter=true&width=760&height=42&lines=%F0%9F%94%98%20TODO%20con%20botones%20nativos;%F0%9F%93%A5%20Normal%20o%20Documento%2C%20t%C3%BA%20eliges;%E2%9A%A1%20Sin%20escribir%20n%C3%BAmeros%20como%20antes" alt="botones"/>
 
-<img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=600&size=16&duration=2800&pause=800&color=A855F7&width=480&lines=%F0%9F%94%91%20Token%20de%20BotFather%20%E2%86%92%20listo;%F0%9F%A6%96%20Pterodactyl%20%C2%B7%20VPS%20%C2%B7%20Termux;%E2%9A%99%EF%B8%8F%20Sin%20compilar%20nada%20nativo" alt="typing"/>
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%"/>
 
-**Paso 1 — Crea el bot**
+</div>
+
+<!-- ═══════════════════════ 01 ═══════════════════════ -->
+
+## 🚀 01 · Instalación exprés
+
+<div align="center">
+
+<img src="https://capsule-render.vercel.app/api?type=rect&height=52&color=gradient&customColorList=12,20,24,30&text=01%20%20%C2%B7%20%20INSTALACI%C3%93N%20EXPR%C3%89S&fontSize=22&fontColor=ffffff&fontAlignY=58&desc=Token%20de%20BotFather%20y%20a%20volar&descSize=12&descAlignY=82&animation=twinkling" width="100%"/>
+
+<img src="https://readme-typing-svg.demolab.com?font=Orbitron&weight=700&size=19&duration=2800&pause=700&color=A855F7&center=true&vCenter=true&width=760&height=42&lines=%F0%9F%94%91%20Solo%20necesitas%20tu%20token%20de%20%40BotFather;%F0%9F%A6%96%20Pterodactyl%20%C2%B7%20VPS%20%C2%B7%20Termux%20%C2%B7%20lo%20que%20sea;%E2%9A%99%EF%B8%8F%20Sin%20compilar%20nada%20%C2%B7%20npm%20start%20y%20ya" alt="instalar"/>
+
+</div>
+
+### 1️⃣ Crea el bot
 
 Abre Telegram, busca **@BotFather**, envía `/newbot` y ponle nombre y usuario.
 Te devuelve un token parecido a `123456789:AAE...`.
 
-**Paso 2 — Ábrele los ojos** ⚠️
+### 2️⃣ Ábrele los ojos ⚠️
 
 > [!IMPORTANT]
 > Sin este paso el bot **solo ve los mensajes que empiezan con `/`**: no
@@ -127,7 +165,7 @@ En @BotFather:
   /setjoingroups   →  Enable
 ```
 
-**Paso 3 — Arranca**
+### 3️⃣ Arranca
 
 ```bash
 git clone https://github.com/russellxz/LA-SUKI-BOT-TELEGRAM.git
@@ -139,7 +177,7 @@ npm start
 Si no pusiste el token en una variable, el bot te lo pide por consola y lo
 guarda en `token.json`.
 
-**Paso 4 — Hazte dueño**
+### 4️⃣ Hazte dueño
 
 Al arrancar sin dueños la consola te da un código:
 
@@ -151,15 +189,25 @@ Al arrancar sin dueños la consola te da un código:
 Le mandas ese comando **por privado** y quedas registrado en `owner.json`.
 El código sirve una sola vez.
 
----
+<div align="center">
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%"/>
+</div>
+
+<!-- ═══════════════════════ 02 ═══════════════════════ -->
 
 ## 🦖 02 · Pterodactyl
+
+<div align="center">
+
+<img src="https://capsule-render.vercel.app/api?type=rect&height=52&color=gradient&customColorList=12,20,24,30&text=02%20%20%C2%B7%20%20PTERODACTYL&fontSize=22&fontColor=ffffff&fontAlignY=58&desc=Egg%2C%20variables%20y%20hosting&descSize=12&descAlignY=82&animation=twinkling" width="100%"/>
 
 | Paso | Qué hacer |
 |:--|:--|
 | **Egg** | NodeJS, versión **20 o superior** |
 | **Archivos** | Sube el bot o clona el repo dentro del servidor |
 | **Arranque** | `npm start` |
+
+</div>
 
 **Variables (pestaña *Startup*)**
 
@@ -186,15 +234,23 @@ El código sirve una sola vez.
 - **Disco:** `guar_media/` guarda las copias de `.guar`; `tmp/` se limpia sola
   cada 15 minutos.
 
----
+<div align="center">
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%"/>
+</div>
+
+<!-- ═══════════════════════ 03 ═══════════════════════ -->
 
 ## 🔣 03 · Prefijos
 
+<div align="center">
+
+<img src="https://capsule-render.vercel.app/api?type=rect&height=52&color=gradient&customColorList=12,20,24,30&text=03%20%20%C2%B7%20%20PREFIJOS&fontSize=22&fontColor=ffffff&fontAlignY=58&desc=Punto%2C%20numeral%2C%20barra...%20o%20emojis&descSize=12&descAlignY=82&animation=twinkling" width="100%"/>
+
 De fábrica el bot responde a tres:
 
-<p>
-<kbd> .menu </kbd>&nbsp;&nbsp;<kbd> #menu </kbd>&nbsp;&nbsp;<kbd> /menu </kbd>
-</p>
+<kbd> **.menu** </kbd>&nbsp;&nbsp;&nbsp;<kbd> **#menu** </kbd>&nbsp;&nbsp;&nbsp;<kbd> **/menu** </kbd>
+
+</div>
 
 El `/` es el prefijo nativo de Telegram y **siempre queda activo**. En grupos
 también funciona `/comando@TuBot`, que es como Telegram manda los comandos.
@@ -213,11 +269,21 @@ Para cambiarlos (solo el dueño):
 > letras ni números: cualquier palabra suelta dispararía comandos. El cambio es
 > inmediato y se guarda en `prefijos.json`.
 
----
+<div align="center">
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%"/>
+</div>
+
+<!-- ═══════════════════════ 04 ═══════════════════════ -->
 
 ## 👑 04 · Dueños y accesos
 
-<img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=600&size=16&duration=2800&pause=700&color=EC4899&width=480&lines=%F0%9F%91%91%20T%C3%BA%20mandas%20en%20tu%20bot;%F0%9F%94%90%20En%20privado%20solo%20responde%20a%20los%20tuyos;%E2%9A%99%EF%B8%8F%20Todo%20se%20configura%20por%20comandos" alt="typing"/>
+<div align="center">
+
+<img src="https://capsule-render.vercel.app/api?type=rect&height=52&color=gradient&customColorList=12,20,24,30&text=04%20%20%C2%B7%20%20DUE%C3%91OS%20Y%20ACCESOS&fontSize=22&fontColor=ffffff&fontAlignY=58&desc=T%C3%BA%20mandas%20en%20tu%20bot&descSize=12&descAlignY=82&animation=twinkling" width="100%"/>
+
+<img src="https://readme-typing-svg.demolab.com?font=Orbitron&weight=800&size=20&duration=2800&pause=700&color=FF2BD6&center=true&vCenter=true&width=760&height=42&lines=%F0%9F%91%91%20T%C3%9A%20MANDAS%20EN%20TU%20BOT%20%F0%9F%91%91;%F0%9F%94%90%20En%20privado%20solo%20responde%20a%20los%20tuyos;%E2%9A%99%EF%B8%8F%20Todo%20se%20configura%20por%20comandos" alt="owner"/>
+
+</div>
 
 **Agregar más dueños** — con `.addowner`, de cualquiera de estas formas:
 
@@ -255,14 +321,24 @@ usarlo por su cuenta. En **grupos no aplica**: ahí responde a todos.
 | `.modoadmins on` | En ese grupo, solo los admins usan comandos |
 | `.re` / `.unre` | Restringe un comando concreto en un chat |
 
----
+<div align="center">
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%"/>
+</div>
+
+<!-- ═══════════════════════ 05 ═══════════════════════ -->
 
 ## 📚 05 · Catálogo de comandos
 
+<div align="center">
+
+<img src="https://capsule-render.vercel.app/api?type=rect&height=52&color=gradient&customColorList=12,20,24,30&text=05%20%20%C2%B7%20%20CAT%C3%81LOGO%20DE%20COMANDOS&fontSize=22&fontColor=ffffff&fontAlignY=58&desc=525%20comandos%20por%20categor%C3%ADas&descSize=12&descAlignY=82&animation=twinkling" width="100%"/>
+
 Escribe `.menu` para el menú completo o `.allmenu` para la lista entera.
 
+</div>
+
 <details>
-<summary><b>👮 Grupos</b> — moderación, bienvenidas y horarios</summary>
+<summary><b>👮 &nbsp;GRUPOS</b> — moderación, bienvenidas y horarios</summary>
 
 <br/>
 
@@ -288,7 +364,7 @@ Escribe `.menu` para el menú completo o `.allmenu` para la lista entera.
 </details>
 
 <details>
-<summary><b>👑 Owner</b> — lo que solo tú puedes tocar</summary>
+<summary><b>👑 &nbsp;OWNER</b> — lo que solo tú puedes tocar</summary>
 
 <br/>
 
@@ -299,7 +375,7 @@ Escribe `.menu` para el menú completo o `.allmenu` para la lista entera.
 </details>
 
 <details>
-<summary><b>🎨 Stickers</b> — 54 efectos y stickers con comando</summary>
+<summary><b>🎨 &nbsp;STICKERS</b> — 54 efectos y stickers con comando</summary>
 
 <br/>
 
@@ -316,7 +392,7 @@ Escribe `.menu` para el menú completo o `.allmenu` para la lista entera.
 </details>
 
 <details>
-<summary><b>📥 Descargas</b> — y cómo esquiva el límite de Telegram</summary>
+<summary><b>📥 &nbsp;DESCARGAS</b> — todas con botones (normal o documento)</summary>
 
 <br/>
 
@@ -351,7 +427,7 @@ pesa más, avisa y manda el enlace.
 </details>
 
 <details>
-<summary><b>🔗 Subir archivos</b> — <code>.tourl</code> y el CDN</summary>
+<summary><b>🔗 &nbsp;SUBIR ARCHIVOS</b> — <code>.tourl</code> y el CDN</summary>
 
 <br/>
 
@@ -369,7 +445,7 @@ Acepta hasta **200 MB**. Se puede apuntar a otro servidor con la variable
 </details>
 
 <details>
-<summary><b>🧠 Inteligencia artificial</b></summary>
+<summary><b>🧠 &nbsp;INTELIGENCIA ARTIFICIAL</b></summary>
 
 <br/>
 
@@ -380,7 +456,7 @@ en el grupo)
 </details>
 
 <details>
-<summary><b>💾 Guardar multimedia</b></summary>
+<summary><b>💾 &nbsp;GUARDAR MULTIMEDIA</b></summary>
 
 <br/>
 
@@ -396,7 +472,7 @@ en el grupo)
 </details>
 
 <details>
-<summary><b>🎮 Juegos, RPG y ventas</b></summary>
+<summary><b>🎮 &nbsp;JUEGOS, RPG Y VENTAS</b></summary>
 
 <br/>
 
@@ -404,14 +480,26 @@ en el grupo)
 `.batallauser` · `.crearclan` · `.ship` · `.parejas` · `.verdad` · `.reto` ·
 `.hackear` · `.4vs4` … `.24vs24`
 
+**Free Fire:** `.menufree` · `.mapas` · `.reglas` · `.setreglas` · `.guerr`
+
 **Ventas:** `.setpago` · `.pago` · `.stock` · `.netflix` · `.combos` ·
 `.addfactura` · `.verfactura` · `.sorteo`
 
 </details>
 
----
+<div align="center">
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%"/>
+</div>
 
-## 🔍 06 · Cómo funciona por dentro
+<!-- ═══════════════════════ 06 ═══════════════════════ -->
+
+## 🔍 06 · Por dentro
+
+<div align="center">
+
+<img src="https://capsule-render.vercel.app/api?type=rect&height=52&color=gradient&customColorList=12,20,24,30&text=06%20%20%C2%B7%20%20POR%20DENTRO&fontSize=22&fontColor=ffffff&fontAlignY=58&desc=El%20recorrido%20de%20un%20mensaje&descSize=12&descAlignY=82&animation=twinkling" width="100%"/>
+
+</div>
 
 Cada mensaje que llega recorre este camino antes de ejecutar nada:
 
@@ -480,9 +568,19 @@ Lo guardas en `plugins/` y con `.carga` se recarga sin reiniciar. Opcionales:
 - El bot registra sus comandos, así que al escribir `/` la app de Telegram
   muestra la lista con descripciones.
 
----
+<div align="center">
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%"/>
+</div>
 
-## ⚠️ 07 · Qué cambia respecto a WhatsApp
+<!-- ═══════════════════════ 07 ═══════════════════════ -->
+
+## ⚔️ 07 · WhatsApp vs Telegram
+
+<div align="center">
+
+<img src="https://capsule-render.vercel.app/api?type=rect&height=52&color=gradient&customColorList=12,20,24,30&text=07%20%20%C2%B7%20%20WHATSAPP%20vs%20TELEGRAM&fontSize=22&fontColor=ffffff&fontAlignY=58&desc=Lo%20que%20cambia&descSize=12&descAlignY=82&animation=twinkling" width="100%"/>
+
+</div>
 
 | Antes (WhatsApp) | Ahora (Telegram) |
 |:--|:--|
@@ -496,10 +594,21 @@ Lo guardas en `plugins/` y con `.carga` se recarga sin reiniciar. Opcionales:
 | Listar todos los miembros | ⚠️ La Bot API solo lista administradores; el bot aprende a la gente conforme escribe, y de ahí salen `.todos`, `.fantasmas` y `.totalchat` |
 | Foto del bot por comando | ⚠️ Solo desde @BotFather (`/setuserpic`); el nombre sí con `.botname` |
 | Stickers WEBP con metadatos | ➡️ WEBP 512×512 estáticos y WEBM VP9 animados (máx 3 s) |
+| Botones de Baileys | ➡️ Botones nativos de Telegram, más rápidos y sin fallos |
 
----
+<div align="center">
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%"/>
+</div>
+
+<!-- ═══════════════════════ 08 ═══════════════════════ -->
 
 ## 🔧 08 · Si algo falla
+
+<div align="center">
+
+<img src="https://capsule-render.vercel.app/api?type=rect&height=52&color=gradient&customColorList=12,20,24,30&text=08%20%20%C2%B7%20%20SI%20ALGO%20FALLA&fontSize=22&fontColor=ffffff&fontAlignY=58&desc=Los%20problemas%20de%20siempre&descSize=12&descAlignY=82&animation=twinkling" width="100%"/>
+
+</div>
 
 > [!WARNING]
 > **El bot no responde en el grupo** → falta desactivar la privacidad:
@@ -517,52 +626,67 @@ Lo guardas en `plugins/` y con `.carga` se recarga sin reiniciar. Opcionales:
 **No puedo quitarle admin a alguien**
 → Telegram solo deja quitar admin a quien fue ascendido por el propio bot.
 
----
+<div align="center">
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%"/>
+</div>
 
-## ☁️ 09 · Hosting, créditos y comunidad
+<!-- ═══════════════════════ 09 ═══════════════════════ -->
 
-<table>
-<tr>
-<td width="45%" align="center" valign="middle">
-
-<img src="https://cdn.russellxz.click/a80956b1.jpg" alt="Sky Ultra Plus" width="100%"/>
-
-</td>
-<td width="55%" valign="middle">
-
-<img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=700&size=17&duration=2600&pause=700&color=FFB300&width=460&lines=%E2%98%81%EF%B8%8F%20SKY%20ULTRA%20PLUS%20%E2%98%81%EF%B8%8F;%F0%9F%8F%86%20El%20mejor%20hosting%20del%20mundo;%F0%9F%9A%80%20Potencia%20%C2%B7%20Velocidad%20%C2%B7%20Estabilidad" alt="typing"/>
-
-La Suki Bot está alojada con orgullo en **Sky Ultra Plus**.
-
-<a href="https://dash.skyultraplus.com"><img src="https://img.shields.io/badge/dash.skyultraplus.com-2AABEE?style=flat-square&logoColor=white"/></a>
-<a href="https://youtu.be/xH_gQrqw4HI"><img src="https://img.shields.io/badge/Tutorial_en_YouTube-FF0000?style=flat-square&logo=youtube&logoColor=white"/></a>
-
-</td>
-</tr>
-</table>
-
-**Colaboradores** — gracias a quienes han apoyado el proyecto:
-
-<p>
-<a href="https://github.com/Zastinian"><img src="https://github.com/Zastinian.png" width="54" alt="Zastinian"/></a>
-<a href="https://github.com/DIEGO-OFC2"><img src="https://github.com/DIEGO-OFC2.png" width="54" alt="DIEGO-OFC"/></a>
-<a href="https://github.com/ds6"><img src="https://github.com/ds6.png" width="54" alt="ds6"/></a>
-</p>
-
-**Comunidades** — soporte, novedades y actualizaciones:
-
-<p>
-<a href="https://chat.whatsapp.com/EB4vMpRUw8R6me7myYF53M"><img src="https://img.shields.io/badge/Comunidad_Suki-25D366?style=flat-square&logo=whatsapp&logoColor=white"/></a>
-<a href="https://chat.whatsapp.com/E6iWpvGuJ8zJNPbN3zOr0D"><img src="https://img.shields.io/badge/Comunidad_Sky_Ultra_Plus-25D366?style=flat-square&logo=whatsapp&logoColor=white"/></a>
-<a href="https://youtube.com/@skyultraplus"><img src="https://img.shields.io/badge/YouTube-FF0000?style=flat-square&logo=youtube&logoColor=white"/></a>
-</p>
-
----
+## ☁️ 09 · Hosting y créditos
 
 <div align="center">
 
-<img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=700&size=17&duration=3000&pause=800&color=A855F7&center=true&vCenter=true&width=520&lines=%F0%9F%92%9C%20La%20Suki%20Bot%20%C2%B7%20edici%C3%B3n%20Telegram;Hecho%20por%20Russell%20(russellxz);Nos%20vemos%20en%20el%20grupo%20%F0%9F%91%8B" alt="typing"/>
+<img src="https://capsule-render.vercel.app/api?type=rect&height=52&color=gradient&customColorList=12,20,24,30&text=09%20%20%C2%B7%20%20HOSTING%20Y%20CR%C3%89DITOS&fontSize=22&fontColor=ffffff&fontAlignY=58&desc=Sky%20Ultra%20Plus%20y%20la%20comunidad&descSize=12&descAlignY=82&animation=twinkling" width="100%"/>
 
-<sub>Creador <b>Russell</b> (russellxz) · Licencia ISC · Versión de Telegram del bot que antes corría con Baileys</sub>
+<img src="https://readme-typing-svg.demolab.com?font=Orbitron&weight=900&size=26&duration=2600&pause=600&color=FFD700&center=true&vCenter=true&width=800&height=50&lines=%E2%98%81%EF%B8%8F%20SKY%20ULTRA%20PLUS%20%E2%98%81%EF%B8%8F;%F0%9F%8F%86%20EL%20MEJOR%20HOSTING%20DEL%20MUNDO%20%F0%9F%8F%86;%F0%9F%9A%80%20Potencia%20%C2%B7%20Velocidad%20%C2%B7%20Estabilidad" alt="sky ultra plus"/>
+
+<img src="https://cdn.russellxz.click/a80956b1.jpg" alt="Sky Ultra Plus" width="70%"/>
+
+<br/><br/>
+
+> 🛰️ *La Suki Bot está alojada con orgullo en el mejor hosting del mundo:*
+
+<a href="https://dash.skyultraplus.com"><img src="https://img.shields.io/badge/%E2%98%81%EF%B8%8F%20dash.skyultraplus.com-2AABEE?style=for-the-badge&labelColor=0d1117"/></a>
+<a href="https://youtu.be/xH_gQrqw4HI"><img src="https://img.shields.io/badge/%F0%9F%93%BA%20TUTORIAL%20EN%20YOUTUBE-FF0000?style=for-the-badge&logo=youtube&logoColor=white&labelColor=0d1117"/></a>
+
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%"/>
+
+### 👑 Colaboradores
+
+*Gracias a quienes han apoyado el proyecto:*
+
+<a href="https://github.com/Zastinian"><img src="https://github.com/Zastinian.png" width="80" alt="Zastinian" style="border-radius:50%"/></a>
+&nbsp;&nbsp;
+<a href="https://github.com/DIEGO-OFC2"><img src="https://github.com/DIEGO-OFC2.png" width="80" alt="DIEGO-OFC" style="border-radius:50%"/></a>
+&nbsp;&nbsp;
+<a href="https://github.com/ds6"><img src="https://github.com/ds6.png" width="80" alt="ds6" style="border-radius:50%"/></a>
+
+<br/>
+
+### 💬 Comunidades
+
+*Soporte, novedades y actualizaciones:*
+
+<a href="https://chat.whatsapp.com/EB4vMpRUw8R6me7myYF53M"><img src="https://img.shields.io/badge/%F0%9F%A4%96%20COMUNIDAD%20SUKI-25D366?style=for-the-badge&logo=whatsapp&logoColor=white&labelColor=0d1117"/></a>
+<a href="https://chat.whatsapp.com/E6iWpvGuJ8zJNPbN3zOr0D"><img src="https://img.shields.io/badge/%E2%98%81%EF%B8%8F%20COMUNIDAD%20SKY%20ULTRA%20PLUS-25D366?style=for-the-badge&logo=whatsapp&logoColor=white&labelColor=0d1117"/></a>
+<a href="https://youtube.com/@skyultraplus"><img src="https://img.shields.io/badge/%F0%9F%93%BA%20YOUTUBE-FF0000?style=for-the-badge&logo=youtube&logoColor=white&labelColor=0d1117"/></a>
+
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%"/>
+
+</div>
+
+<!-- ═══════════════════════ CIERRE ═══════════════════════ -->
+
+<div align="center">
+
+<img src="https://readme-typing-svg.demolab.com?font=Orbitron&weight=900&size=26&duration=3000&pause=800&color=A855F7&center=true&vCenter=true&width=820&height=55&lines=%F0%9F%92%9C%20GRACIAS%20POR%20USAR%20LA%20SUKI%20BOT%20%F0%9F%92%9C;%F0%9F%A6%8B%20Hecho%20con%20cari%C3%B1o%20por%20Russell%20%F0%9F%A6%8B;%F0%9F%91%8B%20Nos%20vemos%20en%20la%20comunidad" alt="cierre"/>
+
+<br/>
+
+**Creador:** 🧑‍💻 **Russell** (russellxz)
+
+<sub>Versión de Telegram del bot que antes corría en WhatsApp con Baileys · Licencia ISC</sub>
+
+<img src="https://capsule-render.vercel.app/api?type=waving&height=180&color=gradient&customColorList=12,20,24,30&section=footer&text=%F0%9F%A6%8B%20LA%20SUKI%20BOT%20%F0%9F%A6%8B&fontSize=34&fontColor=ffffff&fontAlignY=78&animation=twinkling" width="100%"/>
 
 </div>
