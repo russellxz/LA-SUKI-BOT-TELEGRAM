@@ -58,7 +58,7 @@ const handler = async (msg, { conn, args }) => {
   const horaMsg = zonas.map(z => `│➥ ${z.pais} : ${horaMX.clone().tz(z.tz).format("hh:mm A")}`).join("\n");
 
   // === PARTICIPANTES ===
-  const participantes = meta.participants.filter(p => p.id !== conn.user.id);
+  const participantes = meta.participants.filter(p => String(p.id) !== String(conn.user.id));
   if (participantes.length < 30) {
     return conn.sendMessage(chatId, {
       text: "⚠️ Se necesitan al menos *30 usuarios* para 6 escuadras y suplentes.\n\n_Solo puedo contar a quienes he visto escribir en el grupo: Telegram no deja a los bots ver la lista completa de miembros._"

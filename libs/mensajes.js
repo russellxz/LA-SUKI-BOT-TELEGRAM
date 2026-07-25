@@ -131,7 +131,8 @@ export function normalizarMensaje(m) {
   // El objetivo de un comando: a quien se cita, o el primer mencionado
   m.objetivo = m.quoted?.senderId || m.mencionados[0] || null;
 
-  // Compatibilidad con el estilo anterior
+  // Compatibilidad con el estilo anterior (así los plugins traídos de la
+  // versión de WhatsApp siguen encontrando los campos con su nombre de allá)
   m.key = {
     id: m.message_id,
     remoteJid: chatId,
@@ -139,6 +140,8 @@ export function normalizarMensaje(m) {
     fromMe: false
   };
   m.messageId = m.message_id;
+  m.pushName = m.senderName;   // en Baileys el nombre visible se llamaba así
+  m.sender = m.senderId;       // y el autor, así
 
   return m;
 }

@@ -24,13 +24,13 @@ const quotedPush = q => (
   q?.pushName || q?.sender?.pushName || ''
 );
 
-async function niceName(jid, conn, chatId, qPush, fallback = '') {
+async function niceName(jid, conn, chatId, qPush, fallback = '', esGrupo = false) {
   if (qPush && qPush.trim() && !/^\d+$/.test(qPush)) return qPush;
-  if (msg.isGroup) {
+  if (esGrupo) {
     try {
       const meta = await conn.groupMetadata(chatId);
-      const p = meta.participants.find(p => p.id === jid);
-      const n = p?.notify || p?.name;
+      const p = meta.participants.find(p => String(p.id) === String(jid));
+      const n = p?.nombre || p?.notify || p?.name;
       if (n && n.trim() && !/^\d+$/.test(n)) return n;
     } catch {}
   }
@@ -100,10 +100,12 @@ const handler = async (msg, { conn, args }) => {
       content = contentFull || textQuoted || ' ';
     }
 
-    const displayName = await niceName(targetJid, conn, chatId, qPushName, fallbackPN);
+    const displayName = await niceName(targetJid, conn, chatId, qPushName, fallbackPN, msg.isGroup);
 
-    let avatar = 'https://telegra.ph/file/24fa902ead26340f3df2c.png';
-    try { avatar = await conn.profilePictureUrl(targetJid, 'image'); } catch {}
+    const avatarPorDefecto = 'https://telegra.ph/file/24fa902ead26340f3df2c.png';
+    let avatar = avatarPorDefecto;
+    // Si el usuario no tiene foto de perfil, profilePictureUrl devuelve null
+    try { avatar = (await conn.profilePictureUrl(targetJid, chatId)) || avatarPorDefecto; } catch {}
 
     await conn.sendMessage(chatId, { react: { text: '🖼️', key: msg.key } });
 

@@ -21,6 +21,15 @@ const handler = async (msg, ctx) => {
 
   quitarDeLista(chatId, "muted", objetivo.id);
 
+  // Borrar también la hora de fin, por si estaba silenciado por tiempo
+  const estado = global.leerEstado();
+  const id = String(chatId);
+  if (estado[id]?.mutehasta?.[String(objetivo.id)]) {
+    delete estado[id].mutehasta[String(objetivo.id)];
+    if (!Object.keys(estado[id].mutehasta).length) delete estado[id].mutehasta;
+    global.guardarEstado(estado);
+  }
+
   if (await conn.botPuede(chatId, "can_restrict_members")) {
     await conn.desilenciar(chatId, objetivo.id).catch(() => {});
   }

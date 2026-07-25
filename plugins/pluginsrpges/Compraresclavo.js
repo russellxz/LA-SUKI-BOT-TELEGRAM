@@ -4,6 +4,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { objetivoDe } from "../../libs/grupo.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const BASE_TICK_MS = 2 * 60 * 1000; // mismo que el watcher (modo test)
@@ -74,9 +75,7 @@ const handler = async (msg, { conn, args }) => {
 
   // detectar objetivo
   let objetivoNum = null;
-  const ctx = msg.quoted;
-  if (ctx?.participant) objetivoNum = ctx.participant.replace(/\D/g,"");
-  else if (ctx?.mentionedJid?.length) objetivoNum = ctx.mentionedJid[0].replace(/\D/g,"");
+  objetivoNum = String(objetivoDe(msg, args)?.id || "").replace(/\D/g, "");
 
   if (!objetivoNum) return conn.sendMessage(chatId, { text: "❌ Debes responder o mencionar al usuario que quieres comprar.", quoted: msg });
   if (objetivoNum === compradorNum) return conn.sendMessage(chatId, { text: "❌ No puedes comprarte a ti mismo.", quoted: msg });

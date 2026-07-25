@@ -3,7 +3,7 @@
 // En Telegram el silencio es real: se le quita el permiso de escribir con la
 // API. Además se guarda en la lista del grupo para que el bot le borre los
 // mensajes si por algo pierde los permisos de admin.
-import { noEsGrupo, noEsAdmin, botNoPuede, objetivoDe, comoIndicarUsuario, mencion, listaChat, agregarALista } from "../../libs/grupo.js";
+import { noEsGrupo, noEsAdmin, botNoPuede, objetivoDe, comoIndicarUsuario, mencion, listaChat, agregarALista, quitarDeLista } from "../../libs/grupo.js";
 
 /** "10m", "2h", "1d" → segundos */
 function aSegundos(txt) {
@@ -47,6 +47,35 @@ const handler = async (msg, ctx) => {
       await conn.silenciar(chatId, objetivo.id, segundos);
       nativo = true;
     } catch {}
+  }
+
+  // Con tiempo, Telegram levanta el silencio solo; hay que sacarlo también de
+  // la lista del bot o le seguiría borrando los mensajes para siempre.
+  // Se apunta la hora de fin en el estado del chat, así el silencio se levanta
+  // aunque el bot se reinicie por medio.
+  if (segundos > 0) {
+    const estado = global.leerEstado();
+    const id = String(chatId);
+    estado[id] = estado[id] || {};
+    estado[id].mutehasta = estado[id].mutehasta || {};
+    estado[id].mutehasta[String(objetivo.id)] = Date.now() + segundos * 1000;
+    global.guardarEstado(estado);
+
+    const temporizador = setTimeout(() => {
+      quitarDeLista(chatId, "muted", objetivo.id);
+      conn.sendMessage(chatId, {
+        text: `🔊 ${mencion(objetivo.id, objetivo.nombre)} ya cumplió su silencio y puede volver a escribir.`
+      }).catch(() => {});
+    }, segundos * 1000);
+    if (typeof temporizador.unref === "function") temporizador.unref();
+  } else {
+    // Silencio indefinido: se borra cualquier tiempo anterior
+    const estado = global.leerEstado();
+    const id = String(chatId);
+    if (estado[id]?.mutehasta) {
+      delete estado[id].mutehasta[String(objetivo.id)];
+      global.guardarEstado(estado);
+    }
   }
 
   await conn.react(chatId, msg.message_id, "✅");

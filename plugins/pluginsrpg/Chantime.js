@@ -1,6 +1,7 @@
 // plugins/chantime.js
 import fs from 'fs';
 import path from 'path';
+import { objetivoDe } from "../../libs/grupo.js";
 
 function parseTiempo(str) {
   const m = String(str || "").toLowerCase().trim().match(/^(\d+)\s*([mh])$/i);
@@ -40,9 +41,7 @@ const handler = async (msg, { conn, args }) => {
 
   // ⛹️‍♂️ Obtener objetivo por respuesta o mención
   let targetJid = null;
-  const ctx = msg.quoted;
-  if (ctx?.quotedMessage) targetJid = ctx.participant;
-  if (!targetJid && ctx?.mentionedJid?.length) targetJid = ctx.mentionedJid[0];
+  targetJid = objetivoDe(msg, args)?.id;
 
   if (!targetJid) {
     return conn.sendMessage(chatId, {

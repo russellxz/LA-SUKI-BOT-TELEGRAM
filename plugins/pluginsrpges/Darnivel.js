@@ -7,6 +7,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { objetivoDe } from "../../libs/grupo.js";
 
 function loadDB(p){ return fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, "utf8")) : {}; }
 function saveDB(p,o){ fs.writeFileSync(p, JSON.stringify(o, null, 2)); }
@@ -55,12 +56,7 @@ const handler = async (msg, { conn, args }) => {
 
   // Detectar objetivo: mención, respuesta o número directo
   let targetNum = null;
-  const ctx = msg.quoted;
-  if (ctx?.mentionedJid?.length) {
-    targetNum = ctx.mentionedJid[0].replace(/\D/g, "");
-  } else if (ctx?.participant) {
-    targetNum = ctx.participant.replace(/\D/g, "");
-  }
+  targetNum = String(objetivoDe(msg, args)?.id || "").replace(/\D/g, "");
   if (!targetNum && args.length > 1) {
     const maybeNumber = args[1].replace(/\D/g, "");
     if (maybeNumber) targetNum = maybeNumber;

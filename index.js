@@ -332,6 +332,45 @@ function listaDeChat(chatId, clave) {
 global.listaDeChat = listaDeChat;
 
 /**
+ * Quita a un usuario de una lista del chat.
+ * Se usa para levantar los silencios que ya cumplieron su tiempo.
+ */
+function quitarDeListaChat(chatId, clave, valor) {
+  const estado = leerEstado();
+  const id = String(chatId);
+  const lista = estado[id]?.[clave];
+  if (!Array.isArray(lista)) return false;
+  const v = String(valor);
+  if (!lista.includes(v)) return false;
+  estado[id][clave] = lista.filter((x) => String(x) !== v);
+  guardarEstado(estado);
+  return true;
+}
+global.quitarDeListaChat = quitarDeListaChat;
+
+/**
+ * ¿Ya se le cumplió el silencio a este usuario?
+ * El tiempo se guarda en "mutehasta" al usar .mute con duración; así el
+ * silencio se levanta solo aunque el bot se haya reiniciado.
+ */
+function silencioCumplido(chatId, userId) {
+  const estado = leerEstado();
+  const hasta = estado[String(chatId)]?.mutehasta?.[String(userId)];
+  if (!hasta) return false;
+  if (Date.now() < hasta) return false;
+
+  quitarDeListaChat(chatId, "muted", userId);
+  const nuevo = leerEstado();
+  const id = String(chatId);
+  if (nuevo[id]?.mutehasta) {
+    delete nuevo[id].mutehasta[String(userId)];
+    if (!Object.keys(nuevo[id].mutehasta).length) delete nuevo[id].mutehasta;
+    guardarEstado(nuevo);
+  }
+  return true;
+}
+
+/**
  * Lista de usuarios autorizados a usar el bot por privado (.addlista).
  * Se guarda en setwelcome.json bajo la clave "lista", igual que antes.
  */
@@ -750,7 +789,21 @@ async function antiStickers(msg, esAdmin, esOwner) {
 /* ─────────────── Antilink ─────────────── */
 
 const ADV_PATH = path.resolve("./advertencias.json");
-const RE_LINK_TG = /(?:https?:\/\/)?(?:t\.me|telegram\.me|telegram\.dog)\/(?:joinchat\/|\+)?[\w-]+/i;
+/**
+ * Invitaciones a OTROS grupos o canales. Igual que en el bot de WhatsApp, la
+ * idea es cortar a quien viene a repartir su grupo, sea de la red que sea:
+ * Telegram, WhatsApp, Discord... (antes solo miraba los enlaces de Telegram y
+ * las invitaciones de WhatsApp se colaban).
+ */
+const RE_LINK_TG = new RegExp(
+  [
+    "(?:https?://)?(?:t\\.me|telegram\\.me|telegram\\.dog)/(?:joinchat/|\\+)?[\\w-]+",
+    "(?:https?://)?chat\\.whatsapp\\.com/[\\w-]+",
+    "(?:https?://)?(?:wa\\.me|whatsapp\\.com)/(?:channel|invite)/[\\w-]+",
+    "(?:https?://)?(?:discord\\.gg|discord\\.com/invite|discord\\.me)/[\\w-]+"
+  ].join("|"),
+  "i"
+);
 const RE_LINK = /https?:\/\/[^\s]+|www\.[^\s]+\.[a-z]{2,}/i;
 
 async function antilink(msg, esAdmin, esOwner) {
@@ -818,6 +871,12 @@ async function revisarMute(msg, esAdmin, esOwner) {
     if (!msg.isGroup || esOwner || esAdmin) return false;
     const muteados = listaDeChat(msg.chatId, "muted");
     if (!muteados.includes(String(msg.senderId))) return false;
+
+    // Si el silencio era por tiempo y ya se cumplió, se levanta y pasa
+    if (silencioCumplido(msg.chatId, msg.senderId)) {
+      muteAvisos.delete(`${msg.chatId}:${msg.senderId}`);
+      return false;
+    }
 
     if (await conn.botPuede(msg.chatId, "can_delete_messages")) {
       await conn.deleteMessage(msg.chatId, msg.message_id);
