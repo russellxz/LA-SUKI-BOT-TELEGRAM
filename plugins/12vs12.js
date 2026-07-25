@@ -1,3 +1,5 @@
+import { isAdminInGroup } from "../libs/adminCheck.js";
+
 const handler = async (msg, { conn, args }) => {
   const chatId = msg.chatId;
   const sender = msg.senderId;

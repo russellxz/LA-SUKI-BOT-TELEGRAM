@@ -106,23 +106,119 @@ export async function imageToWebp(media) {
   }
 }
 
-/** Video/GIF → WEBM VP9 para sticker animado de Telegram (máx 3s) */
-export async function videoToWebm(media, extEntrada = "mp4") {
-  return ffmpeg(
-    media,
-    [
-      "-t", "2.9",
-      "-an",
-      "-c:v", "libvpx-vp9",
-      "-b:v", "256k",
-      "-crf", "40",
-      "-vf", "scale='min(512,iw)':'min(512,ih)':force_original_aspect_ratio=decrease,fps=30",
-      "-pix_fmt", "yuva420p",
-      "-f", "webm"
-    ],
-    extEntrada,
-    "webm"
-  );
+/** Tamaño máximo que acepta Telegram para un sticker animado */
+export const MAX_STICKER_WEBM = 256 * 1024;
+
+/** Segundos máximos que Telegram acepta en un sticker animado */
+const TOPE_SEGUNDOS = 2.9;
+
+/**
+ * Duración del video en segundos (lo saca del informe de ffmpeg).
+ * Si no se puede averiguar, devuelve el tope, que es el caso más exigente.
+ */
+function duracionDe(buffer, extEntrada) {
+  const entrada = tmpFile(extEntrada);
+  try {
+    fs.writeFileSync(entrada, buffer);
+    // ffmpeg sin salida termina con error, pero antes imprime la duración
+    const r = spawnSync("ffmpeg", ["-hide_banner", "-i", entrada], { encoding: "utf8" });
+    const texto = `${r.stderr || ""}${r.stdout || ""}`;
+    const m = texto.match(/Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)/);
+    if (!m) return TOPE_SEGUNDOS;
+    const segundos = Number(m[1]) * 3600 + Number(m[2]) * 60 + Number(m[3]);
+    return Math.min(segundos || TOPE_SEGUNDOS, TOPE_SEGUNDOS);
+  } catch {
+    return TOPE_SEGUNDOS;
+  } finally {
+    fs.unlink(entrada, () => {});
+  }
+}
+
+/**
+ * Arma los argumentos de ffmpeg para un intento de conversión.
+ *
+ * Telegram exige que el lado más largo mida exactamente 512px, por eso se
+ * escala siempre a 512 (aunque el video venga más chico) y no solo "hasta" 512:
+ * si ningún lado llega a 512 el sticker se ve borroso o directamente en blanco.
+ *
+ * @param {object} ajuste  { crf, fps, bitrate, filtro }  bitrate en kbps (0 = solo CRF)
+ */
+function argsWebm({ crf, fps, bitrate = 0, filtro = "" }) {
+  // Con bitrate se usa VBR puro (sin -crf): así el control de tasa manda y el
+  // archivo entra en el peso. Con -crf el codificador se niega a bajar de esa
+  // calidad y se pasa del límite.
+  const control = bitrate
+    ? ["-b:v", `${bitrate}k`, "-maxrate", `${Math.round(bitrate * 1.3)}k`, "-bufsize", `${bitrate * 2}k`,
+       "-qmin", "0", "-qmax", "63"]
+    : ["-b:v", "0", "-crf", String(crf)];   // calidad constante: manda el CRF
+
+  const cadena = [
+    filtro,
+    `fps=${fps}`,
+    "scale=512:512:force_original_aspect_ratio=decrease:flags=lanczos",
+    "format=yuva420p"
+  ].filter(Boolean).join(",");
+
+  return [
+    "-t", String(TOPE_SEGUNDOS),       // Telegram corta en 3 segundos
+    "-an", "-sn", "-dn",               // sin audio, subtítulos ni datos
+    "-c:v", "libvpx-vp9",
+    ...control,
+    "-vf", cadena,
+    "-pix_fmt", "yuva420p",
+    "-deadline", "good",
+    "-cpu-used", "4",
+    "-row-mt", "1",
+    "-auto-alt-ref", "0",              // necesario para conservar transparencia
+    "-f", "webm"
+  ];
+}
+
+/**
+ * Video / GIF / sticker animado → WEBM VP9 para sticker de Telegram.
+ *
+ * Antes se usaba una sola pasada muy comprimida (256 kbps con CRF 40) y por eso
+ * los stickers de video salían borrosos. Ahora se empieza con buena calidad y,
+ * si el archivo no entra en los 256 KB, se recalcula el bitrate a partir de la
+ * duración real del clip para que quepa sin destrozar la imagen.
+ *
+ * @param {Buffer} media
+ * @param {string} extEntrada
+ * @param {object} opciones  { filtro, previos }
+ *   filtro  → cadena de filtros extra de ffmpeg (para .sks y sus efectos)
+ *   previos → argumentos antes del -i (ej: ["-loop","1"] para animar una foto)
+ */
+export async function videoToWebm(media, extEntrada = "mp4", opciones = {}) {
+  const { filtro = "", previos = [] } = opciones;
+  const segundos = previos.includes("-loop") ? TOPE_SEGUNDOS : duracionDe(media, extEntrada);
+
+  /** kbps necesarios para que el archivo pese ~`kb` kilobytes */
+  const bitratePara = (kb) => Math.max(120, Math.round((kb * 8) / segundos));
+
+  const intentos = [
+    { crf: 30, fps: 30 },                                  // calidad constante
+    { crf: 40, fps: 30, bitrate: bitratePara(230) },        // ajustado al peso
+    { crf: 50, fps: 20, bitrate: bitratePara(190) },        // último recurso
+    { crf: 58, fps: 15, bitrate: bitratePara(150) }
+  ];
+
+  let ultimo = null;
+  let fallo = null;
+
+  for (const ajuste of intentos) {
+    try {
+      const salida = await ffmpeg(media, argsWebm({ ...ajuste, filtro }), extEntrada, "webm", previos);
+      if (!salida?.length) continue;
+      // Se guarda el más chico que se haya logrado, por si ninguno entra
+      if (!ultimo || salida.length < ultimo.length) ultimo = salida;
+      if (salida.length <= MAX_STICKER_WEBM) return salida;
+    } catch (e) {
+      fallo = e;
+    }
+  }
+
+  if (ultimo) return ultimo;   // no bajó de 256 KB: que decida quien llama
+  throw fallo || new Error("No pude convertir el video a sticker");
 }
 
 /** Alias histórico: en Telegram los animados van en WEBM */
