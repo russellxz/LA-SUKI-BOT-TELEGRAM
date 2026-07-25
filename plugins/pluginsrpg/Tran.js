@@ -22,7 +22,7 @@ function formatoTiempo(msRestante) {
 const handler = async (msg, { conn, args }) => {
   const chatId = msg.chatId;
   const sender = msg.senderId;
-  const numeroSender = (sender || "").replace(/\D/g, "");
+  const numeroSender = String(sender || "").replace(/\D/g, "");
 
   await conn.sendMessage(chatId, { react: { text: "💸", key: msg.key } });
 

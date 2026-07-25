@@ -22,7 +22,7 @@ function fmtFecha(ts) {
 const handler = async (msg, { conn }) => {
   const chatId = msg.chatId;
   const sender = msg.senderId;
-  const numero = (sender || "").replace(/\D/g, "");
+  const numero = String(sender || "").replace(/\D/g, "");
 
   // Helpers que SIEMPRE citan el mensaje
   const replyQ = (content) => conn.sendMessage(chatId, content, { quoted: msg });

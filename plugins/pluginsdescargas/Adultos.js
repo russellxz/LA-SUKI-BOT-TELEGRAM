@@ -5,6 +5,7 @@
 import axios from "axios";
 import { getConfig, setConfig } from "../../db.js";
 import { API_BASE, API_KEY } from "../../libs/descargas.js";
+import { menuDescarga, opcionesVideo } from "../../libs/botonesdescarga.js";
 
 const FUENTES = {
   xvideos: { ruta: "/tools/xvideos", nombre: "XVideos", dominio: /xvideos\.com/i },
@@ -104,14 +105,22 @@ const handler = async (msg, { conn, text, args, usedPrefix, command, isAdmin, is
     const datos = await resolver(fuente, url);
     if (!datos.video) throw new Error("No encontré el video en ese enlace");
 
-    await conn.sendMessage(chatId, {
-      video: { url: datos.video },
-      fileName: "video.mp4",
-      caption:
-        `🔞 *${datos.titulo}*\n` +
-        (datos.duracion ? `⏱️ ${datos.duracion}\n` : "") +
-        `📥 ${FUENTES[fuente].nombre}`
-    }, { quoted: msg, protegido: true });
+    await menuDescarga(conn, msg, {
+      titulo: datos.titulo || FUENTES[fuente].nombre,
+      info:
+        `🔞 *${FUENTES[fuente].nombre}*\n\n` +
+        `📝 *Título:* ${datos.titulo || "sin título"}\n` +
+        (datos.duracion ? `⏱️ *Duración:* ${datos.duracion}` : ""),
+      enlace: url,
+      opciones: opcionesVideo(),
+      resolver: () => ({
+        url: datos.video,
+        titulo: datos.titulo,
+        nombre: "video.mp4",
+        ext: "mp4",
+        caption: `🔞 *${datos.titulo || FUENTES[fuente].nombre}*`
+      })
+    });
 
     await conn.react(chatId, msg.message_id, "✅");
   } catch (e) {

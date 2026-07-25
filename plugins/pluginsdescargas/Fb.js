@@ -1,5 +1,9 @@
-// plugins/pluginsdescargas/Fb.js — Descargar videos de Facebook
+// plugins/pluginsdescargas/Fb.js — Descargar videos de Facebook, con botones
+//
+// Igual que el bot de WhatsApp: llega la vista previa con la portada y eliges
+// si lo quieres como video normal o como documento.
 import { descargarFacebook, descargarBuffer } from "../../libs/descargas.js";
+import { menuDescarga, opcionesVideo, limpiarNombre } from "../../libs/botonesdescarga.js";
 
 const handler = async (msg, { conn, text, usedPrefix, command }) => {
   const chatId = msg.chatId;
@@ -18,42 +22,55 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
   }
 
   await conn.react(chatId, msg.message_id, "⏳");
-  const aviso = await conn.sendMessage(chatId, { text: "⏳ *Descargando el video de Facebook...*" }, { quoted: msg });
 
   try {
     const datos = await descargarFacebook(url);
+    const titulo = datos.titulo || "Facebook Video";
 
-    // Primero el endpoint de la API (ya sirve el archivo listo) y, si falla,
-    // el enlace directo del CDN de Facebook.
-    const candidatos = [datos.video, datos.directo].filter((v, i, a) => v && a.indexOf(v) === i);
+    const info =
+      "╭━━━━━━━━━━━━━━━━━╮\n" +
+      "  📘 *FACEBOOK*\n" +
+      "╰━━━━━━━━━━━━━━━━━╯\n\n" +
+      `📝 *Título:* ${titulo}`;
 
-    let buffer, tam, ultimo;
-    for (const enlace of candidatos) {
-      try {
-        ({ buffer, tam } = await descargarBuffer(enlace));
-        break;
-      } catch (e) {
-        ultimo = e;
-        console.log("⚠️ fb:", e.message);
+    await menuDescarga(conn, msg, {
+      titulo,
+      info,
+      miniatura: datos.miniatura || "",
+      enlace: url,
+      opciones: opcionesVideo(),
+      resolver: async () => {
+        // Primero el endpoint de la API (ya sirve el archivo listo) y, si
+        // falla, el enlace directo del CDN de Facebook.
+        const candidatos = [datos.video, datos.directo].filter((v, i, a) => v && a.indexOf(v) === i);
+
+        let ultimo;
+        for (const enlace of candidatos) {
+          try {
+            const { buffer, tam } = await descargarBuffer(enlace);
+            return {
+              buffer,
+              tam,
+              titulo,
+              nombre: `${limpiarNombre(titulo, "facebook")}.mp4`,
+              ext: "mp4",
+              caption: `📘 *Facebook*\n${titulo}`
+            };
+          } catch (e) {
+            ultimo = e;
+            console.log("⚠️ fb:", e.message);
+          }
+        }
+        throw ultimo || new Error("No pude bajar el video");
       }
-    }
-    if (!buffer) throw ultimo || new Error("No pude bajar el video");
-
-    if (aviso?.message_id) await conn.deleteMessage(chatId, aviso.message_id);
-
-    await conn.sendMessage(chatId, {
-      video: buffer,
-      fileName: "facebook.mp4",
-      caption: `📘 *Facebook*\n${datos.titulo || ""}\n📦 ${(tam / 1048576).toFixed(1)} MB`.trim()
-    }, { quoted: msg });
+    });
 
     await conn.react(chatId, msg.message_id, "✅");
   } catch (e) {
-    if (aviso?.message_id) await conn.deleteMessage(chatId, aviso.message_id);
     await conn.react(chatId, msg.message_id, "❌");
     await conn.sendMessage(chatId, {
       text:
-        `❌ No pude descargarlo.\n\n_${String(e?.message || e).slice(0, 200)}_\n\n` +
+        `❌ No pude descargarlo.\n\n_${String(e?.message || e).slice(0, 250)}_\n\n` +
         "_Los videos privados o de cuentas cerradas no se pueden bajar._"
     }, { quoted: msg });
   }

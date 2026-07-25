@@ -6,7 +6,7 @@ const handler = async (msg, { conn, args }) => {
   const sender = msg.senderId;
   const numero = sender.replace(/[^0-9]/g, "");
   const fromMe = false;
-  const botID = (conn.user?.id || "").replace(/[^0-9]/g, "");
+  const botID = String(conn.user?.id || "").replace(/[^0-9]/g, "");
 
   // 🔒 Permisos
   if (!global.isOwner(numero) && !fromMe && numero !== botID) {

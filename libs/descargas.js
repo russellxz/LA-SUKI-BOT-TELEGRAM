@@ -122,7 +122,13 @@ export async function apiGet(ruta, params = {}) {
   return data.result || data.data || data;
 }
 
-/** GET a la API de respaldo (neoxr) */
+/**
+ * GET a la API de respaldo (neoxr).
+ *
+ * neoxr pone el título y la miniatura FUERA de `data`, así que se devuelve el
+ * contenido de `data` con los datos de arriba mezclados: si no, el título se
+ * perdía y las canciones llegaban llamándose "YouTube".
+ */
 export async function neoxr(ruta, params = {}) {
   const r = await axios.get(`${NEOXR_BASE}${ruta}`, {
     params: { ...params, apikey: NEOXR_KEY },
@@ -136,7 +142,15 @@ export async function neoxr(ruta, params = {}) {
   if (!(respuestaOk(data) || data.result || data.data)) {
     throw new Error(data.message || data.error || "Error en la API de respaldo");
   }
-  return data.data || data.result || data;
+
+  const dentro = data.data || data.result;
+  if (!dentro || typeof dentro !== "object" || Array.isArray(dentro)) return dentro || data;
+
+  const meta = {};
+  for (const clave of ["title", "thumbnail", "thumb", "duration", "channel", "author", "fileName", "filename", "size"]) {
+    if (data[clave] !== undefined && dentro[clave] === undefined) meta[clave] = data[clave];
+  }
+  return { ...meta, ...dentro };
 }
 
 /* ─────────────────── Descarga de archivos ─────────────────── */
@@ -221,70 +235,150 @@ export async function buscarYoutube(consulta, limite = 8) {
   }));
 }
 
+/** Calidades de video que acepta la API (igual que en el bot de WhatsApp) */
+export const CALIDADES_VIDEO = ["144", "240", "360", "720", "1080", "1440", "4k"];
+export const CALIDAD_POR_DEFECTO = "360";
+export const CALIDAD_AUDIO = "128kbps";
+
 /**
- * Audio de YouTube. Primero la API de respaldo (es la que usaba el bot de
- * WhatsApp para el mp3) y si falla, la principal.
- * @returns {Promise<{ titulo, url, miniatura }>}
+ * Recorre TODA la respuesta buscando enlaces y se queda con el que más pinta
+ * tiene de ser el archivo. Es el mismo recorrido que hacía el bot de WhatsApp:
+ * las APIs meten el enlace en sitios distintos según el vídeo.
+ */
+export function buscarEnlaceProfundo(objeto, extensiones = /\.(mp3|m4a|webm|opus|ogg|mp4|mkv)(\?|#|$)/i) {
+  const encontrados = [];
+
+  const recorrer = (valor) => {
+    if (!valor) return;
+    if (typeof valor === "string") {
+      if (/^https?:\/\//i.test(valor)) encontrados.push(valor);
+      return;
+    }
+    if (Array.isArray(valor)) return valor.forEach(recorrer);
+    if (typeof valor === "object") Object.values(valor).forEach(recorrer);
+  };
+
+  recorrer(objeto);
+
+  return (
+    encontrados.find((u) => extensiones.test(u)) ||
+    encontrados.find((u) => /download|audio|video|youtube|cdn|media/i.test(u)) ||
+    encontrados[0] ||
+    ""
+  );
+}
+
+/**
+ * Audio de YouTube.
+ *
+ * Usa la misma API que el bot de WhatsApp: neoxr /youtube con
+ * type=audio&quality=128kbps. Si esa falla se prueba con la principal.
+ *
+ * @returns {Promise<{ titulo, url, miniatura, autor }>}
  */
 export async function audioYoutube(url) {
+  const fallos = [];
+
+  // 1) neoxr — la que usa el bot de WhatsApp para el mp3
   try {
-    const datos = await neoxr("/youtube", { url, type: "audio", quality: "128kbps" });
-    const enlace = buscarEnlace(datos);
+    const datos = await neoxr("/youtube", { url, type: "audio", quality: CALIDAD_AUDIO });
+    const enlace =
+      buscarEnlace(datos, ["dl_download", "url", "download", "download_url", "dl", "audio", "audio_url", "link", "file"]) ||
+      buscarEnlaceProfundo(datos, /\.(mp3|m4a|webm|opus|ogg)(\?|#|$)/i);
+
     if (enlace) {
       return {
         titulo: datos.title || datos?.data?.title || "YouTube",
-        miniatura: datos.thumbnail || "",
+        miniatura: datos.thumbnail || datos.thumb || "",
+        autor: datos.channel || datos.author || "",
         url: urlCompleta(enlace)
       };
     }
+    fallos.push("neoxr no devolvió enlace");
   } catch (e) {
-    console.log("⚠️ Audio por la API de respaldo falló:", e.message);
+    fallos.push(`neoxr: ${e.message}`);
   }
 
-  const resultado = await apiPost("/youtube/resolve", { url, type: "audio", format: "mp3" });
-  const enlace = buscarEnlace(resultado);
-  if (!enlace) throw new Error("Ninguna API me dio el enlace del audio");
+  // 2) API principal (esta quiere "format", igual que en el bot de WhatsApp;
+  //    se manda también "quality" por si acaso)
+  try {
+    const r = await apiPost("/youtube/resolve", { url, type: "audio", format: "mp3", quality: CALIDAD_AUDIO });
+    const media = r.media || r;
+    const enlace = media.dl_download || media.direct || buscarEnlaceProfundo(r, /\.(mp3|m4a|webm|opus|ogg)(\?|#|$)/i);
+    if (enlace) {
+      return {
+        titulo: r.title || "YouTube",
+        miniatura: r.thumbnail || "",
+        autor: r.channel || r.author || "",
+        url: urlCompleta(enlace)
+      };
+    }
+    fallos.push("la API principal no devolvió enlace");
+  } catch (e) {
+    fallos.push(`api: ${e.message}`);
+  }
 
-  return {
-    titulo: resultado.title || "YouTube",
-    miniatura: resultado.thumbnail || "",
-    url: urlCompleta(enlace)
-  };
+  throw new Error(`Ninguna API me dio el audio (${fallos.join(" | ")})`);
 }
 
 /**
  * Video de YouTube.
- * OJO: la calidad va SIN la "p" ("360", "720"), si no la API responde
- * "Calidad inválida".
+ *
+ * Igual que el bot de WhatsApp: POST /youtube/resolve con
+ * { url, type: "video", quality } y el enlace sale de result.media.dl_download
+ * (o .direct). La calidad va SIN la "p" ("360", "720", "4k"); con "360p" la API
+ * responde "Calidad inválida".
  */
-export async function videoYoutube(url, calidad = "360") {
-  const limpia = String(calidad).replace(/p$/i, "") || "360";
+export async function videoYoutube(url, calidad = CALIDAD_POR_DEFECTO) {
+  const limpia = normalizarCalidad(calidad);
+  const fallos = [];
 
+  // 1) API principal
   try {
-    const resultado = await apiPost("/youtube/resolve", { url, type: "video", quality: limpia });
-    const enlace = buscarEnlace(resultado);
+    const r = await apiPost("/youtube/resolve", { url, type: "video", quality: limpia });
+    const media = r.media || r;
+    const enlace = media.dl_download || media.direct || buscarEnlaceProfundo(r, /\.(mp4|mkv|webm)(\?|#|$)/i);
     if (enlace) {
       return {
-        titulo: resultado.title || "YouTube",
-        miniatura: resultado.thumbnail || "",
+        titulo: r.title || "YouTube",
+        miniatura: r.thumbnail || "",
         url: urlCompleta(enlace),
         calidad: limpia
       };
     }
+    fallos.push("la API principal no devolvió enlace");
   } catch (e) {
-    console.log("⚠️ Video por la API principal falló:", e.message);
+    fallos.push(`api: ${e.message}`);
   }
 
-  const datos = await neoxr("/youtube", { url, type: "video", quality: `${limpia}p` });
-  const enlace = buscarEnlace(datos);
-  if (!enlace) throw new Error("Ninguna API me dio el enlace del video");
+  // 2) neoxr de respaldo (esta sí quiere la "p")
+  try {
+    const datos = await neoxr("/youtube", { url, type: "video", quality: limpia === "4k" ? "2160p" : `${limpia}p` });
+    const enlace =
+      buscarEnlace(datos, ["dl_download", "url", "download", "download_url", "dl", "video", "link", "file"]) ||
+      buscarEnlaceProfundo(datos, /\.(mp4|mkv|webm)(\?|#|$)/i);
+    if (enlace) {
+      return {
+        titulo: datos.title || "YouTube",
+        miniatura: datos.thumbnail || "",
+        url: urlCompleta(enlace),
+        calidad: limpia
+      };
+    }
+    fallos.push("neoxr no devolvió enlace");
+  } catch (e) {
+    fallos.push(`neoxr: ${e.message}`);
+  }
 
-  return {
-    titulo: datos.title || "YouTube",
-    miniatura: datos.thumbnail || "",
-    url: urlCompleta(enlace),
-    calidad: limpia
-  };
+  throw new Error(`Ninguna API me dio el video (${fallos.join(" | ")})`);
+}
+
+/** Deja la calidad como la quiere la API: "720p" → "720", "2160" → "4k" */
+export function normalizarCalidad(calidad) {
+  const t = String(calidad || "").toLowerCase().trim();
+  if (/4k|2160/.test(t)) return "4k";
+  const n = t.replace(/p$/i, "");
+  return CALIDADES_VIDEO.includes(n) ? n : CALIDAD_POR_DEFECTO;
 }
 
 /* ─────────────────────── Otras redes ─────────────────────── */

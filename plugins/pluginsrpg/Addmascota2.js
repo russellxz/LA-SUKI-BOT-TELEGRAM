@@ -8,12 +8,12 @@ function normName(s = "") {
   return String(s).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
 }
 
-const handler = async (msg, { conn, args, command }) => {
+const handler = async (msg, { conn, args, text, command }) => {
   const chatId = msg.chatId;
   const sender = msg.senderId;
-  const numero = (sender || "").replace(/\D/g, "");
+  const numero = String(sender || "").replace(/\D/g, "");
   const fromMe = false;
-  const botID = (conn.user?.id || "").replace(/\D/g, "");
+  const botID = String(conn.user?.id || "").replace(/\D/g, "");
 
   // Reacción inicial
   await conn.sendMessage(chatId, { react: { text: "🐾", key: msg.key } });
@@ -26,18 +26,16 @@ const handler = async (msg, { conn, args, command }) => {
     }, { quoted: msg });
   }
 
-  // Texto crudo (acepta multi-línea)
-  const raw =
-    msg.text?.trim() ??
-    msg.text?.trim() ??
-    args.join(" ").trim();
+  // Texto crudo, sin el comando (acepta multi-línea)
+  const raw = (text ?? args.join(" ")).trim();
 
   // Separar por el token 🔥addmascota (case-insensitive)
   const partes = raw.split(/🔥addmascota/i)
     .map(s => s.trim())
     .filter(Boolean);
 
-  if (partes.length === 0) {
+  // Sin el token no hay nada que agregar: se muestra cómo se usa
+  if (!/🔥addmascota/i.test(raw) || partes.length === 0) {
     return conn.sendMessage(chatId, {
       text:
 `✳️ *Uso (multi-agregado):*

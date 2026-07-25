@@ -11,7 +11,7 @@ function guardarDB(p, obj) { fs.writeFileSync(p, JSON.stringify(obj, null, 2)); 
 const handler = async (msg, { conn, args }) => {
   const chatId = msg.chatId;
   const sender = msg.senderId;
-  const ownerNum = (sender || "").replace(/\D/g, "");
+  const ownerNum = String(sender || "").replace(/\D/g, "");
 
   await conn.sendMessage(chatId, { react: { text: "🗑️", key: msg.key } });
 

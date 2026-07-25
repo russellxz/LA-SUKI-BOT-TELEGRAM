@@ -320,9 +320,22 @@ Escribe `.menu` para el menú completo o `.allmenu` para la lista entera.
 
 <br/>
 
-`.play` (con botones audio/video) · `.ytmp3` · `.ytmp4` · `.tiktok` ·
-`.instagram` · `.facebook` · `.twitter` · `.spotify` · `.mediafire` · `.apk` ·
-`.pinterest` · `.letra` · `.yts`
+`.play` · `.ytmp3` · `.ytmp4` · `.tiktok` · `.instagram` · `.facebook` ·
+`.twitter` · `.spotify` · `.mediafire` · `.apk` · `.pinterest` · `.letra` · `.yts`
+
+**Todos llevan botones**, igual que en WhatsApp: primero llega la ficha de lo
+que vas a bajar y tú eliges cómo lo quieres.
+
+| Comando | Botones |
+|:--|:--|
+| `.ytmp3` · `.spotify` | 🎵 Audio · 📄 Audio Documento |
+| `.ytmp4` | 🎬 360p · 720p · 1080p (normal) y 📁 las mismas como documento |
+| `.play` | Audio, Audio Documento y video 360p/720p en normal o documento |
+| `.fb` · `.tiktok` · `.twitter` · `.pinvideo` · `.xvideos` | 🎬 Video Normal · 📁 Video Documento |
+| `.ig` | 🖼️/🎬 normal o documento (y "todo" si es un carrusel) |
+| `.mediafire` · `.apk` | 📁 Descargar archivo |
+
+El menú caduca a los 20 minutos y solo puede pulsarlo quien escribió el comando.
 
 Las APIs piden una clave en la cabecera y **Telegram no puede descargar esas
 URLs por su cuenta** (da *failed to get HTTP URL content*). Por eso el bot:
@@ -428,6 +441,7 @@ libs/
   usuarios.js         Registro de usuarios y chats conocidos
   grupo.js            Verificaciones de grupo/admin/permisos
   descargas.js        Cliente de las APIs de descarga
+  botonesdescarga.js  Menú de botones (normal / documento) de las descargas
   banner.js           Banner animado de la consola
   fuctions.js         Conversión de stickers y audio (ffmpeg/sharp)
   subir.js            Subida al CDN (cdn.russellxz.click)

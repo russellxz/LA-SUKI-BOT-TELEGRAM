@@ -11,14 +11,14 @@ function saveDB(p,o){ fs.writeFileSync(p, JSON.stringify(o,null,2)); }
 function isOwnerNumber(numero, conn) {
   try { if (typeof global.isOwner === "function") return !!global.isOwner(numero); } catch {}
   try { if (Array.isArray(global.owner)) return global.owner.some(([n]) => String(n) === String(numero)); } catch {}
-  const botID = (conn.user?.id || "").replace(/\D/g, "");
+  const botID = String(conn.user?.id || "").replace(/\D/g, "");
   return String(numero) === String(botID);
 }
 
 const handler = async (msg, { conn, args }) => {
   const chatId = msg.chatId;
   const sender = msg.senderId;
-  const numero = (sender || "").replace(/\D/g, "");
+  const numero = String(sender || "").replace(/\D/g, "");
   const fromMe = !!false;
 
   // Permisos (igual que addowner)

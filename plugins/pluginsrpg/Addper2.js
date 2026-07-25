@@ -10,9 +10,9 @@ function normName(s) { return String(s || "").replace(/[^a-zA-Z0-9]/g, "").toLow
 const handler = async (msg, { conn, args, command }) => {
   const chatId = msg.chatId;
   const sender = msg.senderId;
-  const numero = (sender || "").replace(/\D/g, "");
+  const numero = String(sender || "").replace(/\D/g, "");
   const fromMe = false;
-  const botID = (conn.user?.id || "").replace(/\D/g, "");
+  const botID = String(conn.user?.id || "").replace(/\D/g, "");
 
   // Reacción inicial
   await conn.sendMessage(chatId, { react: { text: "🛒", key: msg.key } });

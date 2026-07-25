@@ -13,7 +13,7 @@ function num(n){ return Number(n||0).toLocaleString("es-ES", { maximumFractionDi
 const handler = async (msg, { conn, args }) => {
   const chatId = msg.chatId;
   const sender = msg.senderId;
-  const numero = (sender || "").replace(/\D/g, "");
+  const numero = String(sender || "").replace(/\D/g, "");
 
   // reacción inicial
   await conn.sendMessage(chatId, { react: { text: "✨", key: msg.key } });
