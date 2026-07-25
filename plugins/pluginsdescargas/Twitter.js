@@ -1,5 +1,5 @@
 // plugins/pluginsdescargas/Twitter.js — Descargar de Twitter / X
-import { descargarTwitter } from "../../libs/descargas.js";
+import { descargarTwitter, descargarBuffer } from "../../libs/descargas.js";
 
 const handler = async (msg, { conn, text, usedPrefix, command }) => {
   const chatId = msg.chatId;
@@ -20,15 +20,17 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
     const datos = await descargarTwitter(url);
 
     if (datos.video) {
+      const { buffer, tam } = await descargarBuffer(datos.video);
       await conn.sendMessage(chatId, {
-        video: { url: datos.video },
+        video: buffer,
         fileName: "twitter.mp4",
-        caption: `🐦 *Twitter / X*\n${datos.titulo || ""}`
+        caption: `🐦 *Twitter / X*\n${datos.titulo || ""}\n📦 ${(tam / 1048576).toFixed(1)} MB`.trim()
       }, { quoted: msg });
     } else if (datos.imagen) {
+      const { buffer } = await descargarBuffer(datos.imagen);
       await conn.sendMessage(chatId, {
-        image: { url: datos.imagen },
-        caption: `🐦 *Twitter / X*\n${datos.titulo || ""}`
+        image: buffer,
+        caption: `🐦 *Twitter / X*\n${datos.titulo || ""}`.trim()
       }, { quoted: msg });
     } else {
       throw new Error("Ese tweet no tiene video ni imagen");
@@ -38,7 +40,7 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
   } catch (e) {
     await conn.react(chatId, msg.message_id, "❌");
     await conn.sendMessage(chatId, {
-      text: `❌ No pude descargarlo.\n\n_${String(e.message).slice(0, 200)}_`
+      text: `❌ No pude descargarlo.\n\n_${String(e?.message || e).slice(0, 200)}_`
     }, { quoted: msg });
   }
 };

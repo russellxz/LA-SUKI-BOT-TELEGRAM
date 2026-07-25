@@ -1,5 +1,7 @@
 // plugins/pluginsdescargas/Ytmp3.js — Descargar el audio de un video de YouTube
-import { buscarYoutube, resolverYoutube } from "../../libs/descargas.js";
+import { buscarYoutube, audioYoutube, descargarBuffer } from "../../libs/descargas.js";
+
+const limpiarNombre = (t) => String(t).replace(/[\\/:*?"<>|]/g, "").slice(0, 60).trim() || "audio";
 
 const handler = async (msg, { conn, text, usedPrefix, command }) => {
   const chatId = msg.chatId;
@@ -29,21 +31,24 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
       autor = resultados[0].autor;
     }
 
-    const resultado = await resolverYoutube(url, "audio", "mp3");
-    titulo = resultado.titulo || titulo;
+    const resuelto = await audioYoutube(url);
+    titulo = resuelto.titulo || titulo;
+
+    const { buffer, tam } = await descargarBuffer(resuelto.url);
 
     await conn.sendMessage(chatId, {
-      audio: { url: resultado.url },
-      fileName: `${titulo}.mp3`.replace(/[\\/:*?"<>|]/g, ""),
+      audio: buffer,
+      fileName: `${limpiarNombre(titulo)}.mp3`,
       title: titulo,
-      performer: autor || "YouTube"
+      performer: autor || "YouTube",
+      caption: `🎵 *${titulo}*\n📦 ${(tam / 1048576).toFixed(1)} MB`
     }, { quoted: msg });
 
     await conn.react(chatId, msg.message_id, "✅");
   } catch (e) {
     await conn.react(chatId, msg.message_id, "❌");
     await conn.sendMessage(chatId, {
-      text: `❌ No pude descargar el audio.\n\n_${String(e?.message || e || "error desconocido").slice(0, 200)}_`
+      text: `❌ No pude descargar el audio.\n\n_${String(e?.message || e).slice(0, 200)}_`
     }, { quoted: msg });
   }
 };

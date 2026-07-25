@@ -227,6 +227,41 @@ Escribe `.menu` para el menú completo o `.allmenu` para la lista de todos.
 
 ---
 
+## 🎨 Cómo se ven los mensajes
+
+- **Menús con animación:** los menús llevan el mismo GIF/imagen que tenían en la
+  versión de WhatsApp.
+- **Menús completos:** Telegram solo permite 1024 caracteres en el pie de una
+  imagen y 4096 en un mensaje. El bot manda la animación y el texto completo
+  aparte, partiéndolo si hace falta, así que **nunca se corta un menú**.
+- **Si el GIF no carga** (CDN caído, sin internet), el menú llega igual en texto.
+- **Consola con color:** al arrancar se dibuja el nombre del bot en letras
+  grandes con degradado animado, y los avisos van con colores. Funciona en la
+  consola de Pterodactyl.
+- **Menú "/" de Telegram:** el bot registra sus comandos principales, así que al
+  escribir `/` la app muestra la lista con descripciones.
+- **Botón START:** quien abra el bot recibe un saludo con botones para ver el
+  menú y para agregarlo a un grupo.
+
+## 📥 Cómo funcionan las descargas
+
+Las APIs de descarga piden una clave en la cabecera, y **Telegram no puede
+descargar esas URLs por su cuenta** (da el error *failed to get HTTP URL
+content*). Por eso el bot:
+
+1. Pide el enlace a la API.
+2. **Descarga el archivo él mismo** con la clave puesta.
+3. Sube los bytes a Telegram.
+
+Además, si cualquier plugin manda un archivo por URL y Telegram no puede
+bajarlo, el bot lo reintenta solo descargándolo. Límite de subida: **50 MB**
+(lo que permite la Bot API); si el archivo pesa más, el bot avisa y manda el enlace.
+
+Se puede apuntar a otro servidor de APIs con las variables `API_BASE`,
+`API_KEY` y `NEOXR_KEY`.
+
+---
+
 ## 🗂️ Estructura del proyecto
 
 ```
@@ -238,7 +273,8 @@ libs/
   mensajes.js         Normaliza los mensajes que llegan de Telegram
   usuarios.js         Registro de usuarios y chats conocidos
   grupo.js            Verificaciones de grupo/admin/permisos
-  descargas.js        Cliente de las APIs de descarga
+  descargas.js        Cliente de las APIs de descarga (baja los archivos)
+  banner.js           Banner animado de la consola
   fuctions.js         Conversión de stickers y audio (ffmpeg/sharp)
   subir.js            Subida de archivos para las APIs que piden URL
   adminCheck.js       Permisos de owner y admin

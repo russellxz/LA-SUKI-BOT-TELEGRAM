@@ -46,5 +46,5 @@ const handler = async (msg, { conn, usedPrefix, command }) => {
   }
 };
 
-handler.command = ["xxx", "nsfw", "analizar"];
+handler.command = ["xxx", "analizar", "revisar"];
 export default handler;

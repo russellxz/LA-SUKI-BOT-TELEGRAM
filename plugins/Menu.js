@@ -2,6 +2,10 @@
 import fs from "fs";
 import path from "path";
 
+// Animación del menú (la misma que usaba el bot de WhatsApp)
+const MEDIA_MENU = { tipo: "video", url: "https://cdn.russellxz.click/770fe00e.mp4" };
+
+
 const SETMENU = path.resolve("./setmenu.json");
 
 const handler = async (msg, { conn, usedPrefix }) => {
@@ -114,7 +118,11 @@ const handler = async (msg, { conn, usedPrefix }) => {
 
 💜 _Gracias por usar La Suki Bot_`;
 
-  await conn.sendMessage(chatId, { text: texto }, { quoted: msg });
+  await conn.sendMessage(chatId, {
+    [MEDIA_MENU.tipo]: MEDIA_MENU.url,
+    ...(MEDIA_MENU.tipo === "video" ? { gifPlayback: true } : {}),
+    caption: texto
+  }, { quoted: msg });
 };
 
 handler.command = ["menu", "menú", "help2", "comandos"];

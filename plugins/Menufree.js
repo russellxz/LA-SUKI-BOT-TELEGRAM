@@ -1,4 +1,8 @@
 // plugins/Menufree.js — Menú corto con lo más usado
+
+// Animación del menú (la misma que usaba el bot de WhatsApp)
+const MEDIA_MENU = { tipo: "video", url: "https://cdn.russellxz.click/770fe00e.mp4" };
+
 const handler = async (msg, { conn, usedPrefix }) => {
   const chatId = msg.chatId;
   const p = usedPrefix;

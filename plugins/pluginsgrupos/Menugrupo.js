@@ -1,4 +1,8 @@
 // plugins/pluginsgrupos/Menugrupo.js — Menú de comandos de administración
+
+// Animación del menú (la misma que usaba el bot de WhatsApp)
+const MEDIA_MENU = { tipo: "video", url: "https://cdn.russellxz.click/8eef84e4.mp4" };
+
 const handler = async (msg, { conn, usedPrefix }) => {
   const chatId = msg.chatId;
   const p = usedPrefix;
@@ -70,7 +74,11 @@ const handler = async (msg, { conn, usedPrefix }) => {
 💡 *Recuerda:* para expulsar, silenciar o cerrar el grupo
 necesito ser *administradora* con esos permisos.`;
 
-  await conn.sendMessage(chatId, { text: texto }, { quoted: msg });
+  await conn.sendMessage(chatId, {
+    [MEDIA_MENU.tipo]: MEDIA_MENU.url,
+    ...(MEDIA_MENU.tipo === "video" ? { gifPlayback: true } : {}),
+    caption: texto
+  }, { quoted: msg });
 };
 
 handler.command = ["menugrupo", "grupomenu", "menuadmin"];

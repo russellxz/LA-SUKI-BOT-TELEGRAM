@@ -1,6 +1,9 @@
 // plugins/Allmenu.js — Lista completa de comandos, sacada de los plugins cargados
 import path from "path";
 
+// Imagen del menú (la misma que usaba el bot de WhatsApp)
+const MEDIA_MENU = { tipo: "image", url: "https://cdn.russellxz.click/40df9bcb.jpeg" };
+
 const NOMBRES = {
   "plugins": "🌟 GENERAL",
   "plugins/pluginsgrupos": "👮 GRUPOS",
@@ -38,12 +41,11 @@ const handler = async (msg, { conn, usedPrefix }) => {
 
   texto += `\n_Total: *${global.pluginIndex?.size || 0}* comandos (contando los alias)_`;
 
-  // Telegram corta los mensajes largos
-  const trozos = texto.match(/[\s\S]{1,3800}/g) || [texto];
-  for (const trozo of trozos) {
-    await conn.sendMessage(chatId, { text: trozo }, { quoted: msg });
-    await new Promise((r) => setTimeout(r, 300));
-  }
+  // El adaptador se encarga de partirlo si no cabe en un solo mensaje
+  await conn.sendMessage(chatId, {
+    [MEDIA_MENU.tipo]: MEDIA_MENU.url,
+    caption: texto
+  }, { quoted: msg });
 };
 
 handler.command = ["allmenu", "todoslos", "listacomandos"];
