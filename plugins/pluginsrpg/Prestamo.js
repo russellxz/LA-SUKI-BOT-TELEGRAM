@@ -8,7 +8,7 @@ const MAX_PRESTAMO = 250000; // Tope acumulado por préstamo activo
 const handler = async (msg, { conn, args }) => {
   const chatId = msg.chatId;
   const sender = msg.senderId;
-  const numero = (sender || "").replace(/\D/g, "");
+  const numero = String(sender || "").replace(/\D/g, "");
 
   await conn.sendMessage(chatId, { react: { text: "🏦", key: msg.key } });
 

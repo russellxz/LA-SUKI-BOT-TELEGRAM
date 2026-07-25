@@ -14,9 +14,9 @@ function saveDB(p,o){ fs.writeFileSync(p, JSON.stringify(o, null, 2)); }
 const handler = async (msg, { conn, args }) => {
   const chatId  = msg.chatId;
   const sender  = msg.senderId;
-  const numero  = (sender || "").replace(/\D/g, "");
+  const numero  = String(sender || "").replace(/\D/g, "");
   const fromMe  = !!false;
-  const botID   = (conn.user?.id || "").replace(/\D/g, "");
+  const botID   = String(conn.user?.id || "").replace(/\D/g, "");
 
   // ✅ misma lógica que tu addowner
   if (!global.isOwner?.(numero) && !fromMe && numero !== botID) {

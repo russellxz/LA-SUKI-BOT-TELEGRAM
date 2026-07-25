@@ -426,7 +426,9 @@ async function manejarMensaje(raw) {
 
   // ── Stickers con comando (.addco) ──
   const inyectado = await comandoDeSticker(msg);
-  const textoFinal = inyectado || texto;
+  // normalize("NFC") junta las letras con tilde o ñ en un solo carácter: hay
+  // teclados que las mandan separadas y entonces .darcariño no coincidía.
+  const textoFinal = (inyectado || texto).normalize("NFC");
   const prefijoFinal = inyectado
     ? global.prefixes.find((p) => inyectado.startsWith(p))
     : prefijoUsado;

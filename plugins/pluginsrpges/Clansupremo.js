@@ -24,14 +24,14 @@ function isOwnerNumber(numero, conn) {
     }
   } catch {}
   // Permitir también si el mensaje es del propio bot o fromMe
-  const botID = (conn.user?.id || "").replace(/\D/g, "");
+  const botID = String(conn.user?.id || "").replace(/\D/g, "");
   return String(numero) === String(botID);
 }
 
 const handler = async (msg, { conn, args }) => {
   const chatId = msg.chatId;
   const sender = msg.senderId;
-  const numero = (sender || "").replace(/\D/g, "");
+  const numero = String(sender || "").replace(/\D/g, "");
   const fromMe = !!false;
 
   // === Chequeo de owner igual que en addowner ===

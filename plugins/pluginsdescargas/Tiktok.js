@@ -1,9 +1,15 @@
 // plugins/pluginsdescargas/Tiktok.js — Descargar de TikTok sin marca de agua
+//
+// Con los mismos botones que el bot de WhatsApp: video normal, video documento
+// y el audio suelto. Las publicaciones de solo fotos se mandan directas.
 import { descargarTiktok, descargarBuffer } from "../../libs/descargas.js";
+import { menuDescarga, limpiarNombre } from "../../libs/botonesdescarga.js";
 
 const handler = async (msg, { conn, text, usedPrefix, command }) => {
   const chatId = msg.chatId;
-  const url = (text || "").trim();
+  let url = (text || "").trim().replace(/^<|>$/g, "");
+
+  if (/^(www\.)?(vm\.|vt\.)?tiktok\.com\//i.test(url)) url = `https://${url.replace(/^\/+/, "")}`;
 
   if (!url || !/tiktok\.com|vm\.tiktok|vt\.tiktok/i.test(url)) {
     return conn.sendMessage(chatId, {
@@ -18,8 +24,9 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
 
   try {
     const datos = await descargarTiktok(url);
+    const titulo = datos.titulo || "TikTok";
 
-    // Publicaciones de solo fotos
+    // Publicaciones de solo fotos: se mandan tal cual, no hay nada que elegir
     if (!datos.video && datos.imagenes?.length) {
       for (const imagen of datos.imagenes.slice(0, 10)) {
         const enlace = typeof imagen === "string" ? imagen : imagen.url;
@@ -34,7 +41,7 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
       if (datos.audio) {
         try {
           const { buffer } = await descargarBuffer(datos.audio);
-          await conn.sendMessage(chatId, { audio: buffer, fileName: "tiktok.mp3", title: datos.titulo });
+          await conn.sendMessage(chatId, { audio: buffer, fileName: "tiktok.mp3", title: titulo });
         } catch {}
       }
       return conn.react(chatId, msg.message_id, "✅");
@@ -42,23 +49,37 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
 
     if (!datos.video) throw new Error("No encontré el video en ese enlace");
 
-    const { buffer, tam } = await descargarBuffer(datos.video);
+    const opciones = [
+      { id: "v", texto: "🎬 Video Normal", tipo: "video" },
+      { id: "vd", texto: "📁 Video Documento", tipo: "documento" }
+    ];
+    if (datos.audio) opciones.push({ id: "a", texto: "🎵 Solo el audio", tipo: "audio" });
 
-    await conn.sendMessage(chatId, {
-      video: buffer,
-      fileName: "tiktok.mp4",
-      caption:
-        `🎵 *TikTok descargado*\n\n` +
-        (datos.titulo ? `📝 ${datos.titulo}\n` : "") +
-        (datos.autor ? `👤 ${datos.autor}\n` : "") +
-        `📦 ${(tam / 1048576).toFixed(1)} MB`
-    }, { quoted: msg });
+    const info =
+      "╭━━━━━━━━━━━━━━━━━╮\n" +
+      "  🎵 *TIKTOK*\n" +
+      "╰━━━━━━━━━━━━━━━━━╯\n\n" +
+      (datos.titulo ? `📝 *Título:* ${datos.titulo}\n` : "") +
+      (datos.autor ? `👤 *Autor:* ${datos.autor}\n` : "") +
+      (datos.duracion ? `⏱️ *Duración:* ${datos.duracion}s\n` : "");
+
+    await menuDescarga(conn, msg, {
+      titulo,
+      info,
+      miniatura: datos.portada || "",
+      enlace: url,
+      opciones,
+      resolver: (opcion) =>
+        opcion.tipo === "audio"
+          ? { url: datos.audio, titulo, nombre: `${limpiarNombre(titulo, "tiktok")}.mp3`, ext: "mp3" }
+          : { url: datos.video, titulo, nombre: `${limpiarNombre(titulo, "tiktok")}.mp4`, ext: "mp4" }
+    });
 
     await conn.react(chatId, msg.message_id, "✅");
   } catch (e) {
     await conn.react(chatId, msg.message_id, "❌");
     await conn.sendMessage(chatId, {
-      text: `❌ No pude descargarlo.\n\n_${String(e?.message || e).slice(0, 200)}_`
+      text: `❌ No pude descargarlo.\n\n_${String(e?.message || e).slice(0, 250)}_`
     }, { quoted: msg });
   }
 };

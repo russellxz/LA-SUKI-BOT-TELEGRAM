@@ -1,7 +1,6 @@
-// plugins/pluginsdescargas/Spotify.js — Descargar canciones de Spotify
-import { descargarSpotify, buscarYoutube, audioYoutube, descargarBuffer } from "../../libs/descargas.js";
-
-const limpiarNombre = (t) => String(t).replace(/[\\/:*?"<>|]/g, "").slice(0, 60).trim() || "audio";
+// plugins/pluginsdescargas/Spotify.js — Descargar canciones de Spotify, con botones
+import { descargarSpotify, buscarYoutube, audioYoutube } from "../../libs/descargas.js";
+import { menuDescarga, opcionesAudio, limpiarNombre } from "../../libs/botonesdescarga.js";
 
 const handler = async (msg, { conn, text, usedPrefix, command }) => {
   const chatId = msg.chatId;
@@ -19,7 +18,7 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
   await conn.react(chatId, msg.message_id, "⏳");
 
   try {
-    let titulo, artista, enlace;
+    let titulo, artista, enlace, portada = "";
 
     if (/open\.spotify\.com/i.test(entrada)) {
       const datos = await descargarSpotify(entrada);
@@ -27,6 +26,7 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
       titulo = datos.titulo;
       artista = datos.artista;
       enlace = datos.audio;
+      portada = datos.miniatura || "";
     } else {
       // Si escriben el nombre, se busca en YouTube
       const resultados = await buscarYoutube(entrada, 1);
@@ -35,23 +35,35 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
       titulo = resuelto.titulo || resultados[0].titulo;
       artista = resultados[0].autor;
       enlace = resuelto.url;
+      portada = resultados[0].miniatura || "";
     }
 
-    const { buffer, tam } = await descargarBuffer(enlace);
+    const info =
+      "╭━━━━━━━━━━━━━━━━━╮\n" +
+      "  🟢 *SPOTIFY*\n" +
+      "╰━━━━━━━━━━━━━━━━━╯\n\n" +
+      `📝 *Título:* ${titulo}\n` +
+      (artista ? `🎤 *Artista:* ${artista}` : "");
 
-    await conn.sendMessage(chatId, {
-      audio: buffer,
-      fileName: `${limpiarNombre(titulo)}.mp3`,
-      title: titulo,
-      performer: artista || "Spotify",
-      caption: `🟢 *${titulo}*\n${artista ? `🎤 ${artista}\n` : ""}📦 ${(tam / 1048576).toFixed(1)} MB`
-    }, { quoted: msg });
+    await menuDescarga(conn, msg, {
+      titulo,
+      info,
+      miniatura: portada,
+      opciones: opcionesAudio(),
+      resolver: () => ({
+        url: enlace,
+        titulo,
+        autor: artista || "Spotify",
+        nombre: `${limpiarNombre(titulo, "cancion")}.mp3`,
+        ext: "mp3"
+      })
+    });
 
     await conn.react(chatId, msg.message_id, "✅");
   } catch (e) {
     await conn.react(chatId, msg.message_id, "❌");
     await conn.sendMessage(chatId, {
-      text: `❌ No pude descargarla.\n\n_${String(e?.message || e).slice(0, 200)}_`
+      text: `❌ No pude descargarla.\n\n_${String(e?.message || e).slice(0, 250)}_`
     }, { quoted: msg });
   }
 };

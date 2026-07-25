@@ -1,70 +1,67 @@
-import fetch from 'node-fetch';
+// plugins/pluginsdescargas/Mediafire.js — Descargar archivos de MediaFire
+//
+// Primero se muestra la ficha del archivo y con el botón se baja: como
+// documento (lo normal) o, si es un video, también se puede mandar reproducible.
+import { neoxr, descargarBuffer } from "../../libs/descargas.js";
+import { menuDescarga } from "../../libs/botonesdescarga.js";
 
-const handler = async (msg, { conn, args, command }) => {
+const handler = async (msg, { conn, args, usedPrefix, command }) => {
   const chatId = msg.chatId;
-  const text = args.join(" ");
-  const pref = global.prefixes?.[0] || ".";
+  const enlace = args.join(" ").trim();
+  const pref = usedPrefix || global.prefixes?.[0] || ".";
 
-  if (!text) {
+  if (!enlace) {
     return conn.sendMessage(chatId, {
       text: `⚠️ *Uso incorrecto.*\n📌 Ejemplo:\n${pref}${command} https://www.mediafire.com/file/ejemplo/file.zip`
     }, { quoted: msg });
   }
 
-  if (!/^https?:\/\/(www\.)?mediafire\.com/.test(text)) {
+  if (!/^https?:\/\/(www\.)?mediafire\.com/i.test(enlace)) {
     return conn.sendMessage(chatId, {
-      text: `⚠️ *Enlace no válido.*\n📌 Asegúrate de ingresar una URL de MediaFire válida.\n\nEjemplo:\n${pref}${command} https://www.mediafire.com/file/ejemplo/file.zip`
+      text: `⚠️ *Enlace no válido.*\n📌 Tiene que ser una URL de MediaFire.\n\nEjemplo:\n${pref}${command} https://www.mediafire.com/file/ejemplo/file.zip`
     }, { quoted: msg });
   }
 
-  await conn.sendMessage(chatId, {
-    react: { text: '⏳', key: msg.key }
-  });
+  await conn.react(chatId, msg.message_id, "⏳");
 
   try {
-    const apiUrl = `https://api.neoxr.eu/api/mediafire?url=${encodeURIComponent(text)}&apikey=russellxz`;
-    const response = await fetch(apiUrl);
+    const datos = await neoxr("/mediafire", { url: enlace });
+    const archivo = datos?.url ? datos : datos?.data || datos;
+    if (!archivo?.url) throw new Error("No pude obtener el enlace de descarga");
 
-    if (!response.ok) throw new Error(`API error: ${response.statusText}`);
-    const data = await response.json();
+    const nombre = archivo.title || "archivo";
+    const esVideo = /video\//i.test(archivo.mime || "") || /\.(mp4|mkv|webm|avi)$/i.test(nombre);
 
-    if (!data.status || !data.data?.url) throw new Error("No se pudo obtener el enlace de descarga.");
+    const info =
+      "╭━━━━━━━━━━━━━━━━━╮\n" +
+      "  📂 *MEDIAFIRE*\n" +
+      "╰━━━━━━━━━━━━━━━━━╯\n\n" +
+      `📝 *Nombre:* ${nombre}\n` +
+      (archivo.size ? `💾 *Tamaño:* ${archivo.size}\n` : "") +
+      (archivo.mime ? `📦 *Tipo:* ${archivo.mime}\n` : "") +
+      (archivo.extension ? `🏷️ *Extensión:* ${archivo.extension}` : "");
 
-    const fileInfo = data.data;
-    const fileResponse = await fetch(fileInfo.url);
-    if (!fileResponse.ok) throw new Error("No se pudo descargar el archivo.");
+    const opciones = [{ id: "f", texto: "📁 Descargar archivo", tipo: "documento" }];
+    if (esVideo) opciones.unshift({ id: "v", texto: "🎬 Ver como video", tipo: "video" });
 
-    const fileBuffer = await fileResponse.buffer();
-
-    const caption =
-      `𖠁 *Nombre:* ${fileInfo.title}\n` +
-      `𖠁 *Tamaño:* ${fileInfo.size}\n` +
-      `𖠁 *Tipo:* ${fileInfo.mime}\n` +
-      `𖠁 *Extensión:* ${fileInfo.extension}\n\n────────────\n𖠁 _La Suki Bot_`;
-
-    await conn.sendMessage(chatId, {
-      text: caption
-    }, { quoted: msg });
-
-    await conn.sendMessage(chatId, {
-      document: fileBuffer,
-      mimetype: fileInfo.mime,
-      fileName: fileInfo.title
-    }, { quoted: msg });
-
-    await conn.sendMessage(chatId, {
-      react: { text: '✅', key: msg.key }
+    await menuDescarga(conn, msg, {
+      titulo: nombre,
+      info,
+      enlace,
+      opciones,
+      resolver: async () => {
+        const { buffer, tam } = await descargarBuffer(archivo.url);
+        return { buffer, tam, titulo: nombre, nombre, caption: `📂 *${nombre}*` };
+      }
     });
 
-  } catch (err) {
-    console.error("❌ Error en .mediafire:", err);
+    await conn.react(chatId, msg.message_id, "✅");
+  } catch (e) {
+    console.error("❌ Error en .mediafire:", e.message);
+    await conn.react(chatId, msg.message_id, "❌");
     await conn.sendMessage(chatId, {
-      text: `❌ *Error al procesar MediaFire:*\n_${err.message}_`
+      text: `❌ *No pude procesar ese MediaFire.*\n\n_${String(e?.message || e).slice(0, 250)}_`
     }, { quoted: msg });
-
-    await conn.sendMessage(chatId, {
-      react: { text: '❌', key: msg.key }
-    });
   }
 };
 

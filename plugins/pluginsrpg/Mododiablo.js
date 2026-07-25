@@ -25,7 +25,7 @@ const TEXTOS_MODODIABLO = [
 const handler = async (msg, { conn }) => {
   const chatId = msg.chatId;
   const sender = msg.senderId;
-  const numero = (sender || "").replace(/\D/g, "");
+  const numero = String(sender || "").replace(/\D/g, "");
 
   await conn.sendMessage(chatId, { react: { text: "😈", key: msg.key } });
 

@@ -6,7 +6,7 @@ const handler = async (msg, { conn, args }) => {
   const sender = msg.senderId;
   const numero = sender.replace(/\D/g, "");
   const isFromMe = false;
-  const botID = (conn.user?.id || "").replace(/\D/g, "");
+  const botID = String(conn.user?.id || "").replace(/\D/g, "");
 
   await conn.sendMessage(chatId, { react: { text: "🗑️", key: msg.key } });
 

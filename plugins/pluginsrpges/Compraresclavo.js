@@ -60,7 +60,7 @@ function nextAlignedTick() {
 const handler = async (msg, { conn, args }) => {
   const chatId = msg.chatId;
   const sender = msg.senderId;
-  const compradorNum = (sender || "").replace(/\D/g, "");
+  const compradorNum = String(sender || "").replace(/\D/g, "");
 
   await conn.sendMessage(chatId, { react: { text: "🧾", key: msg.key } });
 

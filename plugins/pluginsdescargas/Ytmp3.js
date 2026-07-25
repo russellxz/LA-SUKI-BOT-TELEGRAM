@@ -1,7 +1,12 @@
-// plugins/pluginsdescargas/Ytmp3.js — Descargar el audio de un video de YouTube
-import { buscarYoutube, audioYoutube, descargarBuffer } from "../../libs/descargas.js";
+// plugins/pluginsdescargas/Ytmp3.js — Audio de YouTube, con botones
+//
+// Igual que en el bot de WhatsApp: primero llega una vista previa con el título
+// y dos botones (🎵 Audio / 📄 Audio Documento) y el archivo solo se baja cuando
+// eliges. La API es la misma: neoxr /youtube con type=audio&quality=128kbps.
+import { buscarYoutube, audioYoutube } from "../../libs/descargas.js";
+import { menuDescarga, opcionesAudio, limpiarNombre } from "../../libs/botonesdescarga.js";
 
-const limpiarNombre = (t) => String(t).replace(/[\\/:*?"<>|]/g, "").slice(0, 60).trim() || "audio";
+const esYoutube = (u = "") => /(?:youtube\.com|youtu\.be|music\.youtube\.com)/i.test(u);
 
 const handler = async (msg, { conn, text, usedPrefix, command }) => {
   const chatId = msg.chatId;
@@ -20,35 +25,52 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
 
   try {
     let url = entrada;
-    let titulo = "YouTube";
-    let autor = "";
+    let video = null;
 
-    if (!/youtu\.?be|youtube\.com/i.test(entrada)) {
+    if (!esYoutube(entrada)) {
       const resultados = await buscarYoutube(entrada, 1);
       if (!resultados.length) throw new Error("No encontré esa canción");
-      url = resultados[0].url;
-      titulo = resultados[0].titulo;
-      autor = resultados[0].autor;
+      video = resultados[0];
+      url = video.url;
+    } else {
+      video = (await buscarYoutube(entrada, 1).catch(() => []))[0] || null;
     }
 
-    const resuelto = await audioYoutube(url);
-    titulo = resuelto.titulo || titulo;
+    const titulo = video?.titulo || "YouTube Audio";
 
-    const { buffer, tam } = await descargarBuffer(resuelto.url);
+    const info =
+      "╭━━━━━━━━━━━━━━━━━╮\n" +
+      "  🎵 *YOUTUBE — AUDIO*\n" +
+      "╰━━━━━━━━━━━━━━━━━╯\n\n" +
+      `📝 *Título:* ${titulo}\n` +
+      (video?.autor ? `👤 *Canal:* ${video.autor}\n` : "") +
+      (video?.duracion ? `⏱️ *Duración:* ${video.duracion}\n` : "") +
+      (video?.vistas ? `👁️ *Vistas:* ${Number(video.vistas).toLocaleString("es")}\n` : "") +
+      `\n🔗 ${url}`;
 
-    await conn.sendMessage(chatId, {
-      audio: buffer,
-      fileName: `${limpiarNombre(titulo)}.mp3`,
-      title: titulo,
-      performer: autor || "YouTube",
-      caption: `🎵 *${titulo}*\n📦 ${(tam / 1048576).toFixed(1)} MB`
-    }, { quoted: msg });
+    await menuDescarga(conn, msg, {
+      titulo,
+      info,
+      miniatura: video?.miniatura || "",
+      enlace: url,
+      opciones: opcionesAudio(),
+      resolver: async () => {
+        const resuelto = await audioYoutube(url);
+        return {
+          url: resuelto.url,
+          titulo: resuelto.titulo || titulo,
+          autor: video?.autor || resuelto.autor || "YouTube",
+          nombre: `${limpiarNombre(resuelto.titulo || titulo, "audio")}.mp3`,
+          ext: "mp3"
+        };
+      }
+    });
 
     await conn.react(chatId, msg.message_id, "✅");
   } catch (e) {
     await conn.react(chatId, msg.message_id, "❌");
     await conn.sendMessage(chatId, {
-      text: `❌ No pude descargar el audio.\n\n_${String(e?.message || e).slice(0, 200)}_`
+      text: `❌ No pude preparar el audio.\n\n_${String(e?.message || e).slice(0, 250)}_`
     }, { quoted: msg });
   }
 };
