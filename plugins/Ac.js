@@ -36,7 +36,7 @@ const textoActualizacion = `🔥✨ *NUEVA ACTUALIZACIÓN DE SUKI* ✨🔥
 
 La nueva actualización de *La Suki Bot* ya está lista con mejoras, comandos nuevos y más funciones para todos ustedes. 💖
 
-╭━━━〔 🆕 *NOVEDADES* 〕━━━⬣
+〔 🆕 *NOVEDADES* 〕━━━⬣
 
 🎨 *Nuevo comando:* \`.sks\`
 ➤ Crea stickers animados con más de *50 efectos disponibles*.
@@ -59,9 +59,9 @@ La nueva actualización de *La Suki Bot* ya está lista con mejoras, comandos nu
 🔘 *Nuevo comando:* \`.botones on / off\`
 ➤ Activa o desactiva los botones en los comandos compatibles.
 
-╰━━━━━━━━━━━━━━━━━━━━⬣
+⬣
 
-╭━━━〔 🛠️ *MEJORAS IMPORTANTES* 〕━━━⬣
+〔 🛠️ *MEJORAS IMPORTANTES* 〕━━━⬣
 
 🔐 *Mejor manejo de LID y número real*
 ➤ Ahora Suki trabaja mejor con usuarios que aparecen como *LID* y también con número real.
@@ -84,15 +84,15 @@ La nueva actualización de *La Suki Bot* ya está lista con mejoras, comandos nu
 
 incluyen botones para una experiencia más rápida y cómoda. ⚡
 
-╰━━━━━━━━━━━━━━━━━━━━⬣
+⬣
 
-╭━━━〔 🤖 *PRÓXIMAMENTE* 〕━━━⬣
+〔 🤖 *PRÓXIMAMENTE* 〕━━━⬣
 
 🧠 Se estarán arreglando y mejorando los comandos de IA que ya no estaban respondiendo correctamente.
 
 🔥 Sigan pendientes, porque vienen más actualizaciones para *La Suki Bot*.
 
-╰━━━━━━━━━━━━━━━━━━━━⬣
+⬣
 
 ⭐ *Apoya el proyecto*
 No olvides dejar tu estrella en el repositorio oficial de Suki para saber que les gusta el proyecto y seguir trayendo más actualizaciones nuevas. 💖

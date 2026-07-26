@@ -34,55 +34,41 @@ const handler = async (msg, ctx) => {
 
   const p = usedPrefix;
   const texto =
-`╭━━━『 👑 *MENÚ OWNER* 』━━━◆
-│ Dueños registrados: ${global.owner.length}
-╰━━━━━━━━━━━━━━━━━━◆
+`👑 *MENÚ DEL DUEÑO*\n_Lo que solo tú puedes tocar_\n\n>| 🔣 Prefijo: ${p}\n>| 👑 Dueños registrados: ${global.owner.length}
 
 👑 *DUEÑOS*
-╭─────◆
-│ ${p}addowner — agregar dueño
-│ ${p}delowner — quitar dueño
-│ ${p}addlista — permitir privado
-│ ${p}dellista — quitar permiso
-╰─────◆
+>| ${p}addowner — agregar dueño
+>| ${p}delowner — quitar dueño
+>| ${p}addlista — permitir privado
+>| ${p}dellista — quitar permiso
 
 🤖 *EL BOT*
-╭─────◆
-│ ${p}botname <nombre>
-│ ${p}botfoto — foto y descripción
-│ ${p}carga — recargar plugins
-│ ${p}rest — reiniciar
-│ ${p}git <comando> — ver el código
-╰─────◆
+>| ${p}botname <nombre>
+>| ${p}botfoto — foto y descripción
+>| ${p}carga — recargar plugins
+>| ${p}rest — reiniciar
+>| ${p}git <comando> — ver el código
 
 🔒 *CONTROL*
-╭─────◆
-│ ${p}modoprivado on/off
-│ ${p}apagado on/off — apagar aquí
-│ ${p}re <comando> — restringir
-│ ${p}unre <comando> — liberar
-│ ${p}autoadmins — darte admin
-╰─────◆
+>| ${p}modoprivado on/off
+>| ${p}apagado on/off — apagar aquí
+>| ${p}re <comando> — restringir
+>| ${p}unre <comando> — liberar
+>| ${p}autoadmins — darte admin
 
 📢 *DIFUSIÓN*
-╭─────◆
-│ ${p}bc <mensaje> — a los grupos
-│ ${p}bc2 <mensaje> — a los privados
-│ ${p}vergrupos — mis grupos
-╰─────◆
+>| ${p}bc <mensaje> — a los grupos
+>| ${p}bc2 <mensaje> — a los privados
+>| ${p}vergrupos — mis grupos
 
 🎨 *MENÚS*
-╭─────◆
-│ ${p}setmenu / ${p}delmenu
-│ ${p}setmenugrupo / ${p}delmenugrupo
-│ ${p}setmenuowner / ${p}delmenuowner
-╰─────◆
+>| ${p}setmenu / ${p}delmenu
+>| ${p}setmenugrupo / ${p}delmenugrupo
+>| ${p}setmenuowner / ${p}delmenuowner
 
 🎯 *STICKERS CON COMANDO*
-╭─────◆
-│ ${p}addco <comando> — enlazar
-│ ${p}delco — desenlazar
-╰─────◆`;
+>| ${p}addco <comando> — enlazar
+>| ${p}delco — desenlazar`;
 
   await conn.sendMessage(chatId, {
     [MEDIA_MENU.tipo]: MEDIA_MENU.url,

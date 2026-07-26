@@ -92,7 +92,7 @@ const handler = async (msg, { conn }) => {
     `🧰 Bodega: *${num(clan.bodegaCreditos || 0)}* créditos\n` +
     `🎯 Nivel mínimo para unirse: *${num(clan.minNivelParaUnirse || 1)}*\n` +
     `👥 Miembros: *${miembros.length}*\n` +
-    `────────────────\n` +
+    `\n` +
     `${lineas.join("\n")}`;
 
   // Menciones

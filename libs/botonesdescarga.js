@@ -1,23 +1,32 @@
 /**
  * libs/botonesdescarga.js — Menú de botones para todos los comandos de descarga.
  *
- * En WhatsApp cada comando mandaba una vista previa con botones
- * ("🎬 Video Normal" / "📁 Video Documento") y el archivo solo se bajaba cuando
- * el usuario elegía. Aquí se hace igual, pero con los botones nativos de
- * Telegram (inline keyboard) en vez de los de Baileys.
+ * Cómo se ve en el chat (y por qué no hace spam):
+ *
+ *   1. Llega UNA tarjeta con la portada, la ficha y los botones.
+ *   2. Al pulsar, la propia tarjeta se edita: "⏳ Bajando audio…". No se manda
+ *      ningún mensaje nuevo — en Telegram se pueden editar los mensajes ya
+ *      enviados, así que se aprovecha.
+ *   3. Llega el archivo.
+ *   4. La tarjeta se edita otra vez marcando lo que ya se descargó, con los
+ *      botones puestos por si quieres otro formato.
+ *
+ *   Total: 2 mensajes (tarjeta + archivo). Antes eran 4.
  *
  * Uso desde un plugin:
  *
  *   await menuDescarga(conn, msg, {
- *     titulo: "Mi video",
- *     info: "📝 Título: ...",
+ *     emoji: "🎵", fuente: "YOUTUBE",
+ *     nombre: "Bad Bunny - Diles",
+ *     datos: [["👤", "Canal", "Bad Bunny"], ["⏱️", "Duración", "3:24"]],
  *     miniatura: "https://...",
- *     opciones: opcionesVideo(),          // o las que quieras
- *     resolver: async (opcion) => ({ url, nombre: "video.mp4" })
+ *     opciones: opcionesAudio(),
+ *     resolver: async (opcion) => ({ url, nombre: "cancion.mp3" })
  *   });
  */
 
 import { descargarBuffer, MAX_SUBIDA } from "./descargas.js";
+import { ficha, peso, recortar } from "./estilo.js";
 
 /** Trabajos esperando que alguien pulse un botón: clave → datos */
 const trabajos = new Map();
@@ -37,32 +46,29 @@ export function limpiarNombre(texto, respaldo = "archivo") {
   return String(texto || "").replace(/[\\/:*?"<>|\n\r]/g, "").trim().slice(0, 60) || respaldo;
 }
 
-const pesar = (bytes) =>
-  bytes > 1048576 ? `${(bytes / 1048576).toFixed(2)} MB` : `${(bytes / 1024).toFixed(0)} KB`;
-
 /* ─────────────── Juegos de botones más usados ─────────────── */
 
 /** Video normal / Video documento (Facebook, TikTok, Twitter, Instagram...) */
 export const opcionesVideo = () => [
-  { id: "v", texto: "🎬 Video Normal", tipo: "video" },
-  { id: "vd", texto: "📁 Video Documento", tipo: "documento" }
+  { id: "v", texto: "🎬 Video", tipo: "video" },
+  { id: "vd", texto: "📄 Documento", tipo: "documento" }
 ];
 
 /** Audio normal / Audio documento (YouTube mp3, Spotify...) */
 export const opcionesAudio = () => [
   { id: "a", texto: "🎵 Audio", tipo: "audio" },
-  { id: "ad", texto: "📄 Audio Documento", tipo: "documento" }
+  { id: "ad", texto: "📄 Documento", tipo: "documento", audio: true }
 ];
 
 /** Foto normal / Foto documento (Pinterest, Instagram de fotos...) */
 export const opcionesImagen = () => [
   { id: "i", texto: "🖼️ Imagen", tipo: "imagen" },
-  { id: "idoc", texto: "📄 Imagen Documento", tipo: "documento" }
+  { id: "idoc", texto: "📄 Documento", tipo: "documento" }
 ];
 
 /** Documento suelto (MediaFire, APK...) */
 export const opcionesArchivo = () => [
-  { id: "f", texto: "📁 Descargar archivo", tipo: "documento" }
+  { id: "f", texto: "📥 Descargar", tipo: "documento" }
 ];
 
 /** Calidades de video de YouTube, en normal y en documento */
@@ -70,7 +76,7 @@ export const CALIDADES_YT = ["144", "240", "360", "720", "1080", "1440", "4k"];
 
 export const opcionesYoutubeVideo = (calidades = ["360", "720", "1080"]) => [
   ...calidades.map((q) => ({ id: `v${q}`, texto: `🎬 ${q === "4k" ? "4K" : `${q}p`}`, tipo: "video", calidad: q })),
-  ...calidades.map((q) => ({ id: `d${q}`, texto: `📁 ${q === "4k" ? "4K" : `${q}p`} doc`, tipo: "documento", calidad: q }))
+  ...calidades.map((q) => ({ id: `d${q}`, texto: `📄 ${q === "4k" ? "4K" : `${q}p`}`, tipo: "documento", calidad: q }))
 ];
 
 /* ─────────────────────── Menú ─────────────────────── */
@@ -81,24 +87,56 @@ function enFilas(botones, porFila) {
   return filas;
 }
 
+/** Arma el teclado marcando con ✓ lo que ya se descargó */
+function teclado(trabajo) {
+  return {
+    inline_keyboard: enFilas(
+      trabajo.opciones.map((o) => ({
+        text: trabajo.hechos.has(o.id) ? `✓ ${o.texto}` : o.texto,
+        callback_data: `dl:${o.id}:${trabajo.clave}`
+      })),
+      trabajo.porFila
+    )
+  };
+}
+
+/** El texto de la tarjeta según en qué punto esté */
+function tarjeta(trabajo) {
+  const base = ficha({
+    emoji: trabajo.emoji,
+    fuente: trabajo.fuente,
+    nombre: trabajo.nombre,
+    datos: trabajo.datos,
+    enlace: trabajo.enlace
+  });
+
+  if (trabajo.estado) return `${base}\n\n${trabajo.estado}`;
+  return `${base}\n\n👇 _Elige el formato_`;
+}
+
 /**
- * Manda la vista previa con los botones y deja el trabajo apuntado.
+ * Manda la tarjeta con los botones y deja el trabajo apuntado.
  *
  * @param {object} conn
  * @param {object} msg   mensaje que disparó el comando
  * @param {object} opts
- *   titulo    → nombre de lo que se va a bajar
- *   info      → texto de la vista previa
- *   miniatura → url de la portada (opcional)
- *   opciones  → botones: [{ id, texto, tipo, calidad }]
- *   resolver  → async (opcion) => { url | buffer, nombre, titulo?, caption? }
- *   porFila   → cuántos botones por fila (3 por defecto)
- *   enlace    → url original, por si falla la descarga
+ *   emoji, fuente  → "🎵", "YOUTUBE"  (cabecera de la ficha)
+ *   nombre         → título de lo que se va a bajar
+ *   datos          → [["👤","Canal","Bad Bunny"], ...]
+ *   miniatura      → url de la portada (opcional)
+ *   opciones       → botones: [{ id, texto, tipo, calidad }]
+ *   resolver       → async (opcion) => { url | buffer, nombre, titulo?, caption? }
+ *   porFila        → cuántos botones por fila
+ *   enlace         → url original, por si falla la descarga
  */
 export async function menuDescarga(conn, msg, opts) {
   const {
-    titulo = "Archivo",
-    info = "",
+    emoji = "📦",
+    fuente = "ARCHIVO",
+    nombre = "Archivo",
+    titulo,               // compatibilidad con las llamadas antiguas
+    datos = [],
+    info,                 // idem: texto ya armado
     miniatura = "",
     opciones = opcionesVideo(),
     resolver,
@@ -110,38 +148,63 @@ export async function menuDescarga(conn, msg, opts) {
   limpiarViejos();
 
   const clave = nuevaClave();
-  trabajos.set(clave, {
+  const trabajo = {
+    clave,
     chatId: msg.chatId,
     autorId: String(msg.senderId),
     citado: msg,
-    titulo,
+    emoji,
+    fuente,
+    nombre: nombre || titulo || "Archivo",
+    titulo: titulo || nombre,
+    datos,
+    infoFija: info || null,
     enlace,
     opciones,
+    porFila,
     resolver,
+    hechos: new Set(),
+    estado: "",
     ts: Date.now(),
     ocupado: false
-  });
-
-  const teclado = {
-    inline_keyboard: enFilas(
-      opciones.map((o) => ({ text: o.texto, callback_data: `dl:${o.id}:${clave}` })),
-      porFila
-    )
   };
+  trabajos.set(clave, trabajo);
 
-  const texto = `${info}\n\n👇 *Elige cómo quieres el archivo:*`.trim();
+  const texto = trabajo.infoFija
+    ? `${trabajo.infoFija}\n\n👇 _Elige el formato_`
+    : tarjeta(trabajo);
 
+  let enviado = null;
   if (miniatura) {
     try {
-      return await conn.sendMessage(msg.chatId, { image: miniatura, caption: texto }, { quoted: msg, buttons: teclado });
+      enviado = await conn.sendMessage(msg.chatId, { image: miniatura, caption: texto }, { quoted: msg, buttons: teclado(trabajo) });
+      trabajo.esMedia = true;
     } catch {
       /* si la portada no carga, se manda solo el texto */
     }
   }
-  return conn.sendMessage(msg.chatId, { text: texto }, { quoted: msg, buttons: teclado });
+  if (!enviado) {
+    enviado = await conn.sendMessage(msg.chatId, { text: texto }, { quoted: msg, buttons: teclado(trabajo) });
+    trabajo.esMedia = false;
+  }
+
+  trabajo.mensajeId = enviado?.message_id ?? enviado?.messageId ?? null;
+  return enviado;
 }
 
 /* ─────────────────── Atención de los botones ─────────────────── */
+
+/** Repinta la tarjeta sin mandar nada nuevo */
+async function repintar(conn, trabajo) {
+  if (!trabajo.mensajeId) return;
+  const texto = trabajo.infoFija
+    ? `${trabajo.infoFija}${trabajo.estado ? `\n\n${trabajo.estado}` : "\n\n👇 _Elige el formato_"}`
+    : tarjeta(trabajo);
+  await conn.editar(trabajo.chatId, trabajo.mensajeId, texto, {
+    esMedia: trabajo.esMedia,
+    buttons: teclado(trabajo)
+  });
+}
 
 function registrarBotones(conn) {
   if (!conn || conn.__botonesDescarga) return;
@@ -168,9 +231,13 @@ function registrarBotones(conn) {
 
     trabajo.ocupado = true;
     const chatId = trabajo.chatId;
-    await conn.responderBoton(query.id, "⏳ Descargando...");
 
-    const aviso = await conn.sendMessage(chatId, { text: "⏳ *Descargando, espera un momento...*" }).catch(() => null);
+    // El aviso va como globito de Telegram: no ensucia el chat
+    await conn.responderBoton(query.id, `⏳ Bajando ${opcion.texto.replace(/^\S+\s*/, "")}…`);
+
+    trabajo.estado = `⏳ _Bajando ${opcion.texto.replace(/^\S+\s*/, "").toLowerCase()}…_`;
+    await repintar(conn, trabajo);
+    conn.sendPresenceUpdate("typing", chatId).catch(() => {});
 
     try {
       const resuelto = await trabajo.resolver(opcion);
@@ -178,7 +245,9 @@ function registrarBotones(conn) {
 
       // El plugin ya mandó los archivos por su cuenta (carruseles, packs...)
       if (resuelto.yaEnviado) {
-        if (aviso?.message_id) await conn.deleteMessage(chatId, aviso.message_id).catch(() => {});
+        trabajo.hechos.add(opcion.id);
+        trabajo.estado = `✅ _Listo_`;
+        await repintar(conn, trabajo);
         return;
       }
 
@@ -186,30 +255,33 @@ function registrarBotones(conn) {
       if (!buffer) ({ buffer, tam } = await descargarBuffer(resuelto.url, { referer: resuelto.referer }));
       if (!tam) tam = buffer.length;
 
-      const nombre = limpiarNombre(resuelto.nombre || trabajo.titulo, "archivo");
-      const nombreFinal = /\.[a-z0-9]{2,4}$/i.test(nombre) ? nombre : `${nombre}.${extPorTipo(opcion, resuelto)}`;
-      const pie = `${resuelto.caption || `📥 *${resuelto.titulo || trabajo.titulo}*`}\n📦 ${pesar(tam)}`;
+      const nombreArchivo = limpiarNombre(resuelto.nombre || trabajo.nombre, "archivo");
+      const nombreFinal = /\.[a-z0-9]{2,4}$/i.test(nombreArchivo)
+        ? nombreArchivo
+        : `${nombreArchivo}.${extPorTipo(opcion, resuelto)}`;
 
-      if (aviso?.message_id) await conn.deleteMessage(chatId, aviso.message_id).catch(() => {});
+      // Pie del archivo: corto y al grano, la ficha completa ya está arriba
+      const pie = resuelto.caption ?? `${trabajo.emoji} *${recortar(resuelto.titulo || trabajo.nombre, 60)}*`;
 
       const contenido = { fileName: nombreFinal, caption: pie };
-
       if (opcion.tipo === "documento") contenido.document = buffer;
       else if (opcion.tipo === "audio") {
         contenido.audio = buffer;
-        contenido.title = resuelto.titulo || trabajo.titulo;
+        contenido.title = resuelto.titulo || trabajo.nombre;
         if (resuelto.autor) contenido.performer = resuelto.autor;
       } else if (opcion.tipo === "imagen") contenido.image = buffer;
       else contenido.video = buffer;
 
       await conn.sendMessage(chatId, contenido, { quoted: trabajo.citado });
+
+      trabajo.hechos.add(opcion.id);
+      trabajo.estado = `✅ _${opcion.texto.replace(/^\S+\s*/, "")} enviado · ${peso(tam)}_`;
+      await repintar(conn, trabajo);
     } catch (e) {
-      if (aviso?.message_id) await conn.deleteMessage(chatId, aviso.message_id).catch(() => {});
-      await conn.sendMessage(chatId, {
-        text:
-          `❌ No pude descargarlo.\n\n_${String(e?.message || e).slice(0, 200)}_` +
-          (trabajo.enlace ? `\n\n🔗 Puedes verlo aquí: ${trabajo.enlace}` : "")
-      }, { quoted: trabajo.citado }).catch(() => {});
+      trabajo.estado =
+        `❌ _${String(e?.message || e).slice(0, 140)}_` +
+        (trabajo.enlace ? `\n🔗 ${trabajo.enlace}` : "");
+      await repintar(conn, trabajo);
     } finally {
       trabajo.ocupado = false;
     }
@@ -219,9 +291,8 @@ function registrarBotones(conn) {
 /** Extensión según lo que se pidió */
 function extPorTipo(opcion, resuelto) {
   if (resuelto?.ext) return resuelto.ext;
-  if (opcion.tipo === "audio") return "mp3";
+  if (opcion.tipo === "audio" || opcion.audio) return "mp3";
   if (opcion.tipo === "imagen") return "jpg";
-  if (opcion.tipo === "documento") return resuelto?.audio ? "mp3" : "mp4";
   return "mp4";
 }
 

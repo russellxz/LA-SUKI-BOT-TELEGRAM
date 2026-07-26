@@ -64,7 +64,7 @@ const handler = async (msg, { conn }) => {
     texto += `📊 Estado: ${estado.toUpperCase()}\n\n`;
     texto += `👤 Cliente: ${factura.cliente?.nombre} (${factura.cliente?.numero})\n`;
     texto += `🛒 Vendedor: ${factura.vendedor?.nombre} (${factura.vendedor?.numero})\n`;
-    texto += `──────────────\n\n`;
+    texto += `\n\n`;
   });
 
   await conn.sendMessage(chatId, { text: texto.trim(), quoted: msg });

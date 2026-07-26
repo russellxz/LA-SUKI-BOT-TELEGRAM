@@ -4,6 +4,7 @@
 // si lo quieres como video normal o como documento.
 import { descargarFacebook, descargarBuffer } from "../../libs/descargas.js";
 import { menuDescarga, opcionesVideo, limpiarNombre } from "../../libs/botonesdescarga.js";
+import { ayuda, recortar } from "../../libs/estilo.js";
 
 const handler = async (msg, { conn, text, usedPrefix, command }) => {
   const chatId = msg.chatId;
@@ -14,10 +15,13 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
 
   if (!url || !/facebook\.com|fb\.watch|fb\.me/i.test(url)) {
     return conn.sendMessage(chatId, {
-      text:
-        `📘 *Descargar de Facebook*\n\n` +
-        `Usa: *${usedPrefix}${command} <enlace>*\n\n` +
-        `*Ejemplos:*\n• ${usedPrefix}${command} https://fb.watch/xxxx\n• ${usedPrefix}${command} https://www.facebook.com/share/v/xxxx`
+      text: ayuda({
+        emoji: "📘",
+        nombre: "Descargar de Facebook",
+        para: "Pásame el enlace de un video y te lo bajo.",
+        usos: [`${usedPrefix}${command} <enlace>`],
+        ejemplos: [`${usedPrefix}${command} https://fb.watch/xxxx`, `${usedPrefix}${command} https://www.facebook.com/share/v/xxxx`]
+      })
     }, { quoted: msg });
   }
 
@@ -27,15 +31,10 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
     const datos = await descargarFacebook(url);
     const titulo = datos.titulo || "Facebook Video";
 
-    const info =
-      "╭━━━━━━━━━━━━━━━━━╮\n" +
-      "  📘 *FACEBOOK*\n" +
-      "╰━━━━━━━━━━━━━━━━━╯\n\n" +
-      `📝 *Título:* ${titulo}`;
-
     await menuDescarga(conn, msg, {
-      titulo,
-      info,
+      emoji: "📘",
+      fuente: "Facebook",
+      nombre: titulo,
       miniatura: datos.miniatura || "",
       enlace: url,
       opciones: opcionesVideo(),
@@ -54,7 +53,7 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
               titulo,
               nombre: `${limpiarNombre(titulo, "facebook")}.mp4`,
               ext: "mp4",
-              caption: `📘 *Facebook*\n${titulo}`
+              caption: `📘 *${recortar(titulo, 60)}*`
             };
           } catch (e) {
             ultimo = e;

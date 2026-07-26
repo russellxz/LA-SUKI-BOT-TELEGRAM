@@ -24,18 +24,16 @@ const handler = async (msg, ctx) => {
       .join("\n");
 
     const texto =
-      `╭──『 📋 *INFO DEL GRUPO* 』\n` +
-      `│\n` +
-      `│ 🏷️ *Nombre:* ${chat.title}\n` +
-      `│ 🆔 *ID:* \`${chat.id}\`\n` +
-      `│ 👥 *Miembros:* ${miembros}\n` +
-      `│ 👮 *Admins:* ${admins.length}\n` +
-      `│ 👑 *Creador:* ${creador ? [creador.user.first_name, creador.user.last_name].filter(Boolean).join(" ") : "Oculto"}\n` +
-      `│ 💬 *Mensajes contados:* ${totalMensajes(chatId)}\n` +
-      `│ 🙋 *Miembros que conozco:* ${miembrosDe(chatId).length}\n` +
-      (chat.username ? `│ 🔗 *Enlace:* t.me/${chat.username}\n` : "") +
-      `│\n` +
-      `╰────────────────◆\n\n` +
+      `📋 *INFO DEL GRUPO*\n` +
+      `>| 🏷️ *Nombre:* ${chat.title}\n` +
+      `>| 🆔 *ID:* \`${chat.id}\`\n` +
+      `>| 👥 *Miembros:* ${miembros}\n` +
+      `>| 👮 *Admins:* ${admins.length}\n` +
+      `>| 👑 *Creador:* ${creador ? [creador.user.first_name, creador.user.last_name].filter(Boolean).join(" ") : "Oculto"}\n` +
+      `>| 💬 *Mensajes contados:* ${totalMensajes(chatId)}\n` +
+      `>| 🙋 *Miembros que conozco:* ${miembrosDe(chatId).length}\n` +
+      (chat.username ? `>| 🔗 *Enlace:* t.me/${chat.username}\n` : "") +
+      `\n\n` +
       (chat.description ? `📝 *Descripción:*\n${chat.description}\n\n` : "") +
       (listaAdmins ? `👮 *Administradores:*\n${listaAdmins}` : "");
 

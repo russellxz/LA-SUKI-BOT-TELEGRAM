@@ -60,7 +60,6 @@ Ej: .pagar 2000
 💳 *Pagar toda la deuda:*
 .pagarall
 
-──────────────────
 💳 *Capital disponible:* ${db.banco.montoTotal} créditos
 🧾 *Préstamos activos:* ${totalPrestamos}\n`;
 

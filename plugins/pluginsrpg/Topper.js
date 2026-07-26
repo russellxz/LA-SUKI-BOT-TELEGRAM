@@ -48,7 +48,7 @@ const handler = async (msg, { conn }) => {
         texto += `   - ${p.nombre} (Nivel ${p.nivel})\n`;
       });
     }
-    texto += `─────────────────\n`;
+    texto += `\n`;
   }
 
   // Enviar imagen con el ranking

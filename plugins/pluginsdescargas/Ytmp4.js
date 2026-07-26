@@ -5,6 +5,7 @@
 // con { url, type: "video", quality } (la calidad va sin la "p").
 import { buscarYoutube, videoYoutube, descargarBuffer, normalizarCalidad, CALIDADES_VIDEO } from "../../libs/descargas.js";
 import { menuDescarga, opcionesYoutubeVideo, limpiarNombre } from "../../libs/botonesdescarga.js";
+import { ayuda, duracion, numero, recortar, peso } from "../../libs/estilo.js";
 
 const esYoutube = (u = "") => /(?:youtube\.com|youtu\.be|music\.youtube\.com)/i.test(u);
 
@@ -14,12 +15,14 @@ const handler = async (msg, { conn, text, args, usedPrefix, command }) => {
 
   if (!entrada) {
     return conn.sendMessage(chatId, {
-      text:
-        `🎬 *Descargar video de YouTube*\n\n` +
-        `Usa: *${usedPrefix}${command} <enlace o nombre>*\n\n` +
-        `_También puedes fijar la calidad de una:_\n` +
-        `*${usedPrefix}${command} 720 <enlace>*\n\n` +
-        `Calidades: ${CALIDADES_VIDEO.join(" · ")}`
+      text: ayuda({
+        emoji: "🎬",
+        nombre: "Video de YouTube",
+        para: "Te bajo el video en la calidad que elijas.",
+        usos: [`${usedPrefix}${command} <enlace o nombre>`, `${usedPrefix}${command} 720 <enlace>`],
+        ejemplos: [`${usedPrefix}${command} https://youtu.be/xxxx`],
+        nota: `Calidades: ${CALIDADES_VIDEO.join(" · ")}`
+      })
     }, { quoted: msg });
   }
 
@@ -56,7 +59,7 @@ const handler = async (msg, { conn, text, args, usedPrefix, command }) => {
         titulo: resuelto.titulo || titulo,
         nombre: `${limpiarNombre(resuelto.titulo || titulo, "video")}.mp4`,
         ext: "mp4",
-        caption: `🎬 *${resuelto.titulo || titulo}*\n📺 Calidad: ${etiqueta}`
+        caption: `🎬 *${recortar(resuelto.titulo || titulo, 60)}*\n📺 ${etiqueta}`
       };
     };
 
@@ -68,26 +71,23 @@ const handler = async (msg, { conn, text, args, usedPrefix, command }) => {
       await conn.sendMessage(chatId, {
         video: buffer,
         fileName: datos.nombre,
-        caption: `${datos.caption}\n📦 ${(tam / 1048576).toFixed(2)} MB`
+        caption: `${datos.caption}\n📦 ${peso(tam)}`
       }, { quoted: msg });
       return conn.react(chatId, msg.message_id, "✅");
     }
 
-    const info =
-      "╭━━━━━━━━━━━━━━━━━╮\n" +
-      "  🎬 *YOUTUBE — VIDEO*\n" +
-      "╰━━━━━━━━━━━━━━━━━╯\n\n" +
-      `📝 *Título:* ${titulo}\n` +
-      (video?.autor ? `👤 *Canal:* ${video.autor}\n` : "") +
-      (video?.duracion ? `⏱️ *Duración:* ${video.duracion}\n` : "") +
-      `\n🔗 ${url}`;
-
     await menuDescarga(conn, msg, {
-      titulo,
-      info,
+      emoji: "🎬",
+      fuente: "YouTube · Video",
+      nombre: titulo,
       miniatura: video?.miniatura || "",
       enlace: url,
       porFila: 3,
+      datos: [
+        ["👤", "Canal", video?.autor || null],
+        ["⏱️", "Duración", video?.duracion || (video?.segundos ? duracion(video.segundos) : null)],
+        ["👁️", "Vistas", video?.vistas ? numero(video.vistas) : null]
+      ],
       opciones: opcionesYoutubeVideo(["360", "720", "1080"]),
       resolver: (opcion) => preparar(opcion.calidad)
     });

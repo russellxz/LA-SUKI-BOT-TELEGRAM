@@ -89,7 +89,7 @@ const handler = async (msg, { conn }) => {
   }
 
   // --- 2) Un solo listado enumerado (Supremo #1) ---
-  const raya = "────────────────";
+  const raya = "";
   let texto = "🏰 *LISTA DE CLANES*\n";
   texto += "Usa: *.unirme <número>*  (ej: *.unirme 1*)\n";
   texto += `${raya}\n`;

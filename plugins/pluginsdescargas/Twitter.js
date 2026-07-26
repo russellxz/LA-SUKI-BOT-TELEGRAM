@@ -1,6 +1,7 @@
 // plugins/pluginsdescargas/Twitter.js — Descargar de Twitter / X, con botones
 import { descargarTwitter } from "../../libs/descargas.js";
 import { menuDescarga, opcionesVideo, opcionesImagen, limpiarNombre } from "../../libs/botonesdescarga.js";
+import { ayuda, recortar } from "../../libs/estilo.js";
 
 const handler = async (msg, { conn, text, usedPrefix, command }) => {
   const chatId = msg.chatId;
@@ -10,10 +11,13 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
 
   if (!url || !/twitter\.com|x\.com|t\.co/i.test(url)) {
     return conn.sendMessage(chatId, {
-      text:
-        `🐦 *Descargar de Twitter / X*\n\n` +
-        `Usa: *${usedPrefix}${command} <enlace>*\n\n` +
-        `*Ejemplo:* ${usedPrefix}${command} https://x.com/usuario/status/123`
+      text: ayuda({
+        emoji: "🐦",
+        nombre: "Descargar de Twitter / X",
+        para: "Videos e imágenes de cualquier tweet.",
+        usos: [`${usedPrefix}${command} <enlace>`],
+        ejemplos: [`${usedPrefix}${command} https://x.com/usuario/status/123`]
+      })
     }, { quoted: msg });
   }
 
@@ -26,15 +30,10 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
     const titulo = datos.titulo || "Twitter / X";
     const esVideo = Boolean(datos.video);
 
-    const info =
-      "╭━━━━━━━━━━━━━━━━━╮\n" +
-      "  🐦 *TWITTER / X*\n" +
-      "╰━━━━━━━━━━━━━━━━━╯\n\n" +
-      `📝 ${titulo}`;
-
     await menuDescarga(conn, msg, {
-      titulo,
-      info,
+      emoji: "🐦",
+      fuente: "Twitter / X",
+      nombre: titulo,
       miniatura: datos.imagen || "",
       enlace: url,
       opciones: esVideo ? opcionesVideo() : opcionesImagen(),

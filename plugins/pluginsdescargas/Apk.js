@@ -5,6 +5,7 @@
 import axios from "axios";
 import { NEOXR_BASE, NEOXR_KEY, descargarBuffer } from "../../libs/descargas.js";
 import { menuDescarga } from "../../libs/botonesdescarga.js";
+import { ayuda, recortar } from "../../libs/estilo.js";
 
 const handler = async (msg, { conn, args, usedPrefix, command }) => {
   const chatId = msg.chatId;
@@ -13,7 +14,13 @@ const handler = async (msg, { conn, args, usedPrefix, command }) => {
 
   if (!consulta) {
     return conn.sendMessage(chatId, {
-      text: `⚠️ *Uso incorrecto.*\n✳️ *Ejemplo:* ${pref}${command} whatsapp`
+      text: ayuda({
+        emoji: "📱",
+        nombre: "Buscar APK",
+        para: "Te busco la app y te la mando como archivo.",
+        usos: [`${pref}${command} <nombre de la app>`],
+        ejemplos: [`${pref}${command} whatsapp`, `${pref}${command} minecraft`]
+      })
     }, { quoted: msg });
   }
 
@@ -34,26 +41,21 @@ const handler = async (msg, { conn, args, usedPrefix, command }) => {
     const app = data.data;
     const archivo = data.file;
 
-    const info =
-      "╭━━━━━━━━━━━━━━━━━╮\n" +
-      "  📱 *APK*\n" +
-      "╰━━━━━━━━━━━━━━━━━╯\n\n" +
-      `📝 *Nombre:* ${app.name}\n` +
-      (app.size ? `💾 *Tamaño:* ${app.size}\n` : "") +
-      (app.version ? `🏷️ *Versión:* ${app.version}\n` : "") +
-      (app.developer ? `👨‍💻 *Desarrollador:* ${app.developer}\n` : "") +
-      (app.category ? `📂 *Categoría:* ${app.category}\n` : "") +
-      (app.rating ? `⭐ *Rating:* ${app.rating}\n` : "") +
-      (app.installs ? `📥 *Instalaciones:* ${app.installs}\n` : "") +
-      (app.updated ? `📅 *Actualizado:* ${app.updated}\n` : "") +
-      (app.requirements ? `📲 *Requisitos:* ${app.requirements}\n` : "") +
-      (app.id ? `🆔 ${app.id}` : "");
-
     await menuDescarga(conn, msg, {
-      titulo: app.name || "apk",
-      info,
+      emoji: "📱",
+      fuente: "APK",
+      nombre: app.name || "apk",
       miniatura: app.thumbnail || "",
-      opciones: [{ id: "f", texto: "📁 Descargar APK", tipo: "documento" }],
+      datos: [
+        ["💾", "Tamaño", app.size || null],
+        ["🏷️", "Versión", app.version || null],
+        ["👨‍💻", "Desarrollador", app.developer || null],
+        ["📂", "Categoría", app.category || null],
+        ["⭐", "Rating", app.rating || null],
+        ["📥", "Instalaciones", app.installs || null],
+        ["📅", "Actualizado", app.updated || null]
+      ],
+      opciones: [{ id: "f", texto: "📥 Descargar APK", tipo: "documento" }],
       resolver: async () => {
         const { buffer, tam } = await descargarBuffer(archivo.url);
         return {
@@ -62,7 +64,7 @@ const handler = async (msg, { conn, args, usedPrefix, command }) => {
           titulo: app.name,
           nombre: archivo.filename || `${app.name || "app"}.apk`,
           ext: "apk",
-          caption: `📱 *${app.name}*`
+          caption: `📱 *${recortar(app.name, 60)}*${app.version ? `\n🏷️ ${app.version}` : ""}`
         };
       }
     });

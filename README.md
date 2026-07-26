@@ -14,7 +14,7 @@
 
 <!-- ─────────── LETRAS QUE SE MUEVEN ─────────── -->
 
-<img src="https://readme-typing-svg.demolab.com?font=Orbitron&weight=900&size=32&duration=2400&pause=500&color=A855F7&center=true&vCenter=true&width=850&height=60&lines=%F0%9F%A6%8B%20LA%20SUKI%20BOT%20%C2%B7%20TELEGRAM%20%F0%9F%A6%8B;%E2%9A%A1%20527%20COMANDOS%20%C2%B7%20301%20PLUGINS%20%E2%9A%A1;%F0%9F%9A%80%20EL%20BOT%20M%C3%81S%20COMPLETO%20DE%20TELEGRAM" alt="titulo"/>
+<img src="https://readme-typing-svg.demolab.com?font=Orbitron&weight=900&size=32&duration=2400&pause=500&color=A855F7&center=true&vCenter=true&width=850&height=60&lines=%F0%9F%A6%8B%20LA%20SUKI%20BOT%20%C2%B7%20TELEGRAM%20%F0%9F%A6%8B;%E2%9A%A1%20528%20COMANDOS%20%C2%B7%20301%20PLUGINS%20%E2%9A%A1;%F0%9F%9A%80%20EL%20BOT%20M%C3%81S%20COMPLETO%20DE%20TELEGRAM" alt="titulo"/>
 
 <img src="https://readme-typing-svg.demolab.com?font=Orbitron&weight=700&size=22&duration=2800&pause=600&color=2AABEE&center=true&vCenter=true&width=800&height=45&lines=%F0%9F%8E%A8%20Stickers%2C%20IA%2C%20descargas%20y%20juegos;%F0%9F%91%AE%20Administraci%C3%B3n%20total%20de%20tus%20grupos;%F0%9F%8E%AE%20RPG%2C%20clanes%2C%20mascotas%20y%20econom%C3%ADa;%F0%9F%94%9E%20Y%20mucho%20m%C3%A1s%20que%20vas%20a%20descubrir" alt="que hace"/>
 
@@ -29,7 +29,7 @@
 <img src="https://img.shields.io/badge/BOT%20API-OFICIAL-00D4FF?style=for-the-badge&logo=telegram&logoColor=white&labelColor=0d1117"/>
 <br/>
 <img src="https://img.shields.io/badge/PLUGINS-301%20%E2%9A%A1-A855F7?style=for-the-badge&labelColor=0d1117"/>
-<img src="https://img.shields.io/badge/COMANDOS-527%20%F0%9F%94%A5-FF2BD6?style=for-the-badge&labelColor=0d1117"/>
+<img src="https://img.shields.io/badge/COMANDOS-528%20%F0%9F%94%A5-FF2BD6?style=for-the-badge&labelColor=0d1117"/>
 <img src="https://img.shields.io/badge/BOTONES-NATIVOS%20%F0%9F%94%98-48D597?style=for-the-badge&labelColor=0d1117"/>
 <br/>
 <img src="https://img.shields.io/badge/HOSTING-SKY%20ULTRA%20PLUS%20%F0%9F%9A%80-FFD700?style=for-the-badge&labelColor=0d1117"/>
@@ -59,7 +59,7 @@
 | 🦖 **02** | [Pterodactyl](#-02--pterodactyl) | Egg, variables y detalles del hosting |
 | 🔣 **03** | [Prefijos](#-03--prefijos) | `.` `#` `/` y cómo cambiarlos (sí, con emojis) |
 | 👑 **04** | [Dueños y accesos](#-04--dueños-y-accesos) | `.soyowner`, `.addowner`, quién le habla en privado |
-| 📚 **05** | [Catálogo de comandos](#-05--catálogo-de-comandos) | Los 527, por categorías |
+| 📚 **05** | [Catálogo de comandos](#-05--catálogo-de-comandos) | Los 528, por categorías |
 | 🔍 **06** | [Por dentro](#-06--por-dentro) | El recorrido de un mensaje y la estructura |
 | ⚔️ **07** | [WhatsApp vs Telegram](#-07--whatsapp-vs-telegram) | Lo que se fue y lo que llegó |
 | 🔧 **08** | [Si algo falla](#-08--si-algo-falla) | Los problemas de siempre |
@@ -331,9 +331,14 @@ usarlo por su cuenta. En **grupos no aplica**: ahí responde a todos.
 
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=rect&height=52&color=gradient&customColorList=12,20,24,30&text=05%20%20%C2%B7%20%20CAT%C3%81LOGO%20DE%20COMANDOS&fontSize=22&fontColor=ffffff&fontAlignY=58&desc=527%20comandos%20por%20categor%C3%ADas&descSize=12&descAlignY=82&animation=twinkling" width="100%"/>
+<img src="https://capsule-render.vercel.app/api?type=rect&height=52&color=gradient&customColorList=12,20,24,30&text=05%20%20%C2%B7%20%20CAT%C3%81LOGO%20DE%20COMANDOS&fontSize=22&fontColor=ffffff&fontAlignY=58&desc=528%20comandos%20por%20categor%C3%ADas&descSize=12&descAlignY=82&animation=twinkling" width="100%"/>
 
-Escribe `.menu` para el menú completo o `.allmenu` para la lista entera.
+`.menu` abre un menú **navegable con botones**: tocas una categoría y la misma
+tarjeta se transforma para mostrarte esos comandos, con flechas para pasar de
+una a otra. Nada de menús kilométricos ni mensajes repetidos.
+
+Los comandos salen en `formato de código`: en Telegram **se copian con solo
+tocarlos**. Y `.allmenu` trae la lista entera con cada sección plegable.
 
 </div>
 
@@ -412,6 +417,11 @@ que vas a bajar y tú eliges cómo lo quieres.
 | `.mediafire` · `.apk` | 📁 Descargar archivo |
 
 El menú caduca a los 20 minutos y solo puede pulsarlo quien escribió el comando.
+
+> [!TIP]
+> **Sin spam.** Al pulsar un botón el bot **edita la propia tarjeta**
+> (`⏳ Bajando audio…` → `✅ Audio enviado · 3.4 MB`) en vez de mandar mensajes
+> sueltos. En el chat quedan **2 mensajes**: la tarjeta y el archivo.
 
 Las APIs piden una clave en la cabecera y **Telegram no puede descargar esas
 URLs por su cuenta** (da *failed to get HTTP URL content*). Por eso el bot:

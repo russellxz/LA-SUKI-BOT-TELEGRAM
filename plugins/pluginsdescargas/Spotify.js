@@ -1,6 +1,7 @@
 // plugins/pluginsdescargas/Spotify.js — Descargar canciones de Spotify, con botones
 import { descargarSpotify, buscarYoutube, audioYoutube } from "../../libs/descargas.js";
 import { menuDescarga, opcionesAudio, limpiarNombre } from "../../libs/botonesdescarga.js";
+import { ayuda, recortar } from "../../libs/estilo.js";
 
 const handler = async (msg, { conn, text, usedPrefix, command }) => {
   const chatId = msg.chatId;
@@ -8,10 +9,13 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
 
   if (!entrada) {
     return conn.sendMessage(chatId, {
-      text:
-        `🟢 *Descargar de Spotify*\n\n` +
-        `Usa: *${usedPrefix}${command} <enlace o nombre>*\n\n` +
-        `*Ejemplo:* ${usedPrefix}${command} https://open.spotify.com/track/xxxx`
+      text: ayuda({
+        emoji: "🟢",
+        nombre: "Descargar de Spotify",
+        para: "Pásame el enlace de la canción o su nombre.",
+        usos: [`${usedPrefix}${command} <enlace o nombre>`],
+        ejemplos: [`${usedPrefix}${command} https://open.spotify.com/track/xxxx`]
+      })
     }, { quoted: msg });
   }
 
@@ -38,24 +42,20 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
       portada = resultados[0].miniatura || "";
     }
 
-    const info =
-      "╭━━━━━━━━━━━━━━━━━╮\n" +
-      "  🟢 *SPOTIFY*\n" +
-      "╰━━━━━━━━━━━━━━━━━╯\n\n" +
-      `📝 *Título:* ${titulo}\n` +
-      (artista ? `🎤 *Artista:* ${artista}` : "");
-
     await menuDescarga(conn, msg, {
-      titulo,
-      info,
+      emoji: "🟢",
+      fuente: "Spotify",
+      nombre: titulo,
       miniatura: portada,
+      datos: [["🎤", "Artista", artista || null]],
       opciones: opcionesAudio(),
       resolver: () => ({
         url: enlace,
         titulo,
         autor: artista || "Spotify",
         nombre: `${limpiarNombre(titulo, "cancion")}.mp3`,
-        ext: "mp3"
+        ext: "mp3",
+        caption: `🟢 *${recortar(titulo, 60)}*${artista ? `\n🎤 ${artista}` : ""}`
       })
     });
 

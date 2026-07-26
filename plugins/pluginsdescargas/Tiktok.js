@@ -4,6 +4,7 @@
 // y el audio suelto. Las publicaciones de solo fotos se mandan directas.
 import { descargarTiktok, descargarBuffer } from "../../libs/descargas.js";
 import { menuDescarga, limpiarNombre } from "../../libs/botonesdescarga.js";
+import { ayuda, duracion, recortar } from "../../libs/estilo.js";
 
 const handler = async (msg, { conn, text, usedPrefix, command }) => {
   const chatId = msg.chatId;
@@ -13,10 +14,13 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
 
   if (!url || !/tiktok\.com|vm\.tiktok|vt\.tiktok/i.test(url)) {
     return conn.sendMessage(chatId, {
-      text:
-        `🎵 *Descargar de TikTok*\n\n` +
-        `Usa: *${usedPrefix}${command} <enlace de TikTok>*\n\n` +
-        `*Ejemplo:* ${usedPrefix}${command} https://vm.tiktok.com/xxxxx`
+      text: ayuda({
+        emoji: "🎵",
+        nombre: "Descargar de TikTok",
+        para: "Sin marca de agua, en video o solo el audio.",
+        usos: [`${usedPrefix}${command} <enlace>`],
+        ejemplos: [`${usedPrefix}${command} https://vm.tiktok.com/xxxxx`]
+      })
     }, { quoted: msg });
   }
 
@@ -50,23 +54,20 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
     if (!datos.video) throw new Error("No encontré el video en ese enlace");
 
     const opciones = [
-      { id: "v", texto: "🎬 Video Normal", tipo: "video" },
-      { id: "vd", texto: "📁 Video Documento", tipo: "documento" }
+      { id: "v", texto: "🎬 Video", tipo: "video" },
+      { id: "vd", texto: "📄 Documento", tipo: "documento" }
     ];
-    if (datos.audio) opciones.push({ id: "a", texto: "🎵 Solo el audio", tipo: "audio" });
-
-    const info =
-      "╭━━━━━━━━━━━━━━━━━╮\n" +
-      "  🎵 *TIKTOK*\n" +
-      "╰━━━━━━━━━━━━━━━━━╯\n\n" +
-      (datos.titulo ? `📝 *Título:* ${datos.titulo}\n` : "") +
-      (datos.autor ? `👤 *Autor:* ${datos.autor}\n` : "") +
-      (datos.duracion ? `⏱️ *Duración:* ${datos.duracion}s\n` : "");
+    if (datos.audio) opciones.push({ id: "a", texto: "🎵 Solo audio", tipo: "audio" });
 
     await menuDescarga(conn, msg, {
-      titulo,
-      info,
+      emoji: "🎵",
+      fuente: "TikTok",
+      nombre: titulo,
       miniatura: datos.portada || "",
+      datos: [
+        ["👤", "Autor", datos.autor || null],
+        ["⏱️", "Duración", datos.duracion ? duracion(datos.duracion) : null]
+      ],
       enlace: url,
       opciones,
       resolver: (opcion) =>

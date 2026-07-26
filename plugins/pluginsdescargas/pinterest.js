@@ -4,6 +4,7 @@
 import axios from "axios";
 import { API_BASE, API_KEY, descargarBuffer } from "../../libs/descargas.js";
 import { menuDescarga, opcionesVideo, limpiarNombre } from "../../libs/botonesdescarga.js";
+import { ayuda, recortar } from "../../libs/estilo.js";
 
 const esPinterest = (u = "") => /^https?:\/\//i.test(u) && /(pinterest\.[a-z.]+|pin\.it)/i.test(u);
 
@@ -34,7 +35,13 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
 
   if (!url) {
     return conn.sendMessage(chatId, {
-      text: `📌 *Descargar video de Pinterest*\n\nUsa: *${pref}${command} <enlace>*\nEj: ${pref}${command} https://pin.it/xxxxx`
+      text: ayuda({
+        emoji: "📌",
+        nombre: "Video de Pinterest",
+        para: "Pásame el enlace del pin.",
+        usos: [`${pref}${command} <enlace>`],
+        ejemplos: [`${pref}${command} https://pin.it/xxxxx`]
+      })
     }, { quoted: msg });
   }
 
@@ -56,17 +63,12 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
 
     if (!mp4) throw new Error("No encontré MP4 en ese pin (puede ser solo HLS .m3u8)");
 
-    const info =
-      "╭━━━━━━━━━━━━━━━━━╮\n" +
-      "  📌 *PINTEREST*\n" +
-      "╰━━━━━━━━━━━━━━━━━╯\n\n" +
-      `📝 *Título:* ${titulo}` +
-      (resultado?.creator?.username ? `\n👤 *Autor:* @${resultado.creator.username}` : "");
-
     await menuDescarga(conn, msg, {
-      titulo,
-      info,
+      emoji: "📌",
+      fuente: "Pinterest",
+      nombre: titulo,
       miniatura: resultado?.media?.thumbnail || resultado?.thumbnail || "",
+      datos: [["👤", "Autor", resultado?.creator?.username ? `@${resultado.creator.username}` : null]],
       enlace: url,
       opciones: opcionesVideo(),
       resolver: async () => {
@@ -77,7 +79,7 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
           titulo,
           nombre: `${limpiarNombre(titulo, "pinterest")}.mp4`,
           ext: "mp4",
-          caption: `📌 *${titulo}*`
+          caption: `📌 *${recortar(titulo, 60)}*`
         };
       }
     });

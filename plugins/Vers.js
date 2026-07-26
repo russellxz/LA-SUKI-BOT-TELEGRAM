@@ -22,12 +22,12 @@ const handler = async (msg, { conn, usedPrefix }) => {
 
   const lineas = nombres.sort().map((n) => {
     const animados = db[n].filter((s) => s.animado).length;
-    return `│ 🌟 *${n}* — ${db[n].length} sticker(s)${animados ? ` (${animados} animados)` : ""}`;
+    return `>| 🌟 *${n}* — ${db[n].length} sticker(s)${animados ? ` (${animados} animados)` : ""}`;
   });
 
   await conn.sendMessage(chatId, {
     text:
-      `╭──『 🌟 *PAQUETES DE STICKERS* 』\n│\n${lineas.join("\n")}\n│\n╰────────────────◆\n\n` +
+      `🌟 *PAQUETES DE STICKERS*\n\n${lineas.join("\n")}\n\n` +
       `_Enviar uno: ${usedPrefix}sendsk <nombre>_\n` +
       `_Borrar uno: ${usedPrefix}delsk <nombre> <número>_`
   }, { quoted: msg });

@@ -55,7 +55,7 @@ const handler = async (msg, { conn, args }) => {
   if (ampm.toLowerCase() === "am" && hr === 12) hr = 0;
 
   const horaMX = moment().tz("America/Mexico_City").set({ hour: hr, minute: min, second: 0 });
-  const horaMsg = zonas.map(z => `│➥ ${z.pais} : ${horaMX.clone().tz(z.tz).format("hh:mm A")}`).join("\n");
+  const horaMsg = zonas.map(z => `>| ➥ ${z.pais} : ${horaMX.clone().tz(z.tz).format("hh:mm A")}`).join("\n");
 
   // === PARTICIPANTES ===
   const participantes = meta.participants.filter(p => String(p.id) !== String(conn.user.id));
@@ -74,25 +74,25 @@ const handler = async (msg, { conn, args }) => {
   }
   const suplentes = shuffled.slice(24, 30);
 
-  const render = (arr, n) => `│\n│    𝗘𝗦𝗖𝗨𝗔𝗗𝗥𝗔 ➹${n}\n│\n` +
-    arr.map((u, i) => `│${i === 0 ? "👑" : "⚜️"} ➤ @${u.id}`).join("\n");
+  const render = (arr, n) => `>| \n>|    𝗘𝗦𝗖𝗨𝗔𝗗𝗥𝗔 ➹${n}\n\n` +
+    arr.map((u, i) => `>| ${i === 0 ? "👑" : "⚜️"} ➤ @${u.id}`).join("\n");
 
-  const suplenteTxt = suplentes.map(u => `│⚜️ ➤ @${u.id}`).join("\n");
+  const suplenteTxt = suplentes.map(u => `>| ⚜️ ➤ @${u.id}`).join("\n");
 
-  let text = `╭──────>⋆☽⋆ ⋆☾⋆<──────╮
+  let text = `>⋆☽⋆ ⋆☾⋆<╮
    ㅤ   *GUERRA DE CLANES*
            *${groupName}*
-╰──────>⋆☽⋆ ⋆☾⋆<──────╯
-╭──────────────╮
-│ㅤ⏱ 𝐇𝐎𝐑𝐀𝐑𝐈𝐎 
+>⋆☽⋆ ⋆☾⋆<╯
+╮
+ㅤ⏱ 𝐇𝐎𝐑𝐀𝐑𝐈𝐎
 ${horaMsg}
-│➥ 𝐉𝐔𝐆𝐀𝐃𝐎𝐑𝐄𝐒:\n`;
+➥ 𝐉𝐔𝐆𝐀𝐃𝐎𝐑𝐄𝐒:\n`;
 
   escuadras.forEach((eq, i) => {
     text += render(eq, i + 1) + "\n";
   });
 
-  text += `│\n│ㅤʚ 𝐒𝐔𝐏𝐋𝐄𝐍𝐓𝐄𝐒:\n${suplenteTxt}\n╰─────────────╯`;
+  text += `>| \n>| ㅤʚ 𝐒𝐔𝐏𝐋𝐄𝐍𝐓𝐄𝐒:\n${suplenteTxt}\n╯`;
 
   const mentions = [...escuadras.flat(), ...suplentes].map(u => u.id);
 

@@ -70,7 +70,7 @@ const handler = async (msg, { conn, command }) => {
                `   • Guardado: ${formatNum(t.guardado)} 💼\n` +
                `   • Total: ${formatNum(t.total)} 🏦\n` +
                `   • Personajes: ${t.cntPer} | Mascotas: ${t.cntMas}\n` +
-               `─────────────────\n`;
+               `\n`;
   });
 
   // Enviar imagen con el caption y las menciones

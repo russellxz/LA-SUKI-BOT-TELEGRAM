@@ -30,11 +30,11 @@ const handler = async (msg, { conn, args, usedPrefix, command }) => {
   if (!buscado) {
     const lineas = claves.sort().map((k) => {
       const tipos = [...new Set(db[k].map((i) => i.tipo))].map((t) => ICONOS[t] || "📦").join("");
-      return `│ ${tipos} *${k}* — ${db[k].length}`;
+      return `>| ${tipos} *${k}* — ${db[k].length}`;
     });
     return conn.sendMessage(chatId, {
       text:
-        `╭──『 📂 *PAQUETES GUARDADOS* 』\n│\n${lineas.join("\n")}\n│\n╰────────────────◆\n\n` +
+        `📂 *PAQUETES GUARDADOS*\n\n${lineas.join("\n")}\n\n` +
         `_Detalle de uno: ${usedPrefix}${command} <palabra>_`
     }, { quoted: msg });
   }

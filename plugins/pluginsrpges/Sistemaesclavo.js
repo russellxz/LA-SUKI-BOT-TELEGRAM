@@ -209,7 +209,7 @@ async function procesarRecompensas(conn) {
       const caption =
         `⚠️ *PERDISTE CREDITOS TU ESCLAVO ISO ALGO MAL*⚠️\n` +
         `👑 Dueño: @${duenoNum}\n` +
-        `────────────────────\n` +
+        `\n` +
         lines.join("\n");
       try {
         await _lastConnRef.sendMessage(chat, {

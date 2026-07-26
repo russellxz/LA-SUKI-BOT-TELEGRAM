@@ -5,6 +5,7 @@
 // eliges. La API es la misma: neoxr /youtube con type=audio&quality=128kbps.
 import { buscarYoutube, audioYoutube } from "../../libs/descargas.js";
 import { menuDescarga, opcionesAudio, limpiarNombre } from "../../libs/botonesdescarga.js";
+import { ayuda, duracion, numero, recortar } from "../../libs/estilo.js";
 
 const esYoutube = (u = "") => /(?:youtube\.com|youtu\.be|music\.youtube\.com)/i.test(u);
 
@@ -14,10 +15,13 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
 
   if (!entrada) {
     return conn.sendMessage(chatId, {
-      text:
-        `🎵 *Descargar audio de YouTube*\n\n` +
-        `Usa: *${usedPrefix}${command} <enlace o nombre>*\n\n` +
-        `*Ejemplo:* ${usedPrefix}${command} https://youtu.be/xxxx`
+      text: ayuda({
+        emoji: "🎵",
+        nombre: "Audio de YouTube",
+        para: "Te bajo el audio de cualquier video o canción.",
+        usos: [`${usedPrefix}${command} <enlace o nombre>`],
+        ejemplos: [`${usedPrefix}${command} https://youtu.be/xxxx`, `${usedPrefix}${command} bad bunny diles`]
+      })
     }, { quoted: msg });
   }
 
@@ -38,21 +42,17 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
 
     const titulo = video?.titulo || "YouTube Audio";
 
-    const info =
-      "╭━━━━━━━━━━━━━━━━━╮\n" +
-      "  🎵 *YOUTUBE — AUDIO*\n" +
-      "╰━━━━━━━━━━━━━━━━━╯\n\n" +
-      `📝 *Título:* ${titulo}\n` +
-      (video?.autor ? `👤 *Canal:* ${video.autor}\n` : "") +
-      (video?.duracion ? `⏱️ *Duración:* ${video.duracion}\n` : "") +
-      (video?.vistas ? `👁️ *Vistas:* ${Number(video.vistas).toLocaleString("es")}\n` : "") +
-      `\n🔗 ${url}`;
-
     await menuDescarga(conn, msg, {
-      titulo,
-      info,
+      emoji: "🎵",
+      fuente: "YouTube · Audio",
+      nombre: titulo,
       miniatura: video?.miniatura || "",
       enlace: url,
+      datos: [
+        ["👤", "Canal", video?.autor || null],
+        ["⏱️", "Duración", video?.duracion || (video?.segundos ? duracion(video.segundos) : null)],
+        ["👁️", "Vistas", video?.vistas ? numero(video.vistas) : null]
+      ],
       opciones: opcionesAudio(),
       resolver: async () => {
         const resuelto = await audioYoutube(url);
@@ -61,7 +61,8 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
           titulo: resuelto.titulo || titulo,
           autor: video?.autor || resuelto.autor || "YouTube",
           nombre: `${limpiarNombre(resuelto.titulo || titulo, "audio")}.mp3`,
-          ext: "mp3"
+          ext: "mp3",
+          caption: `🎵 *${recortar(resuelto.titulo || titulo, 60)}*${video?.autor ? `\n👤 ${video.autor}` : ""}`
         };
       }
     });
