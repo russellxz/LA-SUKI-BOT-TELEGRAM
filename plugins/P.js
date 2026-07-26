@@ -130,18 +130,15 @@ const handler = async (msg, { conn }) => {
 🏷️ Host: *${host}*
 🧩 SO: *${platform}*
 🟢 Uptime: *${uptimeStr}*
-────────────────
 🧠 *RAM*
 • Total: ${formatBytes(totalMem)}
 • Usada: ${formatBytes(usedMem)}  (${pct(usedMem, totalMem)})
 • Libre: ${formatBytes(freeMem)}
-────────────────
 ⚙️ *CPU*
 • Modelo: ${cpuModel}
 • Núcleos: ${cpuCores}
 • Carga (1/5/15m): ${num(l1)} / ${num(l5)} / ${num(l15)}
 • Uso aprox.: ${num(cpuPercent)}%
-────────────────
 💾 *Discos (df)*`;
 
   if (disks.length > 0) {
@@ -160,7 +157,7 @@ const handler = async (msg, { conn }) => {
     texto += `\n• No disponible (sin 'df' o sin datos)`;
   }
 
-  texto += `\n────────────────
+  texto += `\n
 🔧 Node.js: ${nodev}`;
 
   // Enviar citando SIEMPRE el mensaje original

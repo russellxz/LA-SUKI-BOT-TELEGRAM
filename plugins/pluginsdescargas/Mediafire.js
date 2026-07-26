@@ -4,6 +4,7 @@
 // documento (lo normal) o, si es un video, también se puede mandar reproducible.
 import { neoxr, descargarBuffer } from "../../libs/descargas.js";
 import { menuDescarga } from "../../libs/botonesdescarga.js";
+import { ayuda, recortar } from "../../libs/estilo.js";
 
 const handler = async (msg, { conn, args, usedPrefix, command }) => {
   const chatId = msg.chatId;
@@ -12,13 +13,19 @@ const handler = async (msg, { conn, args, usedPrefix, command }) => {
 
   if (!enlace) {
     return conn.sendMessage(chatId, {
-      text: `⚠️ *Uso incorrecto.*\n📌 Ejemplo:\n${pref}${command} https://www.mediafire.com/file/ejemplo/file.zip`
+      text: ayuda({
+        emoji: "📂",
+        nombre: "Descargar de MediaFire",
+        para: "Pásame el enlace del archivo.",
+        usos: [`${pref}${command} <enlace>`],
+        ejemplos: [`${pref}${command} https://www.mediafire.com/file/ejemplo/file.zip`]
+      })
     }, { quoted: msg });
   }
 
   if (!/^https?:\/\/(www\.)?mediafire\.com/i.test(enlace)) {
     return conn.sendMessage(chatId, {
-      text: `⚠️ *Enlace no válido.*\n📌 Tiene que ser una URL de MediaFire.\n\nEjemplo:\n${pref}${command} https://www.mediafire.com/file/ejemplo/file.zip`
+      text: `⚠️ *Ese enlace no es de MediaFire*\n\nEjemplo: \`${pref}${command} https://www.mediafire.com/file/ejemplo/file.zip\``
     }, { quoted: msg });
   }
 
@@ -32,26 +39,23 @@ const handler = async (msg, { conn, args, usedPrefix, command }) => {
     const nombre = archivo.title || "archivo";
     const esVideo = /video\//i.test(archivo.mime || "") || /\.(mp4|mkv|webm|avi)$/i.test(nombre);
 
-    const info =
-      "╭━━━━━━━━━━━━━━━━━╮\n" +
-      "  📂 *MEDIAFIRE*\n" +
-      "╰━━━━━━━━━━━━━━━━━╯\n\n" +
-      `📝 *Nombre:* ${nombre}\n` +
-      (archivo.size ? `💾 *Tamaño:* ${archivo.size}\n` : "") +
-      (archivo.mime ? `📦 *Tipo:* ${archivo.mime}\n` : "") +
-      (archivo.extension ? `🏷️ *Extensión:* ${archivo.extension}` : "");
-
-    const opciones = [{ id: "f", texto: "📁 Descargar archivo", tipo: "documento" }];
-    if (esVideo) opciones.unshift({ id: "v", texto: "🎬 Ver como video", tipo: "video" });
+    const opciones = [{ id: "f", texto: "📥 Descargar", tipo: "documento" }];
+    if (esVideo) opciones.unshift({ id: "v", texto: "🎬 Ver video", tipo: "video" });
 
     await menuDescarga(conn, msg, {
-      titulo: nombre,
-      info,
+      emoji: "📂",
+      fuente: "MediaFire",
+      nombre,
       enlace,
+      datos: [
+        ["💾", "Tamaño", archivo.size || null],
+        ["📦", "Tipo", archivo.mime || null],
+        ["🏷️", "Extensión", archivo.extension || null]
+      ],
       opciones,
       resolver: async () => {
         const { buffer, tam } = await descargarBuffer(archivo.url);
-        return { buffer, tam, titulo: nombre, nombre, caption: `📂 *${nombre}*` };
+        return { buffer, tam, titulo: nombre, nombre, caption: `📂 *${recortar(nombre, 60)}*` };
       }
     });
 

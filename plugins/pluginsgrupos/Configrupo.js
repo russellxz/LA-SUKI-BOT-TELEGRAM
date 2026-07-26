@@ -23,7 +23,7 @@ const handler = async (msg, ctx) => {
     ["🤖 ChatGPT del grupo", "chatgpt"]
   ];
 
-  const filas = opciones.map(([nombre, clave]) => `│ ${nombre}: *${marca(getConfig(chatId, clave))}*`).join("\n");
+  const filas = opciones.map(([nombre, clave]) => `>| ${nombre}: *${marca(getConfig(chatId, clave))}*`).join("\n");
 
   const muteados = listaChat(chatId, "muted").length;
   const baneados = listaChat(chatId, "banned").length;
@@ -31,17 +31,15 @@ const handler = async (msg, ctx) => {
   const soyAdmin = await conn.botEsAdmin(chatId);
 
   const texto =
-    `╭──『 ⚙️ *CONFIGURACIÓN* 』\n` +
-    `│ 📍 ${msg.chatName}\n` +
-    `│\n` +
+    `⚙️ *CONFIGURACIÓN*\n` +
+    `>| 📍 ${msg.chatName}\n` +
     filas + "\n" +
-    `│\n` +
-    `│ 🔇 Silenciados: *${muteados}*\n` +
-    `│ 🚫 Baneados del bot: *${baneados}*\n` +
-    `│ 🔒 Comandos restringidos: *${restringidos.length}*\n` +
-    `│ ${soyAdmin ? "⭐ Soy administradora" : "⚠️ NO soy administradora"}\n` +
-    `│ 📜 Reglas: ${estadoChat(chatId, "reglas") ? "definidas" : "sin definir"}\n` +
-    `╰────────────────◆\n\n` +
+    `>| 🔇 Silenciados: *${muteados}*\n` +
+    `>| 🚫 Baneados del bot: *${baneados}*\n` +
+    `>| 🔒 Comandos restringidos: *${restringidos.length}*\n` +
+    `>| ${soyAdmin ? "⭐ Soy administradora" : "⚠️ NO soy administradora"}\n` +
+    `>| 📜 Reglas: ${estadoChat(chatId, "reglas") ? "definidas" : "sin definir"}\n` +
+    `\n\n` +
     `_Usa ${usedPrefix}menugrupo para ver cómo cambiar cada cosa._`;
 
   await conn.sendMessage(chatId, { text: texto }, { quoted: msg });

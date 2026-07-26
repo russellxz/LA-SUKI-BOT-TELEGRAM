@@ -32,7 +32,7 @@ const handler = async (msg, { conn }) => {
     texto += `🧑 *Vendedor:* ${p.vendedor.nombre} ${p.vendedor.apellido}\n`;
     texto += `🎂 *Edad:* ${p.vendedor.edad} años\n`;
     texto += `📈 *Nivel del vendedor:* ${p.vendedor.nivel}\n`;
-    texto += `────────────────\n\n`;
+    texto += `\n\n`;
   });
 
   await conn.sendMessage(chatId, {

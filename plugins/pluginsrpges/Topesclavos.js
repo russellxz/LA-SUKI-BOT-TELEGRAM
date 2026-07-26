@@ -63,7 +63,7 @@ const handler = async (msg, { conn }) => {
   // Texto del top
   let texto = "🏆 *TOP DUEÑOS DE ESCLAVOS (activos)*\n";
   texto += "Los puestos se ordenan por cantidad de esclavos únicos activos.\n";
-  texto += "────────────────────\n";
+  texto += "\n";
 
   const menciones = new Set();
 
@@ -80,7 +80,7 @@ const handler = async (msg, { conn }) => {
 
     texto += `${pos}. @${item.owner} — 🧑‍🤝‍🧑 *${item.total}* esclavo(s)\n`;
     texto += `   👥 Esclavos: ${esclavosTxt}\n`;
-    texto += "────────────────────\n";
+    texto += "\n";
   });
 
   // Envío con imagen + caption

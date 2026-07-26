@@ -1,11 +1,11 @@
 // plugins/pluginsdescargas/Play.js — Buscar y descargar de YouTube
 //
-// Busca la canción y manda la vista previa con botones: audio, audio como
-// documento, y video en varias calidades (normal o documento). El bot baja el
-// archivo él mismo, porque las APIs piden la clave en la cabecera y Telegram
-// no puede hacerlo por su cuenta.
+// Manda UNA sola tarjeta con la portada, la ficha de la canción y los botones.
+// Al pulsar, la propia tarjeta se va editando ("⏳ Bajando…", "✅ enviado") en
+// vez de llenar el chat de mensajes sueltos.
 import { buscarYoutube, audioYoutube, videoYoutube } from "../../libs/descargas.js";
 import { menuDescarga, limpiarNombre } from "../../libs/botonesdescarga.js";
+import { ayuda, duracion, numero, recortar } from "../../libs/estilo.js";
 
 const handler = async (msg, { conn, text, usedPrefix, command }) => {
   const chatId = msg.chatId;
@@ -13,10 +13,13 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
 
   if (!consulta) {
     return conn.sendMessage(chatId, {
-      text:
-        `🎵 *Buscar y descargar de YouTube*\n\n` +
-        `Usa: *${usedPrefix}${command} <nombre o enlace>*\n\n` +
-        `*Ejemplos:*\n• ${usedPrefix}${command} bad bunny diles\n• ${usedPrefix}${command} https://youtu.be/xxxx`
+      text: ayuda({
+        emoji: "🎧",
+        nombre: "Buscar en YouTube",
+        para: "Te busco la canción y tú eliges si la quieres en audio o en video.",
+        usos: [`${usedPrefix}${command} <nombre o enlace>`],
+        ejemplos: [`${usedPrefix}${command} bad bunny diles`, `${usedPrefix}${command} https://youtu.be/xxxx`]
+      })
     }, { quoted: msg });
   }
 
@@ -33,55 +36,52 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
     }
     if (esEnlace) video.url = resultados[0]?.url || consulta;
 
-    const info =
-      "╭━━━━━━━━━━━━━━━━━╮\n" +
-      "  🎧 *YOUTUBE*\n" +
-      "╰━━━━━━━━━━━━━━━━━╯\n\n" +
-      `📝 *Título:* ${video.titulo}\n` +
-      (video.autor ? `👤 *Canal:* ${video.autor}\n` : "") +
-      (video.duracion ? `⏱️ *Duración:* ${video.duracion}\n` : "") +
-      (video.vistas ? `👁️ *Vistas:* ${Number(video.vistas).toLocaleString("es")}\n` : "") +
-      (video.subido ? `📅 *Publicado:* ${video.subido}\n` : "") +
-      `\n🔗 ${video.url}`;
-
     await menuDescarga(conn, msg, {
-      titulo: video.titulo,
-      info,
+      emoji: "🎧",
+      fuente: "YouTube",
+      nombre: video.titulo,
       miniatura: video.miniatura || "",
       enlace: video.url,
       porFila: 2,
+      datos: [
+        ["👤", "Canal", video.autor || null],
+        ["⏱️", "Duración", video.duracion || (video.segundos ? duracion(video.segundos) : null)],
+        ["👁️", "Vistas", video.vistas ? numero(video.vistas) : null],
+        ["📅", "Subido", video.subido || null]
+      ],
       opciones: [
         { id: "a", texto: "🎵 Audio MP3", tipo: "audio" },
-        { id: "ad", texto: "📄 Audio Documento", tipo: "documento", audio: true },
+        { id: "ad", texto: "📄 Audio doc", tipo: "documento", audio: true },
         { id: "v360", texto: "🎬 Video 360p", tipo: "video", calidad: "360" },
-        { id: "d360", texto: "📁 360p Documento", tipo: "documento", calidad: "360" },
+        { id: "d360", texto: "📄 360p doc", tipo: "documento", calidad: "360" },
         { id: "v720", texto: "📺 Video 720p", tipo: "video", calidad: "720" },
-        { id: "d720", texto: "📁 720p Documento", tipo: "documento", calidad: "720" }
+        { id: "d720", texto: "📄 720p doc", tipo: "documento", calidad: "720" }
       ],
       resolver: async (opcion) => {
         const esAudio = opcion.tipo === "audio" || opcion.audio;
 
         if (esAudio) {
-          const resuelto = await audioYoutube(video.url);
+          const r = await audioYoutube(video.url);
+          const nombre = r.titulo || video.titulo;
           return {
-            url: resuelto.url,
-            titulo: resuelto.titulo || video.titulo,
-            autor: video.autor || "YouTube",
-            nombre: `${limpiarNombre(resuelto.titulo || video.titulo, "audio")}.mp3`,
+            url: r.url,
+            titulo: nombre,
+            autor: video.autor || r.autor || "YouTube",
+            nombre: `${limpiarNombre(nombre, "audio")}.mp3`,
             ext: "mp3",
-            audio: true,
-            caption: `🎵 *${resuelto.titulo || video.titulo}*`
+            caption: `🎵 *${recortar(nombre, 60)}*${video.autor ? `\n👤 ${video.autor}` : ""}`
           };
         }
 
-        const resuelto = await videoYoutube(video.url, opcion.calidad || "360");
-        const etiqueta = resuelto.calidad === "4k" ? "4K" : `${resuelto.calidad}p`;
+        const r = await videoYoutube(video.url, opcion.calidad || "360");
+        const nombre = r.titulo || video.titulo;
+        const etiqueta = r.calidad === "4k" ? "4K" : `${r.calidad}p`;
         return {
-          url: resuelto.url,
-          titulo: resuelto.titulo || video.titulo,
-          nombre: `${limpiarNombre(resuelto.titulo || video.titulo, "video")}.mp4`,
+          url: r.url,
+          titulo: nombre,
+          nombre: `${limpiarNombre(nombre, "video")}.mp4`,
           ext: "mp4",
-          caption: `🎬 *${resuelto.titulo || video.titulo}*\n📺 Calidad: ${etiqueta}`
+          caption: `🎬 *${recortar(nombre, 60)}*\n📺 ${etiqueta}`
         };
       }
     });
@@ -90,7 +90,7 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
   } catch (e) {
     await conn.react(chatId, msg.message_id, "❌");
     await conn.sendMessage(chatId, {
-      text: `❌ No pude buscar eso.\n\n_${String(e?.message || e).slice(0, 250)}_`
+      text: `❌ *No pude buscar eso*\n\n_${String(e?.message || e).slice(0, 200)}_`
     }, { quoted: msg });
   }
 };

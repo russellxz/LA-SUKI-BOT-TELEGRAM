@@ -5,6 +5,7 @@
 // que elijas.
 import { descargarInstagram, descargarBuffer } from "../../libs/descargas.js";
 import { menuDescarga } from "../../libs/botonesdescarga.js";
+import { ayuda } from "../../libs/estilo.js";
 
 const handler = async (msg, { conn, text, usedPrefix, command }) => {
   const chatId = msg.chatId;
@@ -14,10 +15,14 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
 
   if (!url || !/instagram\.com|instagr\.am/i.test(url)) {
     return conn.sendMessage(chatId, {
-      text:
-        `📸 *Descargar de Instagram*\n\n` +
-        `Usa: *${usedPrefix}${command} <enlace>*\n\n` +
-        `*Ejemplo:* ${usedPrefix}${command} https://www.instagram.com/p/xxxx`
+      text: ayuda({
+        emoji: "📸",
+        nombre: "Descargar de Instagram",
+        para: "Fotos, reels y publicaciones con varios archivos.",
+        usos: [`${usedPrefix}${command} <enlace>`],
+        ejemplos: [`${usedPrefix}${command} https://www.instagram.com/p/xxxx`],
+        nota: "Las cuentas privadas no se pueden descargar."
+      })
     }, { quoted: msg });
   }
 
@@ -31,25 +36,18 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
     const videos = items.filter((x) => x.tipo === "video").length;
     const fotos = items.length - videos;
 
-    const info =
-      "╭━━━━━━━━━━━━━━━━━╮\n" +
-      "  📸 *INSTAGRAM*\n" +
-      "╰━━━━━━━━━━━━━━━━━╯\n\n" +
-      `📦 *Archivos:* ${items.length}` +
-      (videos ? `\n🎬 Videos: ${videos}` : "") +
-      (fotos ? `\n🖼️ Fotos: ${fotos}` : "");
-
     // Un solo archivo: el menú lo baja y lo manda
     if (items.length === 1) {
       const uno = items[0];
       const esVideo = uno.tipo === "video";
       return void (await menuDescarga(conn, msg, {
-        titulo: "Instagram",
-        info,
+        emoji: "📸",
+        fuente: "Instagram",
+        nombre: esVideo ? "Video de Instagram" : "Foto de Instagram",
         enlace: url,
         opciones: esVideo
-          ? [{ id: "v", texto: "🎬 Video Normal", tipo: "video" }, { id: "vd", texto: "📁 Video Documento", tipo: "documento" }]
-          : [{ id: "i", texto: "🖼️ Imagen", tipo: "imagen" }, { id: "idoc", texto: "📄 Imagen Documento", tipo: "documento" }],
+          ? [{ id: "v", texto: "🎬 Video", tipo: "video" }, { id: "vd", texto: "📄 Documento", tipo: "documento" }]
+          : [{ id: "i", texto: "🖼️ Imagen", tipo: "imagen" }, { id: "idoc", texto: "📄 Documento", tipo: "documento" }],
         resolver: () => ({
           url: uno.url,
           titulo: "Instagram",
@@ -61,12 +59,17 @@ const handler = async (msg, { conn, text, usedPrefix, command }) => {
 
     // Carrusel: el botón decide si van normales o como documento
     await menuDescarga(conn, msg, {
-      titulo: "Instagram",
-      info,
+      emoji: "📸",
+      fuente: "Instagram",
+      nombre: `Publicación con ${items.length} archivos`,
       enlace: url,
+      datos: [
+        ["🎬", "Videos", videos || null],
+        ["🖼️", "Fotos", fotos || null]
+      ],
       opciones: [
-        { id: "todo", texto: "📥 Todo normal", tipo: "lote" },
-        { id: "tododoc", texto: "📁 Todo como documento", tipo: "lote", documento: true }
+        { id: "todo", texto: "📥 Todo", tipo: "lote" },
+        { id: "tododoc", texto: "📄 Todo en documento", tipo: "lote", documento: true }
       ],
       resolver: async (opcion) => {
         let enviados = 0;

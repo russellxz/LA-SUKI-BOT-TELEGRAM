@@ -39,7 +39,7 @@ const handler = async (msg, { conn }) => {
     p.habilidades.forEach((h, i) => {
       texto += `   ${i + 1}. ${h.nombre.replace(/_/g, " ")} (Nivel ${h.nivel || 1})\n`;
     });
-    texto += `────────────────────\n`;
+    texto += `\n`;
   });
 
   await conn.sendMessage(chatId, {

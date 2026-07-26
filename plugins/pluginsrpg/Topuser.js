@@ -69,7 +69,7 @@ const handler = async (msg, { conn }) => {
     texto += `🐾 *Mascotas:* ${u.cantMascotas}  |  🎭 *Personajes:* ${u.cantPersonajes}\n`;
     texto += `💪 *Mascota más poderosa:* ${topMasTxt}\n`;
     texto += `⚔️ *Personaje más poderoso:* ${topPerTxt}\n`;
-    texto += `────────────────\n`;
+    texto += `\n`;
   });
 
   // Enviar con imagen y menciones reales

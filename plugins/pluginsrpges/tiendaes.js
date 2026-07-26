@@ -101,7 +101,7 @@ const handler = async (msg, { conn }) => {
 
   let caption = `🛒 *TIENDA DE ESCLAVOS*\n`;
   caption += `👤 Solicitado por: @${numero}\n`;
-  caption += `────────────────────\n`;
+  caption += `\n`;
 
   caption += `💵 *Precios y retorno total estimado (por contrato):*\n`;
   for (let d = 1; d <= 5; d++) {
@@ -119,7 +119,7 @@ const handler = async (msg, { conn }) => {
   caption += `• *.comprares 2 @1234567890*\n`;
   caption += `\n💡 Usa *.veres* o *.veresclavos* para ver cómo van trabajando tus esclavos.\n`;
 
-  caption += `\n────────────────────\n`;
+  caption += `\n\n`;
   caption += `🔒 *ESCLAVOS RECLAMADOS*\n`;
   if (comprados.length) {
     let i = 1;
@@ -129,7 +129,7 @@ const handler = async (msg, { conn }) => {
         const restante = formatoTiempo(c.hasta - ahora);
         caption += `   ${i++}. @${c.slave} → ⏳ ${restante}\n`;
       });
-      caption += `────────────────────\n`;
+      caption += `\n`;
     }
   } else {
     caption += `No hay esclavos reclamados.\n`;

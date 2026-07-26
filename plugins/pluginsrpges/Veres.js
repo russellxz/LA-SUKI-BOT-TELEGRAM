@@ -68,7 +68,7 @@ const handler = async (msg, { conn }) => {
   let totalPerdido = 0;
 
   let texto = `👑 *TUS ESCLAVOS* @${ownerNum}\n`;
-  texto += "────────────────────\n";
+  texto += "\n";
 
   const menciones = new Set([String(ownerNum)]);
 
@@ -91,7 +91,7 @@ const handler = async (msg, { conn }) => {
     texto += `   ⏳ Contrato: ${restanteContrato}\n`;
     texto += `   ⏱ Próxima recompensa en: ${restanteReward}\n`;
     texto += `   💹 Ganado: *${moneda(ganado)}*  |  💢 Perdido: *${moneda(perdido)}*  |  ⚖️ Neto: *${moneda(neto)}*\n`;
-    texto += "────────────────────\n";
+    texto += "\n";
 
     menciones.add(String(slaveNum));
   });

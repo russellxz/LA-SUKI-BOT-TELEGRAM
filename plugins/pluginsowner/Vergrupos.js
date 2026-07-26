@@ -28,7 +28,7 @@ const handler = async (msg, ctx) => {
     try {
       miembros = await conn.bot.getChatMemberCount(g.id);
     } catch {}
-    lineas.push(`│ 📌 *${g.titulo}*\n│    🆔 \`${g.id}\` · 👥 ${miembros}`);
+    lineas.push(`>| 📌 *${g.titulo}*\n>|    🆔 \`${g.id}\` · 👥 ${miembros}`);
   }
 
   const tandas = [];
@@ -36,10 +36,10 @@ const handler = async (msg, ctx) => {
 
   for (let i = 0; i < tandas.length; i++) {
     const encabezado = i === 0
-      ? `╭──『 👥 *MIS GRUPOS* 』\n│ Total: *${grupos.length}* grupos\n│ Chats privados: *${privados}*\n│\n`
-      : "╭─────◆\n";
+      ? `👥 *MIS GRUPOS*\n>| Total: *${grupos.length}* grupos\n>| Chats privados: *${privados}*\n\n`
+      : "\n";
     await conn.sendMessage(chatId, {
-      text: encabezado + tandas[i].join("\n") + "\n╰────────────────◆"
+      text: encabezado + tandas[i].join("\n") + "\n"
     }, { quoted: i === 0 ? msg : undefined });
   }
 

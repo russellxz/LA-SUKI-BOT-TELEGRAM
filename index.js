@@ -406,6 +406,17 @@ bot.on("message", async (raw) => {
 bot.on("callback_query", async (query) => {
   try {
     registrarUsuario(query.from, query.message?.chat?.id);
+
+    // Deja constancia de quién pulsa cada botón. Sirve para saber si Telegram
+    // está bloqueando a alguien ANTES de que el mensaje llegue aquí: si el
+    // usuario ve un aviso y en esta consola no aparece nada, el bloqueo es de
+    // Telegram (ajustes del bot en @BotFather), no del código.
+    console.log(
+      chalk.blue("🔘 Botón") +
+        chalk.gray(` · ${nombreDe(query.from)} (${query.from.id})`) +
+        chalk.gray(` · ${String(query.data || "").slice(0, 40)}`)
+    );
+
     const atendido = await conn._manejarCallback(query);
     if (!atendido) await conn.responderBoton(query.id);
   } catch (e) {

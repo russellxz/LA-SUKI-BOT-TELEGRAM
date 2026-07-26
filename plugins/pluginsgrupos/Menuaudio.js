@@ -38,16 +38,16 @@ const handler = async (msg, { conn, usedPrefix }) => {
   const lineas = claves.map((clave) => {
     const items = db[clave];
     const tipos = [...new Set(items.map((i) => i.tipo))].map((t) => ICONOS[t] || "📦").join("");
-    return `│ ${tipos} *${clave}* — ${items.length}`;
+    return `>| ${tipos} *${clave}* — ${items.length}`;
   });
 
   const total = claves.reduce((acc, k) => acc + db[k].length, 0);
 
   const texto =
-    `╭──『 🎵 *PALABRAS GUARDADAS* 』\n│\n` +
-    `│ 📦 Paquetes: *${claves.length}*\n│ 📁 Archivos: *${total}*\n│\n` +
+    `🎵 *PALABRAS GUARDADAS*\n\n` +
+    `>| 📦 Paquetes: *${claves.length}*\n>| 📁 Archivos: *${total}*\n\n` +
     lineas.join("\n") +
-    "\n╰────────────────◆\n\n" +
+    "\n\n" +
     `_Escribe la palabra y te mando el archivo._\n` +
     `_Para borrar uno: ${usedPrefix}del <palabra> <número>_`;
 

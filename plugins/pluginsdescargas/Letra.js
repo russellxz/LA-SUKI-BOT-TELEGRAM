@@ -73,7 +73,6 @@ Ej: ${pref}${command || "letra"} yemil difícil amarte`,
 
     const header =
 `🎶 *LETRA ENCONTRADA*
-━━━━━━━━━━━━━━━━
 📌 *Título:* ${title}
 🎤 *Artista:* ${artist}${album ? `\n💿 *Álbum:* ${album}` : ""}
 

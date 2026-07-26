@@ -216,10 +216,10 @@ handler.iniciar = (conn) => {
     try {
       await conn.sendMessage(chatId, {
         text:
-          "╭──『 👑 *NUEVO ADMIN* 』─◆\n" +
-          `│ 👤 Usuario: @${user.id}\n` +
-          `│ ✅ Ascendido por: ${autor ? `@${autor.id}` : "el grupo"}\n` +
-          "╰────────────────────◆",
+          "👑 *NUEVO ADMIN*\n" +
+          `>| 👤 Usuario: @${user.id}\n` +
+          `>| ✅ Ascendido por: ${autor ? `@${autor.id}` : "el grupo"}\n` +
+          "",
         mentions: [user.id, autor?.id].filter(Boolean)
       });
     } catch {}
@@ -229,10 +229,10 @@ handler.iniciar = (conn) => {
     try {
       await conn.sendMessage(chatId, {
         text:
-          "╭──『 📉 *ADMIN DEGRADADO* 』─◆\n" +
-          `│ 👤 Usuario: @${user.id}\n` +
-          `│ ❌ Degradado por: ${autor ? `@${autor.id}` : "el grupo"}\n` +
-          "╰────────────────────◆",
+          "📉 *ADMIN DEGRADADO*\n" +
+          `>| 👤 Usuario: @${user.id}\n` +
+          `>| ❌ Degradado por: ${autor ? `@${autor.id}` : "el grupo"}\n` +
+          "",
         mentions: [user.id, autor?.id].filter(Boolean)
       });
     } catch {}

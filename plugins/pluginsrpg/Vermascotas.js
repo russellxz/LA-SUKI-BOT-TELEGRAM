@@ -56,7 +56,7 @@ const handler = async (msg, { conn }) => {
     texto += `🎯 Habilidades:\n`;
     texto += `   • ${h1Nombre} (Nv ${h1Nivel} • XP ${h1XP})\n`;
     texto += `   • ${h2Nombre} (Nv ${h2Nivel} • XP ${h2XP})\n`;
-    texto += `──────────────\n`;
+    texto += `\n`;
   });
 
   texto += `📌 *Comandos para subir de nivel tus mascotas:*\n`;

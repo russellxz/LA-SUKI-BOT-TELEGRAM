@@ -55,7 +55,7 @@ const handler = async (msg, { conn }) => {
         : "") +
       (p.origen ? `   • Origen: ${p.origen}` : "") + "\n" +
       (deTag ? `   • Embargado a: @${deNumero}\n` : "") +
-      `────────────────────\n`;
+      `\n`;
   });
 
   texto +=

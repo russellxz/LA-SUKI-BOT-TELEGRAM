@@ -33,12 +33,9 @@ const handler = async (msg, { conn, args, command }) => {
     await conn.sendMessage(chatId, {
       video: buffer,
       caption: `
-━━━━━━━━━━━━━━
 🎬 *VIDEO GENERADO*
-━━━━━━━━━━━━━━
 📌 *Prompt:* ${json.prompt}
 🦖 *API:* myapiadonix.vercel.app
-━━━━━━━━━━━━━━
       `,
       gifPlayback: false
     }, { quoted: msg.key ? msg : null });
